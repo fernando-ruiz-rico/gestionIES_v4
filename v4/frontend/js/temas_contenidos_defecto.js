@@ -2,11 +2,10 @@
 
 // Cargamos en el campo "hidden" del formulario el departamento seleccionado
 if(selDepartamento !== undefined)
-    $('#idDepartamento').val(selDepartamento);
+    document.getElementById('idDepartamento').value = selDepartamento;
 
 // Evento de envío del formulario para guardar los cambios
-$("#formtemadefault").on("submit", function(e)
-{
+$("#formtemadefault").addEventListener('submit', function(e) {
     tinymce.get('contexto').save();
     tinymce.get('recursos').save();
     tinymce.get('metodologia').save();
