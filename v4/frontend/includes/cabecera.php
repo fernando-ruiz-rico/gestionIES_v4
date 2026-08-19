@@ -32,9 +32,6 @@ include('../backend/includes/config.php');
     <!-- Bootstrap Icons 1.13.1 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     
-    <!-- jQuery UI CSS -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
-    
     <!-- Estilos mínimos personalizados -->
     <link rel="stylesheet" href="css/estilos.css" />
 </head>
