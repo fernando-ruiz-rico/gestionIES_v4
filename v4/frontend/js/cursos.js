@@ -3,20 +3,19 @@
 // Carga el listado de cursos en el "div" habilitado para ello
 function cargarCursos()
 {
-    dom("#listacursos").load("ajax/cursos/cargar_cursos.php");
+    fetch("ajax/cursos/cargar_cursos.php").then(r => r.text()).then(html => document.getElementById("listacursos").innerHTML = html);
 }
 
 // Muestra los datos del curso indicado en el formulario modal, para su edición
 function cargarCursoModal(id)
 {
-    http.get("ajax/cursos/cargar_curso.php", {idCurso:id}, function(res)
-    {
-        dom('#idCurso').val(id);
-        dom('#nombre').val(res.nombre);
-        dom('#abreviatura').val(res.abreviatura);
-        dom('#horasSemana').val(res.horas_semana);
-        dom('#categoria').val(res.categoria);
-        dom("#formcurso").modal('show');
+    fetch("ajax/cursos/cargar_curso.php?" + new URLSearchParams({idCurso:id}).toString()).then(r => r.json()).then(res => {
+        document.getElementById('idCurso').value = id;
+        document.getElementById('nombre').value = res.nombre;
+        document.getElementById('abreviatura').value = res.abreviatura;
+        document.getElementById('horasSemana').value = res.horas_semana;
+        document.getElementById('categoria').value = res.categoria;
+        (() => { const el = document.getElementById("formcurso"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });    
 }
 
@@ -24,7 +23,7 @@ function cargarCursoModal(id)
 function nuevoCurso()
 {
     limpiarFormularioCursos();
-    dom('#formcurso').modal('show');
+    (() => { const el = document.getElementById("formcurso"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
 }
 
 // Borra el curso indicado, previa confirmación
@@ -33,8 +32,7 @@ function borrarCurso (id, nombre)
 {
     if (confirm("Confirmas el borrado del curso '" + nombre + "'? Sólo se podrá eliminar si no tiene grupos ni materias asociadas. En caso contrario, deberás borrar estos elementos antes."))
     {
-        http.post("ajax/cursos/borrar_curso.php", {id:id}, function(res)
-        {
+        fetch("ajax/cursos/borrar_curso.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({id:id}).toString() }).then(r => r.text()).then(res => {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar el curso. Asegúrate de que no tenga grupos o materias asociados", 0);
             else
@@ -46,18 +44,18 @@ function borrarCurso (id, nombre)
 // Borra el contenido de los campos del formulario modal de alta/edición de cursos
 function limpiarFormularioCursos()
 {
-    dom('#idCurso').val("");
-    dom('#nombre').val("");
-    dom('#abreviatura').val("");
-    dom('#horasSemana').val("");    
-    dom('#categoria').val("");    
+    document.getElementById('idCurso').value = '';
+    document.getElementById('nombre').value = '';
+    document.getElementById('abreviatura').value = '';
+    document.getElementById('horasSemana').value = '';    
+    document.getElementById('categoria').value = '';    
 }
 
 // Evento de auto-ordenación sobre los items de la lista de cursos
 dom('#listacursos').sortable({ items: '.curso', update: function()
     {
         // Recoge los elementos contenidos en el "div"
-        var elementos = dom(this).sortable("toArray").toString();
+        var elementos = (() => { const el = this; return Array.from(el.children).map(c => c.id).join(","); })();
         // Invoca por AJAX al código PHP que ordena los cursos, pasándole los elementos a ordenar
         // Cada elemento se compone del prefijo "cu" seguido del código del curso, y los elementos
         // se envían separados por comas. La página PHP los recibe, trocea y procesa
@@ -69,22 +67,14 @@ dom('#listacursos').sortable({ items: '.curso', update: function()
 });
 
 // Evento de envío del formulario modal para inserción/modificación
-dom("#formcur").on("submit", function(e)
+document.getElementById("formcur").addEventListener("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formcur);
-    http.ajax({
-        url: "ajax/cursos/insertar_curso.php",
-        type: "post",
-        dataType: "html",
-        data: formData,
-        cache: false,
-        contentType: false,
-        processData: false
-    })
-    .done(function(res){
+    fetch("ajax/cursos/insertar_curso.php", { method: "POST", body: formData })
+    .then(function(res) {
         limpiarFormularioCursos();
-        dom("#formcurso").modal('hide');
+        (() => { const el = document.getElementById("formcurso"); const modal = bootstrap.Modal.getInstance(el); if(modal) modal.hide(); })();
         cargarCursos();
     });
 });

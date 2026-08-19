@@ -7,8 +7,8 @@ var selApartado = 0;
 // Cambia el ciclo seleccionado
 function cambiarCiclo()
 {    
-    selCiclo = dom('#ciclo').val();
-    dom('#apartado').val("");
+    selCiclo = document.getElementById('ciclo').value;
+    document.getElementById('apartado').value = '';
     selApartado = 0;
     dom('#idCiclo').val(selCiclo);
     dom('#idApartado').val(selApartado);
@@ -25,9 +25,8 @@ function cambiarApartado()
     selApartado = dom('#apartado').val();
     dom('#idApartado').val(selApartado);
     if (selCiclo > 0 && selApartado > 0)
-        http.post('ajax/pccf/cargar_contenido_pccf.php', {idCiclo: selCiclo, idApartado: selApartado}, function(res)
-        {
-            dom('#edicionapartado').show();
+        fetch("ajax/pccf/cargar_contenido_pccf.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({idCiclo: selCiclo, idApartado: selApartado}).toString() }).then(r => r.text()).then(res => {
+            document.getElementById('edicionapartado').style.display = 'block';
             if (tinymce.get('texto'))
                 tinymce.get('texto').setContent(res);
         });
@@ -52,7 +51,7 @@ function generarPDFApartado()
 }
 
 // Guardar cambios al contenido editado
-dom("#formpccf").on("submit", function(e)
+document.getElementById("formpccf").addEventListener("submit", function(e)
 {
     tinymce.get('texto').save();
     e.preventDefault();
@@ -61,16 +60,8 @@ dom("#formpccf").on("submit", function(e)
     else
     {
         var formData = new FormData(document.forms.formpccf);
-        http.ajax({
-            url: "ajax/pccf/insertar_contenido_pccf.php",
-            type: "post",
-            dataType: "html",
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData: false
-        })
-        .done(function(res){
+        fetch("ajax/pccf/insertar_contenido_pccf.php", { method: "POST", body: formData })
+        .then(function(res) {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al realizar la operación indicada. Si no has hecho cambios respecto al contenido previamente guardado, ignora este mensaje", 0);
             else

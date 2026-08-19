@@ -3,15 +3,15 @@
 // el fichero js/main.js
 
 // Hacemos que el campo "fecha" tenga un "datepicker" para elegir la fecha
-if(dom('#fecha'))
-    dom('#fecha').datepicker({dateFormat: "dd/mm/yy"});
+if(document.getElementById('fecha'))
+    document.getElementById('fecha').datepicker({dateFormat: "dd/mm/yy"});
 
 // Función para rellenar el desplegable de fechas de actas disponibles para el departamento actual
 function cargarActas()
 {
-    http.post('ajax/actas/cargar_actas_departamento.php', function(res)
+    $.post('ajax/actas/cargar_actas_departamento.php', function(res)
     {
-        dom('#fechasActas').html(res);
+        document.getElementById('fechasActas').innerHTML = res;
     });
 }
 
@@ -22,19 +22,19 @@ function cambiarActa(edicion)
     dom('#idActa').val(selActa);
     if (selActa != "")
     {
-        dom('#edicionacta').show();
-        http.post('ajax/actas/cargar_fecha_acta.php', {idActa: selActa}, function(res)
+        document.getElementById('edicionacta').style.display = 'block';
+        $.post('ajax/actas/cargar_fecha_acta.php', {idActa: selActa}, function(res)
         {
-            dom('#fecha').val(res);
+            document.getElementById('fecha').value = res;
         });
-        http.post('ajax/actas/cargar_contenido_acta.php', {idActa: selActa}, function(res)
+        $.post('ajax/actas/cargar_contenido_acta.php', {idActa: selActa}, function(res)
         {
             if (tinymce.get('texto'))
                 tinymce.get('texto').setContent(res);
         });
     } else {
-        dom('#edicionacta').hide();
-        dom('#fecha').val("");
+        document.getElementById('edicionacta').style.display = 'none';
+        document.getElementById('fecha').value = "";
         if (tinymce.get('texto'))
             tinymce.get('texto').setContent("");        
     }
@@ -43,11 +43,11 @@ function cambiarActa(edicion)
 // Función para preparar el formulario con datos de una nueva acta
 function nuevaActa()
 {
-    http.post('ajax/actas/nueva_acta_departamento.php', function(res)
+    $.post('ajax/actas/nueva_acta_departamento.php', function(res)
     {
-        dom('#edicionacta').show();
-        dom('#idActa').val("");
-        dom('#fecha').val("");
+        document.getElementById('edicionacta').style.display = 'block';
+        document.getElementById('idActa').value = "";
+        document.getElementById('fecha').value = "";
         if (tinymce.get('texto'))
             tinymce.get('texto').setContent(res);
     });
@@ -64,8 +64,7 @@ function generarPDFActa()
 }
 
 // Envío del formulario para el acta
-dom("#formacta").on("submit", function(e)
-{
+$("#formacta").addEventListener('submit', function(e) {
     tinymce.get('texto').save();
     e.preventDefault();
 
@@ -76,7 +75,7 @@ dom("#formacta").on("submit", function(e)
     else
     {
         var formData = new FormData(document.forms.formacta);
-        http.ajax({
+        $.ajax({
             url: "ajax/actas/insertar_acta_departamento.php",
             type: "post",
             dataType: "html",

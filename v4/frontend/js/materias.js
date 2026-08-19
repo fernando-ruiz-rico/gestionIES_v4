@@ -14,47 +14,46 @@ function seleccionarCursoMateria()
 // Carga el listado de materias del curso indicado en el "div" habilitado para ello
 function cargarMaterias()
 {
-    dom("#listamaterias").load("ajax/materias/cargar_materias.php", {idCurso: selCurso});
+    document.getElementById("listamaterias").load("ajax/materias/cargar_materias.php", {idCurso: selCurso});
 }
 
 // Carga los datos de la materia indicada en el formulario modal
 function cargarMateriaModal(id)
 {
-    http.get("ajax/materias/cargar_materia.php", {idMateria:id}, function(res)
-    {
-        dom('#idMateria').val(id);
-        dom('#idCurso').val(res.idCurso);
-        dom('#nombre').val(res.nombre);
-        dom('#codigoOficial').val(res.codigo_oficial);
-        dom('#nombreOficial').val(res.nombre_oficial);
-        dom('#creditosECTS').val(res.creditos_ects);
-        dom('#horasAnuales').val(res.horas_anuales);
-        dom('#cantidad').val(res.cantidad);
-        dom('#horas').val(res.horas);
-        dom('#horasComplementarias').val(res.horas_complementarias);
-        dom('#tipo').val(res.tipo);
-        dom('#departamento').val(res.idDepartamento);
+    fetch("ajax/materias/cargar_materia.php?" + new URLSearchParams({idMateria:id}).toString()).then(r => r.json()).then(res => {
+        document.getElementById('idMateria').value = id;
+        document.getElementById('idCurso').value = res.idCurso;
+        document.getElementById('nombre').value = res.nombre;
+        document.getElementById('codigoOficial').value = res.codigo_oficial;
+        document.getElementById('nombreOficial').value = res.nombre_oficial;
+        document.getElementById('creditosECTS').value = res.creditos_ects;
+        document.getElementById('horasAnuales').value = res.horas_anuales;
+        document.getElementById('cantidad').value = res.cantidad;
+        document.getElementById('horas').value = res.horas;
+        document.getElementById('horasComplementarias').value = res.horas_complementarias;
+        document.getElementById('tipo').value = res.tipo;
+        document.getElementById('departamento').value = res.idDepartamento;
         cargarEspecialidades(res.idEspecialidad);
         if (res.computables_horas_grupo == 1)
-            dom('#computablesHorasGrupo').prop('checked', true);
+            document.getElementById('computablesHorasGrupo').checked = true;
         else
-            dom('#computablesHorasGrupo').prop('checked', false);
+            document.getElementById('computablesHorasGrupo').checked = false;
         if (res.asignada_directiva == 1)
-            dom('#asignadaDirectiva').prop('checked', true);
+            document.getElementById('asignadaDirectiva').checked = true;
         else
-            dom('#asignadaDirectiva').prop('checked', false);
-        dom('#minNumProfesores').val(res.min_num_profesores);
-        dom('#maxGruposProfesor').val(res.max_grupos_profesor);
+            document.getElementById('asignadaDirectiva').checked = false;
+        document.getElementById('minNumProfesores').value = res.min_num_profesores;
+        document.getElementById('maxGruposProfesor').value = res.max_grupos_profesor;
         if (res.tiene_programacion == 1)
-            dom('#tieneProgramacion').prop('checked', true);
+            document.getElementById('tieneProgramacion').checked = true;
         else
-            dom('#tieneProgramacion').prop('checked', false);
+            document.getElementById('tieneProgramacion').checked = false;
         if (res.divisible == 1)
-            dom('#divisible').prop('checked', true);
+            document.getElementById('divisible').checked = true;
         else
-            dom('#divisible').prop('checked', false);
+            document.getElementById('divisible').checked = false;
 
-        dom("#formmateria").modal('show');
+        (() => { const el = document.getElementById("formmateria"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });    
 }
 
@@ -65,18 +64,17 @@ function cargarEspecialidades(idEspecialidad)
     if(selDepartamento != "")
     {
         // Primero cargamos las especialidades del departamento asociado
-        http.get("ajax/especialidades/cargar_especialidades_json.php", {idDepartamento:selDepartamento}, function(resEsp)
-        {
+        fetch("ajax/especialidades/cargar_especialidades_json.php?" + new URLSearchParams({idDepartamento:selDepartamento}).toString()).then(r => r.json()).then(resEsp => {
             let resultado = JSON.parse(resEsp);
             // Accedemos al "select" de especialidad del formulario y rellenamos las opciones
             dom('#especialidad').empty();
             // Añadimos una opción vacía inicial
-            var $option = dom('<option></option>')
+            var option = document.createElement('option')
                 .attr('value', '')
                 .text('--Selecciona una especialidad--');
             dom('#especialidad').append($option);
             for(var i = 0; i < resultado.length; i++) {
-                var $option = dom('<option></option>')
+                var option = document.createElement('option')
                     .attr('value', resultado[i].id)
                     .text(resultado[i].descripcion);
                 dom('#especialidad').append($option);
@@ -98,7 +96,7 @@ function nuevaMateria()
         mostrarMensaje("Debes seleccionar un curso primero", 2);
     } else {
         limpiarFormularioMaterias();
-        dom('#formmateria').modal('show');
+        (() => { const el = document.getElementById("formmateria"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     }
 }
 
@@ -107,8 +105,7 @@ function borrarMateria (id, nombre)
 {
     if (confirm("Confirmas el borrado de la materia '" + nombre + "'?"))
     {
-        http.post("ajax/materias/borrar_materia.php", {id:id}, function(res)
-        {
+        fetch("ajax/materias/borrar_materia.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({id:id}).toString() }).then(r => r.text()).then(res => {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar la materia", 0);
             cargarMaterias();
@@ -119,24 +116,24 @@ function borrarMateria (id, nombre)
 // Limpia los datos del formulario modal de materias
 function limpiarFormularioMaterias()
 {
-    dom('#idMateria').val("");
-    dom('#nombre').val("");
-    dom('#codigoOficial').val("");
-    dom('#nombreOficial').val("");
-    dom('#creditosECTS').val("");
-    dom('#horasAnuales').val("");
-    dom('#cantidad').val("1");
-    dom('#horas').val("");
-    dom('#horasComplementarias').val("");
-    dom('#tipo').val("OTRAS");
-    dom('#departamento').val("");
-    dom('#especialidad').val("");
-    dom('#computablesHorasGrupo').prop('checked', true);
-    dom('#tieneProgramacion').prop('checked', true);
-    dom('#divisible').prop('checked', true);
-    dom('#asignadaDirectiva').prop('checked', false);
-    dom('#minNumProfesores').val("0");
-    dom('#maxGruposProfesor').val("0");    
+    document.getElementById('idMateria').value = '';
+    document.getElementById('nombre').value = '';
+    document.getElementById('codigoOficial').value = '';
+    document.getElementById('nombreOficial').value = '';
+    document.getElementById('creditosECTS').value = '';
+    document.getElementById('horasAnuales').value = '';
+    document.getElementById('cantidad').value = "1";
+    document.getElementById('horas').value = '';
+    document.getElementById('horasComplementarias').value = '';
+    document.getElementById('tipo').value = "OTRAS";
+    document.getElementById('departamento').value = '';
+    document.getElementById('especialidad').value = '';
+    document.getElementById('computablesHorasGrupo').checked = true;
+    document.getElementById('tieneProgramacion').checked = true;
+    document.getElementById('divisible').checked = true;
+    document.getElementById('asignadaDirectiva').checked = false;
+    document.getElementById('minNumProfesores').value = "0";
+    document.getElementById('maxGruposProfesor').value = "0";    
 }
 
 // Carga el formulario modal para editar los datos de la materia indicada para los distintos grupos
@@ -144,7 +141,7 @@ function cargarMateriasGrupos(idMateria, idCurso)
 {
     dom('#formsgrupos').load("ajax/materias/cargar_forms_materias_grupos.php", {idMateria:idMateria, idCurso: idCurso, importar: 0}, function()
     {
-        dom('#formmateriagrupo').modal('show');
+        (() => { const el = document.getElementById("formmateriagrupo"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });
 }
 
@@ -159,19 +156,17 @@ function importarDatos(idMateria, idCurso)
 // Carga el modal para asociar competencias (profesionales, etc) a la materia
 function asociarCompetencias(idMateria)
 {
-    http.get("ajax/materias/cargar_competencias_materia.php", {idMateria: idMateria}, function(res)
-    {
-        dom("#competenciasMateria").html(res);
-        dom("#formcommat").modal('show');
+    fetch("ajax/materias/cargar_competencias_materia.php?" + new URLSearchParams({idMateria: idMateria}).toString()).then(r => r.json()).then(res => {
+        document.getElementById("competenciasMateria").innerHTML = res;
+        (() => { const el = document.getElementById("formcommat"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });    
 }
 
 // Añade una nueva competencia a la materia indicada
 function asociarCompetencia(idMateria)
 {
-    let idCompetencia = dom('#idCompetencia').val();
-    http.get("ajax/materias/nueva_competencia_materia.php", {idMateria: idMateria, idCompetencia: idCompetencia}, function(res)
-    {
+    let idCompetencia = document.getElementById('idCompetencia').value;
+    fetch("ajax/materias/nueva_competencia_materia.php?" + new URLSearchParams({idMateria: idMateria, idCompetencia: idCompetencia}).toString()).then(r => r.json()).then(res => {
         asociarCompetencias(idMateria);
     });    
 }
@@ -179,30 +174,21 @@ function asociarCompetencia(idMateria)
 // Quita una competencia de la materia indicada
 function borrarCompetencia(idMateria, idCompetencia)
 {
-    http.get("ajax/materias/borrar_competencia_materia.php", {idMateria: idMateria, idCompetencia: idCompetencia}, function(res)
-    {
+    fetch("ajax/materias/borrar_competencia_materia.php?" + new URLSearchParams({idMateria: idMateria, idCompetencia: idCompetencia}).toString()).then(r => r.json()).then(res => {
         asociarCompetencias(idMateria);
     });    
 }
 
 // Evento de envío del formulario para inserción/modificación
 
-dom("#formmat").on("submit", function(e)
+document.getElementById("formmat").addEventListener("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formmat);
-    http.ajax({
-        url: "ajax/materias/insertar_materia.php",
-        type: "post",
-        dataType: "html",
-        data: formData,
-        cache: false,
-        contentType: false,
-        processData: false
-    })
-    .done(function(res){
+    fetch("ajax/materias/insertar_materia.php", { method: "POST", body: formData })
+    .then(function(res) {
         limpiarFormularioMaterias();
-        dom('#formmateria').modal('hide');
+        (() => { const el = document.getElementById("formmateria"); const modal = bootstrap.Modal.getInstance(el); if(modal) modal.hide(); })();
         cargarMaterias();
     });
 });

@@ -14,25 +14,24 @@ function seleccionarCursoGrupo()
 // Carga los grupos del curso seleccionado actualmente
 function cargarGrupos()
 {
-    dom("#listagrupos").load("ajax/grupos/cargar_grupos.php", {idCurso: selCurso});
+    document.getElementById("listagrupos").load("ajax/grupos/cargar_grupos.php", {idCurso: selCurso});
 }
 
 // Carga en el formulario modal los datos del grupo indicado
 function cargarGrupoModal(id)
 {
-    http.get("ajax/grupos/cargar_grupo.php", {idGrupo:id}, function(res)
-    {
-        dom('#idGrupo').val(id);
-        dom('#idCurso').val(res.idCurso);
-        dom('#nombre').val(res.nombre);
-        dom('#abreviatura').val(res.abreviatura);
+    fetch("ajax/grupos/cargar_grupo.php?" + new URLSearchParams({idGrupo:id}).toString()).then(r => r.json()).then(res => {
+        document.getElementById('idGrupo').value = id;
+        document.getElementById('idCurso').value = res.idCurso;
+        document.getElementById('nombre').value = res.nombre;
+        document.getElementById('abreviatura').value = res.abreviatura;
         if (res.mostrar == 1)
-            dom('#mostrar').prop('checked', true);
+            document.getElementById('mostrar').checked = true;
         else
-            dom('#mostrar').prop('checked', false);
-        dom('#horasComplementariasDual').val(res.horas_complementarias_dual);
+            document.getElementById('mostrar').checked = false;
+        document.getElementById('horasComplementariasDual').value = res.horas_complementarias_dual;
 
-        dom("#formgrupo").modal('show');
+        (() => { const el = document.getElementById("formgrupo"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });    
 }
 
@@ -44,7 +43,7 @@ function nuevoGrupo()
         mostrarMensaje("Debes seleccionar un curso primero", 0);
     } else {
         limpiarFormularioGrupos();
-        dom('#formgrupo').modal('show');
+        (() => { const el = document.getElementById("formgrupo"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     }
 }
 
@@ -53,8 +52,7 @@ function borrarGrupo (id, nombre)
 {
     if (confirm("Confirmas el borrado del grupo '" + nombre + "'?"))
     {
-        http.post("ajax/grupos/borrar_grupo.php", {id:id}, function(res)
-        {
+        fetch("ajax/grupos/borrar_grupo.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({id:id}).toString() }).then(r => r.text()).then(res => {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar el grupo", 0);
             cargarGrupos();
@@ -65,11 +63,11 @@ function borrarGrupo (id, nombre)
 // Borra los campos del formulario de grupos
 function limpiarFormularioGrupos()
 {
-    dom('#idGrupo').val("");
-    dom('#nombre').val("");
-    dom('#abreviatura').val("");
-    dom('#horasComplementariasDual').val("");
-    dom('#mostrar').removeAttr("checked");    
+    document.getElementById('idGrupo').value = '';
+    document.getElementById('nombre').value = '';
+    document.getElementById('abreviatura').value = '';
+    document.getElementById('horasComplementariasDual').value = '';
+    document.getElementById('mostrar').removeAttr("checked");    
 }
 
 // Evento para auto-ordenar los grupos
@@ -77,8 +75,8 @@ dom('#listagrupos').sortable({ items: '.grupo', update: function()
     {
         // Se envían los datos en un string. Cada grupo con el prefijo "gr" y su código, separados por comas
         // En el servidor se procesa esa cadena, se parte y se le asigna un número de orden a cada grupo
-        var elementos = dom(this).sortable("toArray").toString();
-        http.get("ajax/grupos/ordenar_grupos.php", {orden: elementos}, function()
+        var elementos = (() => { const el = this; return Array.from(el.children).map(c => c.id).join(","); })();
+        $.get("ajax/grupos/ordenar_grupos.php", {orden: elementos}, function()
         {
             cargarGrupos();
         });
@@ -86,22 +84,14 @@ dom('#listagrupos').sortable({ items: '.grupo', update: function()
 });
 
 // Evento de envío del formulario modal para insertar/modificar grupos
-dom("#formgrup").on("submit", function(e)
+document.getElementById("formgrup").addEventListener("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formgrup);
-    http.ajax({
-        url: "ajax/grupos/insertar_grupo.php",
-        type: "post",
-        dataType: "html",
-        data: formData,
-        cache: false,
-        contentType: false,
-        processData: false
-    })
-    .done(function(res){
+    fetch("ajax/grupos/insertar_grupo.php", { method: "POST", body: formData })
+    .then(function(res) {
         limpiarFormularioGrupos();
-        dom("#formgrupo").modal('hide');
+        (() => { const el = document.getElementById("formgrupo"); const modal = bootstrap.Modal.getInstance(el); if(modal) modal.hide(); })();
         cargarGrupos();
     });
 });

@@ -3,18 +3,17 @@
 // Carga en el div con id "listadepartamentos" el listado de departamentos obtenido
 function cargarDepartamentos()
 {
-    dom("#listadepartamentos").load("ajax/departamentos/cargar_departamentos.php");
+    fetch("ajax/departamentos/cargar_departamentos.php").then(r => r.text()).then(html => document.getElementById("listadepartamentos").innerHTML = html);
 }
 
 // Carga en el formulario modal de departamentos modales/departamentos.php los datos
 // del departamento con el "id" proporcionado (se reciben en formato JSON)
 function cargarDepartamentoModal(id)
 {
-    http.get("ajax/departamentos/cargar_departamento.php", {idDepartamento:id}, function(res)
-    {
-        dom('#idDepartamento').val(id);
-        dom('#nombre').val(res.nombre);
-        dom("#formdepartamento").modal('show');
+    fetch("ajax/departamentos/cargar_departamento.php?" + new URLSearchParams({idDepartamento:id}).toString()).then(r => r.json()).then(res => {
+        document.getElementById('idDepartamento').value = id;
+        document.getElementById('nombre').value = res.nombre;
+        (() => { const el = document.getElementById("formdepartamento"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });    
 }
 
@@ -22,7 +21,7 @@ function cargarDepartamentoModal(id)
 function nuevoDepartamento()
 {
     limpiarFormularioDepartamentos();
-    dom('#formdepartamento').modal('show');
+    (() => { const el = document.getElementById("formdepartamento"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
 }
 
 // Borra el departamento con el "id" indicado, previa confirmación
@@ -31,8 +30,7 @@ function borrarDepartamento (id, nombre)
 {
     if (confirm("Confirmas el borrado del departamento '" + nombre + "'? Sólo se podrá eliminar si no tiene profesores asociados. En caso contrario, deberás borrar estos elementos antes."))
     {
-        http.post("ajax/departamentos/borrar_departamento.php", {id:id}, function(res)
-        {
+        fetch("ajax/departamentos/borrar_departamento.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({id:id}).toString() }).then(r => r.text()).then(res => {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar el departamento. Puede que tenga profesores u otros recursos asociados que se deban borrar antes", 0);
             else
@@ -44,29 +42,21 @@ function borrarDepartamento (id, nombre)
 // Borra los datos del formulario modal de departamentos
 function limpiarFormularioDepartamentos()
 {
-    dom('#idDepartamento').val("");
-    dom('#nombre').val("");
+    document.getElementById('idDepartamento').value = '';
+    document.getElementById('nombre').value = '';
 }
 
 // Evento de envío del formulario modal de departamentos
-dom("#formdep").on("submit", function(e)
+document.getElementById("formdep").addEventListener("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formdep);
-    http.ajax({
-        url: "ajax/departamentos/insertar_departamento.php",
-        type: "post",
-        dataType: "html",
-        data: formData,
-        cache: false,
-        contentType: false,
-        processData: false
-    })
-    .done(function(res){
+    fetch("ajax/departamentos/insertar_departamento.php", { method: "POST", body: formData })
+    .then(function(res) {
         // Al recibir la respuesta, vaciamos formulario y recargamos la página
         // En este caso no se controlan errores porque los datos son simples
         limpiarFormularioDepartamentos();
-        dom("#formdepartamento").modal('hide');
-        GestionIES.navigate("departamentos.php");
+        (() => { const el = document.getElementById("formdepartamento"); const modal = bootstrap.Modal.getInstance(el); if(modal) modal.hide(); })();
+        window.location.href="departamentos.php";
     });
 });

@@ -18,8 +18,8 @@ function seleccionarProfesor()
 // Cambia la materia seleccionada
 function cambiarMateria()
 {    
-    selMateria = dom('#materia').val();
-    dom('#grupo').val("");
+    selMateria = document.getElementById('materia').value;
+    document.getElementById('grupo').value = '';
     selGrupo = 0;
     dom('#idMateria').val(selMateria);
     dom('#idGrupo').val(selGrupo);
@@ -28,19 +28,19 @@ function cambiarMateria()
         tinymce.get('texto').setContent("");
 
     // Actualizamos los grupos según la materia elegida
-    dom('#grupo').prop('disabled', true).html('<option value="0">Cargando…</option>');
-    http.ajax({ url: 'ajax/programaciones_aula/cargar_grupos.php', method: 'POST', dataType: 'json',
+    document.getElementById('grupo').prop('disabled', true).innerHTML = '<option value="0">Cargando…</option>';
+    fetch("ajax/programaciones_aula/cargar_grupos.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" } }).then(r => r.json())
         data: { idMateria: selMateria, idProfesor: selProfesor }})
-    .done(function (res) {
+    .then(function(res) {
         let opciones = '<option value="0">--Selecciona un grupo--</option>';
         res.forEach(function (a) {
             opciones += `<option value="${a.id}">${a.nombre}</option>`;
         });
         dom('#grupo').html(opciones).prop('disabled', false);   
     });
-    http.ajax({ url: 'ajax/programaciones_aula/cargar_temas.php', method: 'POST', dataType: 'json',
+    fetch("ajax/programaciones_aula/cargar_temas.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" } }).then(r => r.json())
         data: { idMateria: selMateria }})
-    .done(function (res) {
+    .then(function(res) {
         let opciones = '<option value="0">--Selecciona una unidad o tema--</option>';
         res.forEach(function (a) {
             opciones += `<option value="${a.id}">${a.orden}. ${a.titulo}</option>`;
@@ -74,9 +74,8 @@ function cargarContenido()
 {
     if(selMateria > 0 && selGrupo > 0 /*&& selTema >= 0*/)
     {
-        http.post('ajax/programaciones_aula/cargar_contenido_programacion.php', {idTema: selTema, idGrupo: selGrupo, idProfesor: selProfesor}, function(res)
-        {
-            dom('#ediciontema').show();
+        fetch("ajax/programaciones_aula/cargar_contenido_programacion.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({idTema: selTema, idGrupo: selGrupo, idProfesor: selProfesor}).toString() }).then(r => r.text()).then(res => {
+            document.getElementById('ediciontema').style.display = 'block';
             if (tinymce.get('texto'))
                 tinymce.get('texto').setContent(res);
         });
@@ -114,7 +113,7 @@ function generarPDF()
 }
 
 // Guardar cambios al contenido editado
-dom("#formprogramacionaula").on("submit", function(e)
+document.getElementById("formprogramacionaula").addEventListener("submit", function(e)
 {
     tinymce.get('texto').save();
     e.preventDefault();
@@ -123,16 +122,8 @@ dom("#formprogramacionaula").on("submit", function(e)
     else
     {
         var formData = new FormData(document.forms.formprogramacionaula);
-        http.ajax({
-            url: "ajax/programaciones_aula/insertar_contenido_programacion.php",
-            type: "post",
-            dataType: "html",
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData: false
-        })
-        .done(function(res){
+        fetch("ajax/programaciones_aula/insertar_contenido_programacion.php", { method: "POST", body: formData })
+        .then(function(res) {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al realizar la operación indicada. Si no has hecho cambios respecto al contenido previamente guardado, ignora este mensaje", 0);
             else

@@ -4,36 +4,34 @@
 // Carga el listado de cualificaciones en el "div" habilitado para ello
 function cargarCualificaciones()
 {
-    dom("#listaprincipal").load("ajax/cualificaciones_uc/cargar_cualificaciones.php");
+    fetch("ajax/cualificaciones_uc/cargar_cualificaciones.php").then(r => r.text()).then(html => document.getElementById("listaprincipal").innerHTML = html);
 }
 
 // Carga el listado de unidades de competencia en el "div" habilitado para ello
 function cargarUnidades()
 {
-    dom("#listaprincipal").load("ajax/cualificaciones_uc/cargar_unidades.php");
+    fetch("ajax/cualificaciones_uc/cargar_unidades.php").then(r => r.text()).then(html => document.getElementById("listaprincipal").innerHTML = html);
 }
 
 // Muestra los datos de la cualificación en el formulario modal, para su edición
 function cargarCualificacionModal(id)
 {
-    http.get("ajax/cualificaciones_uc/cargar_cualificacion.php", {codigo:id}, function(res)
-    {
-        dom('#idCualificacion').val(id);
-        dom('#codigoCualificacion').val(res.codigo);
-        dom('#textoCualificacion').val(res.texto);
-        dom("#formcualificacion").modal('show');
+    fetch("ajax/cualificaciones_uc/cargar_cualificacion.php?" + new URLSearchParams({codigo:id}).toString()).then(r => r.json()).then(res => {
+        document.getElementById('idCualificacion').value = id;
+        document.getElementById('codigoCualificacion').value = res.codigo;
+        document.getElementById('textoCualificacion').value = res.texto;
+        (() => { const el = document.getElementById("formcualificacion"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });    
 }
 
 // Muestra los datos de la unidad en el formulario modal, para su edición
 function cargarUnidadModal(id)
 {
-    http.get("ajax/cualificaciones_uc/cargar_unidad.php", {codigo:id}, function(res)
-    {
-        dom('#idUnidad').val(id);
-        dom('#codigoUnidad').val(res.codigo);
-        dom('#textoUnidad').val(res.texto);
-        dom("#formunidad").modal('show');
+    fetch("ajax/cualificaciones_uc/cargar_unidad.php?" + new URLSearchParams({codigo:id}).toString()).then(r => r.json()).then(res => {
+        document.getElementById('idUnidad').value = id;
+        document.getElementById('codigoUnidad').value = res.codigo;
+        document.getElementById('textoUnidad').value = res.texto;
+        (() => { const el = document.getElementById("formunidad"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });    
 }
 
@@ -41,14 +39,14 @@ function cargarUnidadModal(id)
 function nuevaCualificacion()
 {
     limpiarFormularioCualificaciones();
-    dom('#formcualificacion').modal('show');
+    (() => { const el = document.getElementById("formcualificacion"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
 }
 
 // Muestra el formulario modal limpio para insertar una nueva unidad
 function nuevaUnidad()
 {
     limpiarFormularioUnidades();
-    dom('#formunidad').modal('show');
+    (() => { const el = document.getElementById("formunidad"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
 }
 
 // Borra la cualificación indicada, previa confirmación
@@ -56,8 +54,7 @@ function borrarCualificacion(id)
 {
     if (confirm("Confirmas el borrado de la cualificación '" + id + "'? Sólo se podrá eliminar si no tiene unidades de competencia asociadas. En caso contrario, deberás borrar estos elementos antes."))
     {
-        http.post("ajax/cualificaciones_uc/borrar_cualificacion.php", {codigo:id}, function(res)
-        {
+        fetch("ajax/cualificaciones_uc/borrar_cualificacion.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({codigo:id}).toString() }).then(r => r.text()).then(res => {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar la cualificación. Asegúrate de que no tenga unidades asociadas", 0);
             else
@@ -71,8 +68,7 @@ function borrarUnidad(id)
 {
     if (confirm("Confirmas el borrado de la unidad '" + id + "'?"))
     {
-        http.post("ajax/cualificaciones_uc/borrar_unidad.php", {codigo:id}, function(res)
-        {
+        fetch("ajax/cualificaciones_uc/borrar_unidad.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({codigo:id}).toString() }).then(r => r.text()).then(res => {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar la unidad", 0);
             else
@@ -84,26 +80,25 @@ function borrarUnidad(id)
 // Borra el contenido de los campos del formulario modal de cualificaciones
 function limpiarFormularioCualificaciones()
 {
-    dom('#idCualificacion').val("");
-    dom('#codigoCualificacion').val("");
-    dom('#textoCualificacion').val("");
+    document.getElementById('idCualificacion').value = '';
+    document.getElementById('codigoCualificacion').value = '';
+    document.getElementById('textoCualificacion').value = '';
 }
 
 // Borra el contenido de los campos del formulario modal de cualificaciones
 function limpiarFormularioUnidades()
 {
-    dom('#idUnidad').val("");
-    dom('#codigoUnidad').val("");
-    dom('#textoUnidad').val("");
+    document.getElementById('idUnidad').value = '';
+    document.getElementById('codigoUnidad').value = '';
+    document.getElementById('textoUnidad').value = '';
 }
 
 // Asocia unidades de competencia a una cualificación profesional
 function asociarUnidades(idCualificacion)
 {
-    http.get("ajax/cualificaciones_uc/cargar_asociaciones_cualificacion.php", {codigo:idCualificacion}, function(res)
-    {
-        dom("#asociaciones").html(res);
-        dom("#formcualuni").modal('show');
+    fetch("ajax/cualificaciones_uc/cargar_asociaciones_cualificacion.php?" + new URLSearchParams({codigo:idCualificacion}).toString()).then(r => r.json()).then(res => {
+        document.getElementById("asociaciones").innerHTML = res;
+        (() => { const el = document.getElementById("formcualuni"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });    
 }
 
@@ -113,8 +108,7 @@ function nuevaAsociacion(codigoCualificacion)
     let codigoUnidad = dom('#codigoAsociacion').val();
     if(codigoUnidad != "")
     {
-        http.post("ajax/cualificaciones_uc/nueva_asociacion.php", {codigoCualificacion:codigoCualificacion, codigoUnidad: codigoUnidad}, function(res)
-        {
+        fetch("ajax/cualificaciones_uc/nueva_asociacion.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({codigoCualificacion:codigoCualificacion, codigoUnidad: codigoUnidad}).toString() }).then(r => r.text()).then(res => {
             asociarUnidades(codigoCualificacion);
         });
     }
@@ -123,50 +117,33 @@ function nuevaAsociacion(codigoCualificacion)
 // Elimina una asociación de unidad de competencia a cualificación
 function borrarAsociacion(codigoCualificacion, codigoUnidad)
 {
-    http.post("ajax/cualificaciones_uc/borrar_asociacion.php", {codigoCualificacion:codigoCualificacion, codigoUnidad: codigoUnidad}, function(res)
-    {
+    fetch("ajax/cualificaciones_uc/borrar_asociacion.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({codigoCualificacion:codigoCualificacion, codigoUnidad: codigoUnidad}).toString() }).then(r => r.text()).then(res => {
         asociarUnidades(codigoCualificacion);
     });
 }
 
 // Evento de envío del formulario modal para inserción/modificación de cualificaciones
-dom("#formcua").on("submit", function(e)
+document.getElementById("formcua").addEventListener("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formcua);
-    http.ajax({
-        url: "ajax/cualificaciones_uc/insertar_cualificacion.php",
-        type: "post",
-        dataType: "html",
-        data: formData,
-        cache: false,
-        contentType: false,
-        processData: false
-    })
-    .done(function(res){
+    fetch("ajax/cualificaciones_uc/insertar_cualificacion.php", { method: "POST", body: formData })
+    .then(function(res) {
         limpiarFormularioCualificaciones();
-        dom("#formcualificacion").modal('hide');
+        (() => { const el = document.getElementById("formcualificacion"); const modal = bootstrap.Modal.getInstance(el); if(modal) modal.hide(); })();
         cargarCualificaciones();
     });
 });
 
 // Evento de envío del formulario modal para inserción/modificación de unidades de competencia
-dom("#formuni").on("submit", function(e)
+document.getElementById("formuni").addEventListener("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formuni);
-    http.ajax({
-        url: "ajax/cualificaciones_uc/insertar_unidad.php",
-        type: "post",
-        dataType: "html",
-        data: formData,
-        cache: false,
-        contentType: false,
-        processData: false
-    })
-    .done(function(res){
+    fetch("ajax/cualificaciones_uc/insertar_unidad.php", { method: "POST", body: formData })
+    .then(function(res) {
         limpiarFormularioUnidades();
-        dom("#formunidad").modal('hide');
+        (() => { const el = document.getElementById("formunidad"); const modal = bootstrap.Modal.getInstance(el); if(modal) modal.hide(); })();
         cargarUnidades();
     });
 });

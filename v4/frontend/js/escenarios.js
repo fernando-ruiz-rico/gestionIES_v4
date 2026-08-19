@@ -3,19 +3,18 @@
 // Lista los escenarios posibles en el "div" habilitado para ello
 function cargarEscenarios()
 {
-    dom("#escenariosdesid").load("ajax/escenarios/cargar_escenarios.php");
+    fetch("ajax/escenarios/cargar_escenarios.php").then(r => r.text()).then(html => document.getElementById("escenariosdesid").innerHTML = html);
 }
 
 // Muestra los datos del escenario indicado en el formulario modal, para su edición
 function cargarEscenarioModal(id)
 {
-    http.get("ajax/escenarios/cargar_escenario.php", {idEscenario:id}, function(res)
-    {
-        dom('#idEscenario').val(id);
-        dom('#nombre').val(res.nombre);
-        dom('#listadoDepartamentosEscenario').load('ajax/escenarios/cargar_departamentos_escenario.php', {idEscenario:id}, function(res)
+    fetch("ajax/escenarios/cargar_escenario.php?" + new URLSearchParams({idEscenario:id}).toString()).then(r => r.json()).then(res => {
+        document.getElementById('idEscenario').value = id;
+        document.getElementById('nombre').value = res.nombre;
+        document.getElementById('listadoDepartamentosEscenario').load('ajax/escenarios/cargar_departamentos_escenario.php', {idEscenario:id}, function(res)
         {
-            dom("#formescenario").modal('show');
+            (() => { const el = document.getElementById("formescenario"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
         });
     });    
 }
@@ -26,7 +25,7 @@ function nuevoEscenario()
     limpiarFormularioEscenarios();
     dom('#listadoDepartamentosEscenario').load('ajax/escenarios/cargar_departamentos_escenario.php', function(res)
     {
-        dom("#formescenario").modal('show');
+        (() => { const el = document.getElementById("formescenario"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });
 }
 
@@ -36,8 +35,7 @@ function borrarEscenario (id, nombre)
 {
     if (confirm("Confirmas el borrado del escenario '" + nombre + "'? Este borrado también afectará a las selecciones que los profesores hayan hecho sobre él."))
     {
-        http.post("ajax/escenarios/borrar_escenario.php", {id:id}, function(res)
-        {
+        fetch("ajax/escenarios/borrar_escenario.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({id:id}).toString() }).then(r => r.text()).then(res => {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar el escenario", 0);
             else
@@ -49,8 +47,8 @@ function borrarEscenario (id, nombre)
 // Borra el contenido del formulario modal
 function limpiarFormularioEscenarios()
 {
-    dom('#idEscenario').val("");
-    dom('#nombreEscenario').val("");
+    document.getElementById('idEscenario').value = '';
+    document.getElementById('nombreEscenario').value = '';
 }
 
 // Establece el escenario indicado como el actualmente vigente
@@ -88,29 +86,20 @@ function marcarEscenarioActivoDesideratas(id, activo)
 // Duplica el escenario indicado, creando otro con nombre similar y mismos departamentos asociados
 function duplicarEscenario(id)
 {
-    http.post("ajax/escenarios/duplicar_escenario.php", {idEscenario: id}, function(res)
-    {
+    fetch("ajax/escenarios/duplicar_escenario.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({idEscenario: id}).toString() }).then(r => r.text()).then(res => {
         cargarEscenarios();
     });            
 }
 
 // Evento de envío del formulario modal para insertar/modificar escenarios
-dom("#formesc").on("submit", function(e)
+document.getElementById("formesc").addEventListener("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formesc);
-    http.ajax({
-        url: "ajax/escenarios/insertar_escenario.php",
-        type: "post",
-        dataType: "html",
-        data: formData,
-        cache: false,
-        contentType: false,
-        processData: false
-    })
-    .done(function(res){
+    fetch("ajax/escenarios/insertar_escenario.php", { method: "POST", body: formData })
+    .then(function(res) {
         limpiarFormularioEscenarios();
-        dom("#formescenario").modal('hide');
+        (() => { const el = document.getElementById("formescenario"); const modal = bootstrap.Modal.getInstance(el); if(modal) modal.hide(); })();
         cargarEscenarios();
     });
 });
