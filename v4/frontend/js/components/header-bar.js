@@ -53,6 +53,13 @@ const HeaderBar = {
         
         logout() {
             this.$emit('logout');
+        },
+        
+        closeMenu() {
+            // Cierra el menú lateral (útil para móvil)
+            document.getElementById('wrapper').classList.remove('toggled');
         }
-    }
+    },
+    
+    emits: ['logout', 'close-menu']
 };

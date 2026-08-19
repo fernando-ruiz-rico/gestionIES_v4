@@ -88,7 +88,18 @@ const Sidebar = {
         navigate(link) {
             if (link && !link.startsWith('javascript:')) {
                 this.$emit('navigate', link + '.php');
+                // Cerrar menú después de navegar - emitir evento para app-layout
+                this.$emit('close-menu');
             }
         }
+    },
+    
+    emits: ['navigate', 'close-menu'],
+    
+    mounted() {
+        // Escuchar cambios de ruta para cerrar menú automáticamente
+        window.addEventListener('hashchange', () => {
+            this.$emit('close-menu');
+        });
     }
 };

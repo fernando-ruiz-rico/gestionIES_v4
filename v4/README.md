@@ -495,6 +495,25 @@ v4/
 
 ## Historial de cambios
 
+### v4.1.1 - 2025
+- ✅ **Sidebar**: Menú lateral se cierra automáticamente al seleccionar una opción
+  - Implementado evento `close-menu` en sidebar.js
+  - Listener en `mounted()` para cerrar menú en cambio de ruta (hashchange)
+  - Previene que el menú tape la nueva pantalla después de navegar
+  - Mejora UX en dispositivos móviles y tablets
+
+### v4.1.0 - Fase 1.1 Departamentos Completada
+- ✅ **Departamentos**: Módulo completo con diseño Bootstrap 5
+  - Backend: `backend/api/departamentos.php` (CRUD completo)
+  - Frontend View: `frontend/js/views/departamentos-view.js`
+  - Frontend JS: `frontend/js/departamentos.js`
+  - Diseño homogéneo con Bootstrap 5.3.8
+  - Iconos Bootstrap Icons (sin imágenes PNG)
+  - CSS personalizado mínimo
+  - SweetAlert2 para mensajes y confirmaciones
+  - Modal centrado con header coloreado
+  - Listado en card con list-group-flush
+
 ### v4.0.1 - 2025
 - ✅ Corregido error de compatibilidad PHP: migrado de `mysql_*` a `mysqli_*`
 - ✅ Login funcional usando tabla `profesores` de v3
@@ -508,3 +527,70 @@ v4/
 - Estructura base fullstack creada
 - Frontend Vue 3 con Bootstrap 5
 - Sistema de autenticación básico (requería correcciones)
+
+---
+
+## Metodología de Desarrollo v4
+
+### Principios de Diseño
+
+1. **Bootstrap First**
+   - Utilizar al máximo las clases utilitarias de Bootstrap 5.3.8
+   - CSS personalizado solo cuando sea estrictamente necesario
+   - Componentes nativos de Bootstrap (modals, cards, list-groups, etc.)
+
+2. **Iconografía**
+   - Bootstrap Icons 1.13.1 exclusivamente
+   - Sin imágenes PNG/SVG personalizadas
+   - Iconos semánticos según contexto
+
+3. **Componentes Vue**
+   - Vue 3 desde CDN (sin build step)
+   - Templates como strings en archivos .js
+   - Componentes registrados globalmente
+   - Comunicación padre-hijo vía props/events
+
+4. **Responsive Design**
+   - Mobile-first approach
+   - Sidebar colapsable en pantallas <768px
+   - Menú se cierra automáticamente tras navegación
+   - Uso de container-fluid para contenido principal
+
+5. **Arquitectura Fullstack**
+   - Backend PHP 5 devuelve JSON
+   - Frontend Vue consume APIs con fetch()
+   - Sesiones manejadas desde backend
+   - Validación siempre en servidor
+
+### Patrón CRUD Base
+
+Cada módulo sigue esta estructura:
+
+```
+backend/
+└── api/
+    └── {modulo}.php       # API REST (GET, POST, DELETE)
+
+frontend/
+├── js/
+│   ├── views/
+│   │   └── {modulo}-view.js    # Template Vue del módulo
+│   └── {modulo}.js             # Lógica de negocio (cargar, crear, editar, borrar)
+```
+
+### Convenciones de Código
+
+- **Backend PHP**: 
+  - Respuestas JSON: `{success: bool, data: any, message: string}`
+  - Usar `mysqli_*` con prepared statements
+  - Validar permisos por rol
+
+- **Frontend JS**:
+  - Componentes como objetos literales
+  - Events personalizados con `$emit()`
+  - SweetAlert2 para UX feedback
+  - Iconos Bootstrap en templates
+
+### Registro de Decisiones Técnicas
+
+Las decisiones importantes de diseño e implementación se documentan en este README bajo la sección correspondiente de cada versión.

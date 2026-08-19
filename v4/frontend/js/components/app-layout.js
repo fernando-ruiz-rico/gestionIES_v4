@@ -3,10 +3,10 @@ const AppLayout = {
     template: `
         <div id="wrapper">
             <!-- Header superior -->
-            <header-bar :usuario="usuario" @logout="handleLogout"></header-bar>
+            <header-bar :usuario="usuario" @logout="handleLogout" @close-menu="handleCloseMenu"></header-bar>
             
             <!-- Sidebar con menú -->
-            <sidebar :usuario="usuario" :menus="menus" @navigate="handleNavigate"></sidebar>
+            <sidebar :usuario="usuario" :menus="menus" @navigate="handleNavigate" @close-menu="handleCloseMenu"></sidebar>
             
             <!-- Contenido principal -->
             <div id="page-content-wrapper" class="container-fluid">
@@ -40,6 +40,11 @@ const AppLayout = {
     methods: {
         handleLogout() {
             this.$emit('logout');
+        },
+        
+        handleCloseMenu() {
+            // Cierra el menú lateral al navegar o por evento explícito
+            document.getElementById('wrapper').classList.remove('toggled');
         },
         
         handleNavigate(link) {
