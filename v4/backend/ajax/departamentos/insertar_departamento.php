@@ -1,7 +1,8 @@
 <?php
-/**
- * Inserta o actualiza un departamento
- */
+
+// Esta página inserta el departamento que recibe en la petición, o lo actualiza si viene con un 
+// "id" ya asignado.
+// En principio no se controlan errores porque los datos son bastante simples
 
 @session_start();
 $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';
@@ -9,16 +10,15 @@ $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';
 if ($permisos && !empty($_REQUEST['nombre']))
 {
     include('../../includes/database.php');
-    $nombre = mysqli_real_escape_string($db, $_REQUEST['nombre']);
+    $nombre = $_REQUEST['nombre'];
 
     if (empty($_REQUEST['id']))
     {
         mysqli_query($db, "INSERT INTO departamentos (nombre) VALUES ('$nombre')");    
     } else {
-        $id = intval($_REQUEST['id']);
-        mysqli_query($db, "UPDATE departamentos SET nombre='$nombre' WHERE id = $id");            
+        mysqli_query($db, "UPDATE departamentos SET nombre='$nombre' WHERE id = " . $_REQUEST['id']);            
     }
-    include('../../includes/database2.php');
+    include ('../../includes/database2.php');
 }
 
 ?>
