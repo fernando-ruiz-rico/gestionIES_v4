@@ -421,7 +421,7 @@ v4/
 | Grupos | ✅ | ✅ | Completado |
 | Materias | ✅ | ✅ | Completado |
 | Escenarios | ✅ | ✅ | Completado |
-| Programaciones | ❌ | ❌ | Pendiente |
+| Programaciones | ✅ | ✅ | Completado (CRUD básico) |
 | Temas | ❌ | ❌ | Pendiente |
 | PCCF | ❌ | ❌ | Pendiente |
 | Resultados Aprendizaje | ❌ | ❌ | Pendiente |
@@ -495,12 +495,39 @@ v4/
 
 ## Historial de cambios
 
-### v4.1.1 - 2025
-- ✅ **Sidebar**: Menú lateral se cierra automáticamente al seleccionar una opción
-  - Implementado evento `close-menu` en sidebar.js
-  - Listener en `mounted()` para cerrar menú en cambio de ruta (hashchange)
-  - Previene que el menú tape la nueva pantalla después de navegar
-  - Mejora UX en dispositivos móviles y tablets
+### v4.2.0 - 2025 - Fase 2 Programaciones Didácticas Iniciada
+- ✅ **Programaciones**: Módulo CRUD básico implementado
+  - Backend: `backend/api/programaciones/index.php` (migrado de mysql_* a PDO)
+    - Listar programaciones con filtro por materia
+    - Obtener programación por ID
+    - Guardar (crear/actualizar) programación
+    - Eliminar programación
+    - Campos: curso, año, idMateria, idGrupo, profesor, objetivos, metodologia, evaluacion, atencion_diversidad, materiales, bibliografia
+  - Frontend API: `frontend/js/api/programaciones.js`
+  - Frontend View: `frontend/js/views/programaciones-view.js`
+    - Listado en tabla responsive con Bootstrap 5
+    - Filtro por materia
+    - Modal con formulario completo
+    - SweetAlert2 para confirmaciones
+  - Integración completa:
+    - Añadido script en `index.html`
+    - Registrado componente en `app.js`
+    - Mapeado en `app-layout.js`
+  - ⚠️ **Pendiente**: Submódulos de apartados, temas, contenidos por defecto, seguimiento
+
+### v4.1.3 - 2025 - Fase 1 Completa (Módulos Básicos)
+- ✅ **Especialidades**: CRUD completo implementado
+- ✅ **Ciclos Formativos**: CRUD con asociación a especialidades
+- ✅ **Cursos**: CRUD con categorías (ESO/BACH/FP/OTROS)
+- ✅ **Grupos**: CRUD básico
+- ✅ **Materias**: CRUD básico
+- ✅ **Escenarios**: CRUD adaptado a tabla `escenarios_desideratas`
+- ✅ **Correcciones generales**:
+  - Todos los endpoints backend migrados a PDO con sentencias preparadas
+  - APIs frontend consistentes con el patrón establecido
+  - Vistas formateadas correctamente sin errores de sintaxis
+  - Orden de carga de scripts verificado en index.html
+  - Componentes registrados en app.js y app-layout.js
 
 ### v4.1.2 - 2025 - Fase 1.2 Profesores Completada
 - ✅ **Profesores**: Módulo completo con diseño Bootstrap 5
