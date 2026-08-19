@@ -1,0 +1,21 @@
+trim() {
+    local var="$*"
+    # Eliminar espacios iniciales y finales
+    var="${var#"${var%%[![:space:]]*}"}"
+    var="${var%"${var##*[![:space:]]}"}"
+    printf '%s' "$var"
+}
+
+#!/bin/bash
+BASE="pdf_descargados_$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$BASE"
+
+while IFS=$'\t' read -r url ruta; do
+    dir=$(dirname "$ruta")
+    archivo=$(basename "$ruta")
+    mkdir -p "$BASE/$dir"
+    echo "Descargando: $ruta"
+    wget -O $(trim "$BASE/$dir/$archivo") "$url" --no-check-certificate
+done < urls_descarga.txt
+
+echo "✅ Listo. Archivos en: $BASE"
