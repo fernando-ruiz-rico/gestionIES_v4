@@ -2,20 +2,20 @@
 
 // Cargamos en el campo "hidden" del formulario el departamento seleccionado
 if(selDepartamento !== undefined)
-    $('#idDepartamento').value = selDepartamento;
+    $('#idDepartamento').val(selDepartamento);
 // Variable para guardar el apartado elegido
 var selApartado = 0;
 
 // Cambia el apartado seleccionado
 function cambiarApartado()
 {
-    selApartado = $('#seleccionApartado').value;
+    selApartado = $('#seleccionApartado').val();
     if (selApartado > 0)
     {
-        $('#edicionapartado').style.display = "block";
+        $('#edicionapartado').show();
         if (tinymce.get('texto'))
             tinymce.get('texto').setContent("");
-        $('#idApartado').value = selApartado;
+        $('#idApartado').val(selApartado);
         $.post('ajax/programaciones_contenidos_defecto/cargar_contenido_defecto_programacion.php', {idDepartamento: selDepartamento, idApartado: selApartado}, function(res)
         {
             if (tinymce.get('texto'))
@@ -24,12 +24,12 @@ function cambiarApartado()
     }
     else
     {
-        $('#edicionapartado').style.display = "none";
+        $('#edicionapartado').hide();
     }
 }
 
 // Evento de envío del formulario para guardar los cambios
-document.getElementById("formprogramaciondefault").on("submit", function(e)
+$("#formprogramaciondefault").on("submit", function(e)
 {
     tinymce.get('texto').save();
     e.preventDefault();
@@ -63,5 +63,5 @@ if($('#edicionapartado').length > 0)
 
     // Si hay TinyMCE hay formulario. Inicialmente lo ocultamos
     // Sólo se mostrará si elegimos un apartado concreto del listado
-    $('#edicionapartado').style.display = "none";
+    $('#edicionapartado').hide();
 }

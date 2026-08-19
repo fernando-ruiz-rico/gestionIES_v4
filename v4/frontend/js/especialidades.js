@@ -9,29 +9,30 @@ var selDepartamento = 0;
 // cargar las especialidades asociadas a ese departamento
 function seleccionarDepartamento()
 {
-    selDepartamento  = $('#seleccionDepartamento').value;
-    $('#idDepartamento').value = selDepartamento;
+    selDepartamento  = $('#seleccionDepartamento').val();
+    $('#idDepartamento').val(selDepartamento);
     cargarEspecialidades();
 }
 
 // Carga las especialidades del departamento actualmente seleccionado
 function cargarEspecialidades()
 {
-    document.getElementById("listaespecialidades").load("ajax/especialidades/cargar_especialidades.php", {idDepartamento: selDepartamento});
+    $("#listaespecialidades").load("ajax/especialidades/cargar_especialidades.php", {idDepartamento: selDepartamento});
 }
 
 // Abre el diálogo modal con los datos de la especialidad indicada por su "id"
 function cargarEspecialidadModal(id)
 {
-    fetch('ajax/especialidades/cargar_especialidad.php?' + new URLSearchParams({idEspecialidad:id})).then(r => r.json()).then(res =>
-        $('#idAntiguo').value = res.id;
-        $('#idEspecialidad').value = res.id;
-        $('#idDepartamento').value = res.idDepartamento;
-        $('#descripcion').value = res.descripcion;
-        $('#horasTutoria').value = res.horasTutoria;
-        $('#horasIngles').value = res.horasIngles;
-        $('#profesores').value = res.profesores;
-        document.getElementById("formespecialidad").modal('show');
+    $.get("ajax/especialidades/cargar_especialidad.php", {idEspecialidad:id}, function(res)
+    {
+        $('#idAntiguo').val(res.id);
+        $('#idEspecialidad').val(res.id);
+        $('#idDepartamento').val(res.idDepartamento);
+        $('#descripcion').val(res.descripcion);
+        $('#horasTutoria').val(res.horasTutoria);
+        $('#horasIngles').val(res.horasIngles);
+        $('#profesores').val(res.profesores);
+        $("#formespecialidad").modal('show');
     });    
 }
 
@@ -52,7 +53,8 @@ function borrarEspecialidad(id)
 {    
     if (confirm("Confirmas el borrado de la especialidad '" + id + "'?"))
     {
-        fetch('ajax/especialidades/borrar_especialidad.php', {method: 'POST', body: new URLSearchParams({id:id})}).then(r => r.text()).then(res =>
+        $.post("ajax/especialidades/borrar_especialidad.php", {id:id}, function(res)
+        {
             if (res.trim() == 'si')
                  mostrarMensaje("Error al borrar la especialidad", 0);
            cargarEspecialidades();
@@ -63,16 +65,16 @@ function borrarEspecialidad(id)
 // Borra los datos del formulario modal de alta/edición de especialidad
 function limpiarFormularioEspecialidades()
 {
-    $('#idAntiguo').value = "";
-    $('#idEspecialidad').value = "";
-    $('#descripcion').value = "";
-    $('#horasTutoria').value = "";
-    $('#horasIngles').value = "";
-    $('#profesores').value = "";
+    $('#idAntiguo').val("");
+    $('#idEspecialidad').val("");
+    $('#descripcion').val("");
+    $('#horasTutoria').val("");
+    $('#horasIngles').val("");
+    $('#profesores').val("");
 }
 
 // Evento de envío del formulario modal de especialidad
-document.getElementById("formesp").on("submit", function(e)
+$("#formesp").on("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formesp);
@@ -88,7 +90,7 @@ document.getElementById("formesp").on("submit", function(e)
     .done(function(res){
         // Recogemos respuesta y mostramos resultado en ventana modal de mensaje
         limpiarFormularioEspecialidades();
-        document.getElementById("formespecialidad").modal('hide');
+        $("#formespecialidad").modal('hide');
         if (res.trim().startsWith('si'))
             mostrarMensaje("Error al realizar la operación solicitada: " + res.trim().substring(2), 0);
         else

@@ -7,8 +7,8 @@ let selTema = 0;     // Tema seleccionado
 // Función para recargar la página con el profesor seleccionado en el desplegable (si lo hay)
 function seleccionarProfesor()
 {
-    let nuevoProfesor = $('#seleccionProfesor').value;
-    $('#idProfesor').value = nuevoProfesor;
+    let nuevoProfesor = $('#seleccionProfesor').val();
+    $('#idProfesor').val(nuevoProfesor);
     if (nuevoProfesor != "")
     {
         window.location.href = "programaciones_aula.php?idProfesor=" + nuevoProfesor;
@@ -18,17 +18,17 @@ function seleccionarProfesor()
 // Cambia la materia seleccionada
 function cambiarMateria()
 {    
-    selMateria = $('#materia').value;
-    $('#grupo').value = "";
+    selMateria = $('#materia').val();
+    $('#grupo').val("");
     selGrupo = 0;
-    $('#idMateria').value = selMateria;
-    $('#idGrupo').value = selGrupo;
-    $('#ediciontema').style.display = "none";
+    $('#idMateria').val(selMateria);
+    $('#idGrupo').val(selGrupo);
+    $('#ediciontema').hide();
     if (tinymce.get('texto'))
         tinymce.get('texto').setContent("");
 
     // Actualizamos los grupos según la materia elegida
-    $('#grupo').prop('disabled', true).innerHTML = '<option value="0">Cargando…</option>';
+    $('#grupo').prop('disabled', true).html('<option value="0">Cargando…</option>');
     $.ajax({ url: 'ajax/programaciones_aula/cargar_grupos.php', method: 'POST', dataType: 'json',
         data: { idMateria: selMateria, idProfesor: selProfesor }})
     .done(function (res) {
@@ -36,7 +36,7 @@ function cambiarMateria()
         res.forEach(function (a) {
             opciones += `<option value="${a.id}">${a.nombre}</option>`;
         });
-        $('#grupo').innerHTML = opciones.prop('disabled', false);   
+        $('#grupo').html(opciones).prop('disabled', false);   
     });
     $.ajax({ url: 'ajax/programaciones_aula/cargar_temas.php', method: 'POST', dataType: 'json',
         data: { idMateria: selMateria }})
@@ -45,15 +45,15 @@ function cambiarMateria()
         res.forEach(function (a) {
             opciones += `<option value="${a.id}">${a.orden}. ${a.titulo}</option>`;
         });
-        $('#tema').innerHTML = opciones.prop('disabled', false);   
+        $('#tema').html(opciones).prop('disabled', false);   
     });
 }
 
 // Cambiar el grupo seleccionado
 function cambiarGrupo()
 {
-    selGrupo = $('#grupo').value;
-    $('#idGrupo').value = selGrupo;
+    selGrupo = $('#grupo').val();
+    $('#idGrupo').val(selGrupo);
     if (tinymce.get('texto'))
         tinymce.get('texto').setContent("");
     cargarContenido();
@@ -62,8 +62,8 @@ function cambiarGrupo()
 // Cambiar el tema seleccionado
 function cambiarTema()
 {
-    selTema = $('#tema').value;
-    $('#idTema').value = selTema;
+    selTema = $('#tema').val();
+    $('#idTema').val(selTema);
     if (tinymce.get('texto'))
         tinymce.get('texto').setContent("");
     cargarContenido();
@@ -76,14 +76,14 @@ function cargarContenido()
     {
         $.post('ajax/programaciones_aula/cargar_contenido_programacion.php', {idTema: selTema, idGrupo: selGrupo, idProfesor: selProfesor}, function(res)
         {
-            $('#ediciontema').style.display = "block";
+            $('#ediciontema').show();
             if (tinymce.get('texto'))
                 tinymce.get('texto').setContent(res);
         });
     }
     else
     {
-        $('#ediciontema').style.display = "none";
+        $('#ediciontema').hide();
     }
 }
 
@@ -114,7 +114,7 @@ function generarPDF()
 }
 
 // Guardar cambios al contenido editado
-document.getElementById("formprogramacionaula").on("submit", function(e)
+$("#formprogramacionaula").on("submit", function(e)
 {
     tinymce.get('texto').save();
     e.preventDefault();
@@ -148,5 +148,5 @@ if($('#ediciontema').length > 0)
 
     // Si hay TinyMCE hay formulario. Inicialmente lo ocultamos
     // Sólo se mostrará si elegimos un apartado concreto del listado
-    $('#ediciontema').style.display = "none";
+    $('#ediciontema').hide();
 }

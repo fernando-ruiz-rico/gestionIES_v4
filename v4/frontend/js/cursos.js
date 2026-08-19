@@ -3,19 +3,20 @@
 // Carga el listado de cursos en el "div" habilitado para ello
 function cargarCursos()
 {
-    document.getElementById("listacursos").load("ajax/cursos/cargar_cursos.php");
+    $("#listacursos").load("ajax/cursos/cargar_cursos.php");
 }
 
 // Muestra los datos del curso indicado en el formulario modal, para su edición
 function cargarCursoModal(id)
 {
-    fetch('ajax/cursos/cargar_curso.php?' + new URLSearchParams({idCurso:id})).then(r => r.json()).then(res =>
-        $('#idCurso').value = id;
-        $('#nombre').value = res.nombre;
-        $('#abreviatura').value = res.abreviatura;
-        $('#horasSemana').value = res.horas_semana;
-        $('#categoria').value = res.categoria;
-        document.getElementById("formcurso").modal('show');
+    $.get("ajax/cursos/cargar_curso.php", {idCurso:id}, function(res)
+    {
+        $('#idCurso').val(id);
+        $('#nombre').val(res.nombre);
+        $('#abreviatura').val(res.abreviatura);
+        $('#horasSemana').val(res.horas_semana);
+        $('#categoria').val(res.categoria);
+        $("#formcurso").modal('show');
     });    
 }
 
@@ -32,7 +33,8 @@ function borrarCurso (id, nombre)
 {
     if (confirm("Confirmas el borrado del curso '" + nombre + "'? Sólo se podrá eliminar si no tiene grupos ni materias asociadas. En caso contrario, deberás borrar estos elementos antes."))
     {
-        fetch('ajax/cursos/borrar_curso.php', {method: 'POST', body: new URLSearchParams({id:id})}).then(r => r.text()).then(res =>
+        $.post("ajax/cursos/borrar_curso.php", {id:id}, function(res)
+        {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar el curso. Asegúrate de que no tenga grupos o materias asociados", 0);
             else
@@ -44,11 +46,11 @@ function borrarCurso (id, nombre)
 // Borra el contenido de los campos del formulario modal de alta/edición de cursos
 function limpiarFormularioCursos()
 {
-    $('#idCurso').value = "";
-    $('#nombre').value = "";
-    $('#abreviatura').value = "";
-    $('#horasSemana').value = "";    
-    $('#categoria').value = "";    
+    $('#idCurso').val("");
+    $('#nombre').val("");
+    $('#abreviatura').val("");
+    $('#horasSemana').val("");    
+    $('#categoria').val("");    
 }
 
 // Evento de auto-ordenación sobre los items de la lista de cursos
@@ -67,7 +69,7 @@ $('#listacursos').sortable({ items: '.curso', update: function()
 });
 
 // Evento de envío del formulario modal para inserción/modificación
-document.getElementById("formcur").on("submit", function(e)
+$("#formcur").on("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formcur);
@@ -82,7 +84,7 @@ document.getElementById("formcur").on("submit", function(e)
     })
     .done(function(res){
         limpiarFormularioCursos();
-        document.getElementById("formcurso").modal('hide');
+        $("#formcurso").modal('hide');
         cargarCursos();
     });
 });

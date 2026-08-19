@@ -3,17 +3,18 @@
 // Carga los apartados en el "div" habilitado para ello
 function cargarApartados()
 {
-    document.getElementById("apartadosprog").load("ajax/programaciones_apartados/cargar_apartados.php");
+    $("#apartadosprog").load("ajax/programaciones_apartados/cargar_apartados.php");
 }
 
 // Muestra los datos de un apartado en el formulario modal
 function cargarApartadoModal(id)
 {
-    fetch('ajax/programaciones_apartados/cargar_apartado.php?' + new URLSearchParams({idApartado:id})).then(r => r.json()).then(res =>
-        $('#idApartado').value = id;
-        $('#titulo').value = res.titulo;
-        $('#categoria').value = res.categoria;
-        $('#tipo').value = res.tipo;
+    $.get("ajax/programaciones_apartados/cargar_apartado.php", {idApartado:id}, function(res)
+    {
+        $('#idApartado').val(id);
+        $('#titulo').val(res.titulo);
+        $('#categoria').val(res.categoria);
+        $('#tipo').val(res.tipo);
         if (res.subapartado == 1)
             $('#subapartado').prop('checked', true);
         else
@@ -26,7 +27,7 @@ function cargarApartadoModal(id)
             $('#contenidoDefecto').prop('checked', true);
         else
             $('#contenidoDefecto').prop('checked', false);
-        document.getElementById("formapartadoprogramacion").modal('show');
+        $("#formapartadoprogramacion").modal('show');
     });    
 }
 
@@ -42,7 +43,8 @@ function borrarApartado (id, titulo)
 {
     if (confirm("Confirmas el borrado del apartado '" + titulo + "'? Se eliminarán todos los contenidos de las programaciones relativos a dicho apartado."))
     {
-        fetch('ajax/programaciones_apartados/borrar_apartado.php', {method: 'POST', body: new URLSearchParams({id:id})}).then(r => r.text()).then(res =>
+        $.post("ajax/programaciones_apartados/borrar_apartado.php", {id:id}, function(res)
+        {
             cargarApartados();
         });            
     }
@@ -51,12 +53,12 @@ function borrarApartado (id, titulo)
 // Limpia los campos del formulario modal
 function limpiarFormularioApartados()
 {
-    $('#idApartado').value = "";
-    $('#titulo').value = "";
-    $('#categoria').value = "";
-    $('#tipo').value = "";
+    $('#idApartado').val("");
+    $('#titulo').val("");
+    $('#categoria').val("");
+    $('#tipo').val("");
     $('#subapartado').removeAttr("checked");
-    $('#requerido').setAttribute("checked", "checked");    
+    $('#requerido').attr("checked", "checked");    
     $('#contenidoDefecto').removeAttr("checked");
 }
 
@@ -72,7 +74,7 @@ $('#apartadosprog').sortable({ items: '.apartado', update: function()
 });
 
 // Evento de envío del formulario modal para crear/modificar apartados
-document.getElementById("formapartado").on("submit", function(e)
+$("#formapartado").on("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formapartado);
@@ -87,7 +89,7 @@ document.getElementById("formapartado").on("submit", function(e)
     })
     .done(function(res){
         limpiarFormularioApartados();
-	    document.getElementById("formapartadoprogramacion").modal('hide');
+	    $("#formapartadoprogramacion").modal('hide');
         cargarApartados();
     });
 });

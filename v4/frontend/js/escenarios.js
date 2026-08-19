@@ -3,18 +3,19 @@
 // Lista los escenarios posibles en el "div" habilitado para ello
 function cargarEscenarios()
 {
-    document.getElementById("escenariosdesid").load("ajax/escenarios/cargar_escenarios.php");
+    $("#escenariosdesid").load("ajax/escenarios/cargar_escenarios.php");
 }
 
 // Muestra los datos del escenario indicado en el formulario modal, para su edición
 function cargarEscenarioModal(id)
 {
-    fetch('ajax/escenarios/cargar_escenario.php?' + new URLSearchParams({idEscenario:id})).then(r => r.json()).then(res =>
-        $('#idEscenario').value = id;
-        $('#nombre').value = res.nombre;
+    $.get("ajax/escenarios/cargar_escenario.php", {idEscenario:id}, function(res)
+    {
+        $('#idEscenario').val(id);
+        $('#nombre').val(res.nombre);
         $('#listadoDepartamentosEscenario').load('ajax/escenarios/cargar_departamentos_escenario.php', {idEscenario:id}, function(res)
         {
-            document.getElementById("formescenario").modal('show');
+            $("#formescenario").modal('show');
         });
     });    
 }
@@ -25,7 +26,7 @@ function nuevoEscenario()
     limpiarFormularioEscenarios();
     $('#listadoDepartamentosEscenario').load('ajax/escenarios/cargar_departamentos_escenario.php', function(res)
     {
-        document.getElementById("formescenario").modal('show');
+        $("#formescenario").modal('show');
     });
 }
 
@@ -35,7 +36,8 @@ function borrarEscenario (id, nombre)
 {
     if (confirm("Confirmas el borrado del escenario '" + nombre + "'? Este borrado también afectará a las selecciones que los profesores hayan hecho sobre él."))
     {
-        fetch('ajax/escenarios/borrar_escenario.php', {method: 'POST', body: new URLSearchParams({id:id})}).then(r => r.text()).then(res =>
+        $.post("ajax/escenarios/borrar_escenario.php", {id:id}, function(res)
+        {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar el escenario", 0);
             else
@@ -47,8 +49,8 @@ function borrarEscenario (id, nombre)
 // Borra el contenido del formulario modal
 function limpiarFormularioEscenarios()
 {
-    $('#idEscenario').value = "";
-    $('#nombreEscenario').value = "";
+    $('#idEscenario').val("");
+    $('#nombreEscenario').val("");
 }
 
 // Establece el escenario indicado como el actualmente vigente
@@ -86,13 +88,14 @@ function marcarEscenarioActivoDesideratas(id, activo)
 // Duplica el escenario indicado, creando otro con nombre similar y mismos departamentos asociados
 function duplicarEscenario(id)
 {
-    fetch('ajax/escenarios/duplicar_escenario.php', {method: 'POST', body: new URLSearchParams({idEscenario: id})}).then(r => r.text()).then(res =>
+    $.post("ajax/escenarios/duplicar_escenario.php", {idEscenario: id}, function(res)
+    {
         cargarEscenarios();
     });            
 }
 
 // Evento de envío del formulario modal para insertar/modificar escenarios
-document.getElementById("formesc").on("submit", function(e)
+$("#formesc").on("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formesc);
@@ -107,7 +110,7 @@ document.getElementById("formesc").on("submit", function(e)
     })
     .done(function(res){
         limpiarFormularioEscenarios();
-        document.getElementById("formescenario").modal('hide');
+        $("#formescenario").modal('hide');
         cargarEscenarios();
     });
 });

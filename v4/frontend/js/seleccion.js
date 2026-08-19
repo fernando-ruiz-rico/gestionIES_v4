@@ -14,13 +14,13 @@ var selSel = -1;
 // Función que se activa cuando se selecciona un escenario del desplegable
 function seleccionarEscenario()
 {
-    selEscenario = $('#escenario').value;
+    selEscenario = $('#escenario').val();
     if (selEscenario <= 0)
     {
-        $('.panelseleccion').style.display = "none";
+        $('.panelseleccion').hide();
     } else {
         
-        $('.panelseleccion').style.display = "block";
+        $('.panelseleccion').show();
         listarProfesores();
         listarCursos();
         listarSeleccion();
@@ -100,11 +100,11 @@ function seleccionarHorasMateria(idMateria, idGrupo, especialidadMateria, horas,
             res = confirm("La materia seleccionada no corresponde a tu especialidad (" + selEspecialidadProf + ")\n¿Confirmas que quieres seleccionarla?");
         if (res)
         {
-            $('#idMateria').value = idMateria;
-            $('#idGrupo').value = idGrupo;
-            $('#horas').value = horas;
+            $('#idMateria').val(idMateria);
+            $('#idGrupo').val(idGrupo);
+            $('#horas').val(horas);
             // Las horas no se pueden modificar si la materia no se puede dividir entre varios profesores
-            $('#horas').readonly = !divisible;
+            $('#horas').prop("readonly", !divisible);
             $('#formhorasseleccion').modal('show');
         }
     }
@@ -164,8 +164,8 @@ function seleccionarSeleccion(id)
 // Función invocada desde el "badge" de cada materia, para ver qué profesores la han elegido
 function cargarSeleccionesMateria(idMateria, idGrupo, idEscenario, nombreMateria, nombreCurso, nombreGrupo)
 {
-    $('#nombreMateria').innerHTML = nombreMateria;
-    $('#nombreCurso').innerHTML = nombreCurso + nombreGrupo;
+    $('#nombreMateria').html(nombreMateria);
+    $('#nombreCurso').html(nombreCurso + nombreGrupo);
     // Cargamos en el "div" correspondiente del modal los profesores que han elegido esta materia
     $('#listadoProfesoresMateria').load('ajax/seleccion/cargar_listado_profesores_materia.php', {idMateria: idMateria, idGrupo: idGrupo, idEscenario: idEscenario}, function()
     {
@@ -206,9 +206,9 @@ function imprimirPreferenciasSeleccion(unProfesor)
 // Función invocada desde el formulario donde se selecciona una materia
 function seleccionarHoras()
 {
-    var idMateria = $('#idMateria').value;
-    var idGrupo = $('#idGrupo').value;
-    var horas = $('#horas').value;
+    var idMateria = $('#idMateria').val();
+    var idGrupo = $('#idGrupo').val();
+    var horas = $('#horas').val();
     $('#listasel').load("ajax/seleccion/insertar_seleccion.php?idMateria="+idMateria+"&idGrupo=" + idGrupo + "&idProfesor="+selProf + "&idEscenario=" + selEscenario + "&horas=" + horas, function()
     {
         $('#totalsel').load("ajax/seleccion/sumar_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);        
