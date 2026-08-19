@@ -35,8 +35,16 @@
                     if ($menu["link"] != NULL)
                     {
                         $class = "bg-light ";
-                        if ($menu["submenu"])
+                        // Si este elemento pertenece a un grupo de submenú (tiene id de grupo y no es el principal)
+                        // O si es un submenú, le añadimos la clase submenu
+                        if (!$menu["submenu"] && $menu["id"] > 0)
+                        {
+                            // Es un menú principal que tiene submenús, no necesita clase submenu
+                        }
+                        else if ($menu["submenu"])
+                        {
                             $class = "bg-dark submenu submenu" . $menu["id"] . " ";
+                        }
         ?>
 
                     <a href="<?= $menu["link"] ?>" class="<?= $class ?>list-group-item list-group-item-action">
@@ -50,7 +58,7 @@
                     // Menú que simplemente despliega submenús
                     else
                     {
-        ?>
+?>
 
                     <a href="#" class="list-group-item list-group-item-action bg-light" 
                         onclick="showSubmenu(<?= $menu["id"] ?>)">
