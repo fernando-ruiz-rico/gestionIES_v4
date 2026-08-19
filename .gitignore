@@ -1,0 +1,48 @@
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+
+# Dependencies
+vendor/
+node_modules/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*~
+*.bak
+*.backup
+
+# Cache directories
+.cache/
+.php_cs.cache
+
+# Composer/Packagist
+composer.lock
+vendor/
+
+# Session files
+sess_*
+```

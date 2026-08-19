@@ -1,0 +1,111 @@
+/* Estilos personalizados mínimos */
+
+body {
+    font-family: arial;
+    background-color: #ede0d4;
+}
+
+/* Panel central de páginas */
+.panelcentral {
+    margin: 5% 13%;
+}
+
+/* Colores de fondo para elementos */
+.claro {
+    background-color: #ddb892;
+    color: #7f5539;
+}
+
+.oscuro {
+    background-color: #9c6644;
+    color: #e6ccb2;
+}
+
+.muyoscuro {
+    background-color: #7f5539;
+    color: #ede0d4;
+}
+
+/* Listados */
+.listado {
+    margin: 5px;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 1.3em;
+    width: 100%;
+}
+
+/* Formulario de login */
+#formlogin {
+    margin: 100px 30%;
+    padding: 2%;
+    border-radius: 10px;
+}
+
+.cabeceraformlogin {
+    display: block;
+    padding: 10px;
+    text-align: center;
+}
+
+.campoformlogin {
+    padding: 10px;
+}
+
+/* Wrapper del menú */
+#wrapper {
+    overflow-x: hidden;
+}
+
+#sidebar-wrapper {
+    min-height: 100vh;
+    margin-left: -15rem;
+    transition: margin .25s ease-out;
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding: 0.5rem 1.25rem;
+    font-size: 1.2rem;
+}
+
+#sidebar-wrapper .sidebar-heading em {
+    font-size: 0.8rem;
+}
+
+#sidebar-wrapper .list-group {
+    width: 15rem;
+}
+
+.list-group-item {
+    font-size: 0.8em;
+}
+
+#page-content-wrapper {
+    min-width: 100vw;
+    margin-top: 10px;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+    margin-left: 0;
+}
+
+/* Menú */
+.submenu, .submenu:visited, .submenu:active {
+    padding: 0.5rem 2rem;
+    color: #999;
+}
+
+.submenu:hover {
+    padding: 0.5rem 2rem;
+    color: #DDD !important;
+}
+
+#menu-toggle {
+    position: fixed;
+    top: 0px;
+}
+
+#sidebar-wrapper {
+    position: fixed;
+    top: 40px;
+}
