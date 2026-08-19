@@ -7,18 +7,18 @@ var selEvaluacion = 0;
 
 // Si hay desplegable de curso, elegimos el curso actual
 // La variable "cursoActual" se ha establecido en la página "programaciones_seguimiento.php"
-document.getElementById('cursoSeguimiento').value = cursoActual;
+dom('#cursoSeguimiento').val(cursoActual);
 
 // Actualiza los valores seleccionados de curso, evaluación y materia y comprueba que
 // no estén vacíos
 function actualizarDatos(comunes = false)
 {
-    selMateria = document.getElementById('materiaSeguimiento').value;
+    selMateria = dom('#materiaSeguimiento').val();
     if (cursoActual == "")
-        selCurso = document.getElementById('cursoSeguimiento').value;
+        selCurso = dom('#cursoSeguimiento').val();
     else
         selCurso = cursoActual;
-    selEvaluacion = document.getElementById('evaluacionSeguimiento').value;    
+    selEvaluacion = dom('#evaluacionSeguimiento').val();    
     
     // Si vamos a editar datos comunes no hace falta seleccionar materia
     return (selMateria > 0 || comunes) && selCurso != "" && selEvaluacion > 0;
@@ -31,7 +31,7 @@ function ejecutarOperacionSeleccionada(operacion)
     {
         if(actualizarDatos(true))
         {
-            $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php', {curso: selCurso, evaluacion: selEvaluacion}, function (res)
+            http.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php', {curso: selCurso, evaluacion: selEvaluacion}, function (res)
             {
                 if (res == "error")
                 {
@@ -64,7 +64,7 @@ function ejecutarOperacionSeleccionada(operacion)
 
         if (actualizarDatos())
         {
-            $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento.php', {idMateria: selMateria, curso: selCurso, evaluacion: selEvaluacion}, function (res)
+            http.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento.php', {idMateria: selMateria, curso: selCurso, evaluacion: selEvaluacion}, function (res)
             {
                 if (res == "error")
                 {
@@ -73,7 +73,7 @@ function ejecutarOperacionSeleccionada(operacion)
                         tinymce.get('temporalizacion').setContent("");
                     if (tinymce.get('resultados'))
                         tinymce.get('resultados').setContent("");       
-                    document.getElementById('resultadosPorcentaje').value = 0;                
+                    dom('#resultadosPorcentaje').val(0);                
                 }
                 else
                 {
@@ -81,7 +81,7 @@ function ejecutarOperacionSeleccionada(operacion)
                         tinymce.get('temporalizacion').setContent(res.temporalizacion);
                     if (tinymce.get('resultados'))
                         tinymce.get('resultados').setContent(res.resultados);
-                    document.getElementById('resultadosPorcentaje').value = res.resultados_porcentaje;
+                    dom('#resultadosPorcentaje').val(res.resultados_porcentaje);
                 }
             });
         } else {
@@ -89,11 +89,11 @@ function ejecutarOperacionSeleccionada(operacion)
                 tinymce.get('temporalizacion').setContent("");
             if (tinymce.get('resultados'))
                 tinymce.get('resultados').setContent("");
-            document.getElementById('resultadosPorcentaje').value = 0;
+            dom('#resultadosPorcentaje').val(0);
         }
     // Importar datos de evaluación anterior
     } else if (operacion == 'importarEvaluacion') {
-        if (confirm("Al importar datos de otra evaluación se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
+        if (confirm ("Al importar datos de otra evaluación se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
         {
             if (actualizarDatos())
             {
@@ -101,7 +101,7 @@ function ejecutarOperacionSeleccionada(operacion)
                 {
                     mostrarMensaje('Esta opción sólo está disponible para la 2ª o 3ª evaluación', 0)
                 } else {
-                    $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento.php', {modo: 'evaluacion', idMateria: selMateria, curso: selCurso, evaluacion: selEvaluacion}, function (res)
+                    http.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento.php', {modo: 'evaluacion', idMateria: selMateria, curso: selCurso, evaluacion: selEvaluacion}, function (res)
                     {
                         if (res == "error")
                         {
@@ -110,7 +110,7 @@ function ejecutarOperacionSeleccionada(operacion)
                                 tinymce.get('temporalizacion').setContent("");
                             if (tinymce.get('resultados'))
                                 tinymce.get('resultados').setContent("");       
-                            document.getElementById('resultadosPorcentaje').value = 0;                
+                            dom('#resultadosPorcentaje').val(0);                
                         }
                         else
                         {
@@ -118,7 +118,7 @@ function ejecutarOperacionSeleccionada(operacion)
                                 tinymce.get('temporalizacion').setContent(res.temporalizacion);
                             if (tinymce.get('resultados'))
                                 tinymce.get('resultados').setContent(res.resultados);
-                            document.getElementById('resultadosPorcentaje').value = res.resultados_porcentaje;
+                            dom('#resultadosPorcentaje').val(res.resultados_porcentaje);
                         }
                     });                
                 }
@@ -128,7 +128,7 @@ function ejecutarOperacionSeleccionada(operacion)
         }
     // Importar datos de curso anterior
     } else if (operacion == 'importarCursoAnterior') {
-        if (confirm("Al importar datos de otro curso se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
+        if (confirm ("Al importar datos de otro curso se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
         {
             if (actualizarDatos())
             {
@@ -136,7 +136,7 @@ function ejecutarOperacionSeleccionada(operacion)
                 {
                     mostrarMensaje('Esta opción sólo está disponible para el curso actual', 0)
                 } else {
-                    $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento.php', {modo: 'curso', idMateria: selMateria, curso: selCurso, evaluacion: selEvaluacion}, function (res)
+                    http.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento.php', {modo: 'curso', idMateria: selMateria, curso: selCurso, evaluacion: selEvaluacion}, function (res)
                     {
                         if (res == "error")
                         {
@@ -145,7 +145,7 @@ function ejecutarOperacionSeleccionada(operacion)
                                 tinymce.get('temporalizacion').setContent("");
                             if (tinymce.get('resultados'))
                                 tinymce.get('resultados').setContent("");       
-                            document.getElementById('resultadosPorcentaje').value = 0;                
+                            dom('#resultadosPorcentaje').val(0);                
                         }
                         else
                         {
@@ -153,7 +153,7 @@ function ejecutarOperacionSeleccionada(operacion)
                                 tinymce.get('temporalizacion').setContent(res.temporalizacion);
                             if (tinymce.get('resultados'))
                                 tinymce.get('resultados').setContent(res.resultados);
-                            document.getElementById('resultadosPorcentaje').value = res.resultados_porcentaje;
+                            dom('#resultadosPorcentaje').val(res.resultados_porcentaje);
                         }
                     });                
                 }
@@ -164,7 +164,7 @@ function ejecutarOperacionSeleccionada(operacion)
     } else if (operacion == 'vistaPrevia') {
         if (actualizarDatos())
         {
-            window.open('programaciones_seguimiento_vista_previa.php?idMateria=' + selMateria + '&curso=' + selCurso + '&evaluacion=' + selEvaluacion);        
+            GestionIES.open('programaciones_seguimiento_vista_previa.php?idMateria=' + selMateria + '&curso=' + selCurso + '&evaluacion=' + selEvaluacion);        
         } else {
             mostrarMensaje('Falta algún elemento por seleccionar (materia, curso o evaluación)', 2);            
         }
@@ -173,7 +173,7 @@ function ejecutarOperacionSeleccionada(operacion)
     {
         if (actualizarDatos(true))
         {
-            $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php', {curso: selCurso, evaluacion: selEvaluacion}, function (res)
+            http.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php', {curso: selCurso, evaluacion: selEvaluacion}, function (res)
             {
                 if (res == "error")
                 {
@@ -204,7 +204,7 @@ function ejecutarOperacionSeleccionada(operacion)
                 tinymce.get('temporalizacion_defecto').setContent("");       
         }
     } else if (operacion == 'importarEvaluacionComun') {
-        if (confirm("Al importar datos de otra evaluación se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
+        if (confirm ("Al importar datos de otra evaluación se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
         {
             if (actualizarDatos(true))
             {
@@ -212,7 +212,7 @@ function ejecutarOperacionSeleccionada(operacion)
                 {
                     mostrarMensaje('Esta opción sólo está disponible para la 2ª o 3ª evaluación', 0)
                 } else {
-                    $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php', {modo: 'evaluacion', curso: selCurso, evaluacion: selEvaluacion}, function (res)
+                    http.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php', {modo: 'evaluacion', curso: selCurso, evaluacion: selEvaluacion}, function (res)
                     {
                         if (res == "error")
                         {
@@ -240,7 +240,7 @@ function ejecutarOperacionSeleccionada(operacion)
             }
         }
     } else if (operacion == 'importarCursoAnteriorComun') {
-        if (confirm("Al importar datos de otro curso se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
+        if (confirm ("Al importar datos de otro curso se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
         {
             if (actualizarDatos(true))
             {
@@ -248,7 +248,7 @@ function ejecutarOperacionSeleccionada(operacion)
                 {
                     mostrarMensaje('Esta opción sólo está disponible para el curso actual', 0)
                 } else {
-                    $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php', {modo: 'curso', curso: selCurso, evaluacion: selEvaluacion}, function (res)
+                    http.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php', {modo: 'curso', curso: selCurso, evaluacion: selEvaluacion}, function (res)
                     {
                         if (res == "error")
                         {
@@ -278,7 +278,7 @@ function ejecutarOperacionSeleccionada(operacion)
     } else if (operacion == 'vistaPreviaComun') {
         if (actualizarDatos(true))
         {
-            window.open('programaciones_seguimiento_vista_previa.php?curso=' + selCurso + '&evaluacion=' + selEvaluacion);
+            GestionIES.open('programaciones_seguimiento_vista_previa.php?curso=' + selCurso + '&evaluacion=' + selEvaluacion);
         } else {
             mostrarMensaje('Falta algún elemento por seleccionar (curso o evaluación)', 2);            
         }
@@ -290,24 +290,25 @@ function generarPDFSeguimiento()
 {
     if (actualizarDatos(true))
     {
-        window.open('pdf_programaciones_seguimiento.php?curso=' + selCurso + '&evaluacion=' + selEvaluacion);
+        GestionIES.open('pdf_programaciones_seguimiento.php?curso=' + selCurso + '&evaluacion=' + selEvaluacion);
     } else {
         mostrarMensaje("Debes seleccionar un curso y evaluación", 2);        
     }
 }
 
 // Guardar datos de seguimiento de materia
-$("#formseguimiento").addEventListener('submit', function(e) {
+dom("#formseguimiento").on("submit", function(e)
+{
     if (actualizarDatos())
     {
         e.preventDefault();
-        document.getElementById('idMateria').value = selMateria;
-        document.getElementById('curso').value = selCurso;
-        document.getElementById('evaluacion').value = selEvaluacion;
+        dom('#idMateria').val(selMateria);
+        dom('#curso').val(selCurso);
+        dom('#evaluacion').val(selEvaluacion);
         tinymce.get('temporalizacion').save();
         tinymce.get('resultados').save();
         var formData = new FormData(document.forms.formseguimiento);
-        $.ajax({
+        http.ajax({
             url: "ajax/programaciones_seguimiento/insertar_seguimiento_programacion.php",
             type: "post",
             dataType: "html",
@@ -328,17 +329,18 @@ $("#formseguimiento").addEventListener('submit', function(e) {
 });
 
 // Guardar datos de seguimiento comunes
-$("#formseguimientocomun").addEventListener('submit', function(e) {
+dom("#formseguimientocomun").on("submit", function(e)
+{
     if (actualizarDatos(true))
     {
         e.preventDefault();
-        document.getElementById('cursoComun').value = selCurso;
-        document.getElementById('evaluacionComun').value = selEvaluacion;
+        dom('#cursoComun').val(selCurso);
+        dom('#evaluacionComun').val(selEvaluacion);
         tinymce.get('funcionamiento_departamento').save();
         tinymce.get('actividades').save();
         tinymce.get('temporalizacion_defecto').save();
         var formData = new FormData(document.forms.formseguimientocomun);
-        $.ajax({
+        http.ajax({
             url: "ajax/programaciones_seguimiento/insertar_seguimiento_comun_programacion.php",
             type: "post",
             dataType: "html",

@@ -6,27 +6,28 @@ var selCiclo = 0;
 // Se activa al cambiar el curso seleccionado
 function seleccionarCiclo()
 {
-    selCiclo  = document.getElementById('ciclos').value;
-    document.getElementById('idCiclo').value = selCiclo;
+    selCiclo  = dom('#ciclos').val();
+    dom('#idCiclo').val(selCiclo);
     cargarCompetencias();
 }
 
 // Carga las competencias del ciclo seleccionado actualmente
 function cargarCompetencias()
 {
-    $("#listacompetencias").load("ajax/competencias_ciclos/cargar_competencias.php", {idCiclo: selCiclo});
+    dom("#listacompetencias").load("ajax/competencias_ciclos/cargar_competencias.php", {idCiclo: selCiclo});
 }
 
 // Carga en el formulario modal los datos de la competencia indicada
 function cargarCompetenciaModal(id)
 {
-    fetch("ajax/competencias_ciclos/cargar_competencia.php?" + new URLSearchParams(idCompetencia:id)).then(response => response.text()).then(res => {
-        document.getElementById('idCompetencia').value = id;
-        document.getElementById('idCiclo').value = res.idCiclo;
-        document.getElementById('codigo').value = res.codigo;
-        document.getElementById('texto').value = res.texto;
-        document.getElementById('tipo').value = res.tipo;
-        $("#formcompetencia").show();
+    http.get("ajax/competencias_ciclos/cargar_competencia.php", {idCompetencia:id}, function(res)
+    {
+        dom('#idCompetencia').val(id);
+        dom('#idCiclo').val(res.idCiclo);
+        dom('#codigo').val(res.codigo);
+        dom('#texto').val(res.texto);
+        dom('#tipo').val(res.tipo);
+        dom("#formcompetencia").modal('show');
     });    
 }
 
@@ -38,7 +39,7 @@ function nuevaCompetencia()
         mostrarMensaje("Debes seleccionar un ciclo primero", 0);
     } else {
         limpiarFormularioCompetencias();
-        document.getElementById('formcompetencia').show();
+        dom('#formcompetencia').modal('show');
     }
 }
 
@@ -47,7 +48,7 @@ function borrarCompetencia (id, codigo)
 {
     if (confirm("Confirmas el borrado de la competencia '" + codigo + "'?"))
     {
-        $.post("ajax/competencias_ciclos/borrar_competencia.php", {id:id}, function(res)
+        http.post("ajax/competencias_ciclos/borrar_competencia.php", {id:id}, function(res)
         {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar la competencia", 0);
@@ -59,19 +60,19 @@ function borrarCompetencia (id, codigo)
 // Borra los campos del formulario de competencias
 function limpiarFormularioCompetencias()
 {
-    document.getElementById('idCompetencia').value = "";
-    document.getElementById('codigo').value = "";
-    document.getElementById('texto').value = "";
-    document.getElementById('tipo').value = "";
+    dom('#idCompetencia').val("");
+    dom('#codigo').val("");
+    dom('#texto').val("");
+    dom('#tipo').val("");
 }
 
 // Evento para auto-ordenar las competencias
-document.getElementById('listacompetencias').sortable({ items: '.competencia', update: function()
+dom('#listacompetencias').sortable({ items: '.competencia', update: function()
     {
         // Se envían los datos en un string. Cada competencia con el prefijo "cm" y su id, separados por comas
         // En el servidor se procesa esa cadena, se parte y se le asigna un número de orden a cada competencia
-        var elementos = $(this).sortable("toArray").toString();
-        $.get("ajax/competencias_ciclos/ordenar_competencias.php", {orden: elementos}, function()
+        var elementos = dom(this).sortable("toArray").toString();
+        http.get("ajax/competencias_ciclos/ordenar_competencias.php", {orden: elementos}, function()
         {
             cargarCompetencias();
         });
@@ -79,10 +80,11 @@ document.getElementById('listacompetencias').sortable({ items: '.competencia', u
 });
 
 // Evento de envío del formulario modal para insertar/modificar competencias
-$("#formcomp").addEventListener('submit', function(e) {
+dom("#formcomp").on("submit", function(e)
+{
     e.preventDefault();
     var formData = new FormData(document.forms.formcomp);
-    $.ajax({
+    http.ajax({
         url: "ajax/competencias_ciclos/insertar_competencia.php",
         type: "post",
         dataType: "html",
@@ -93,7 +95,7 @@ $("#formcomp").addEventListener('submit', function(e) {
     })
     .done(function(res){
         limpiarFormularioCompetencias();
-        $("#formcompetencia").hide();
+        dom("#formcompetencia").modal('hide');
         cargarCompetencias();
     });
 });

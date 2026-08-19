@@ -20,7 +20,7 @@ function mostrarMensaje(mensaje, tipo)
     const mensajemodal = document.getElementById('mensajemodal');
     if (mensajemodal) {
         const modal = bootstrap.Modal.getInstance(mensajemodal) || new bootstrap.Modal(mensajemodal);
-        modal.style.display = 'block';
+        modal.show();
     }
 }
 
@@ -47,14 +47,16 @@ async function cargarHTML(url, params = {}, targetSelector)
 {
     const formData = new URLSearchParams(params);
     try {
-        const response = await fetch(url, {
+        const response = await fetch(GestionIES.backendUrl(url), {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData.toString()
+            body: formData.toString(),
+            credentials: 'same-origin'
         });
-        const html = await response.textContent;
+        if (!response.ok) throw new Error('Error HTTP ' + response.status);
+        const html = await response.text();
         const target = document.querySelector(targetSelector);
-        if (target) target.innerHTML = html;
+        if (target) target.innerHTML = GestionIES.prepareFragment(html);
         return html;
     } catch (error) {
         console.error('Error al cargar HTML:', error);
@@ -68,7 +70,8 @@ async function getJSON(url, params = {})
     const queryString = new URLSearchParams(params).toString();
     const fullUrl = queryString ? url + '?' + queryString : url;
     try {
-        const response = await fetch(fullUrl);
+        const response = await fetch(GestionIES.backendUrl(fullUrl), { credentials: 'same-origin' });
+        if (!response.ok) throw new Error('Error HTTP ' + response.status);
         return await response.json();
     } catch (error) {
         console.error('Error en GET JSON:', error);
@@ -82,8 +85,9 @@ async function getText(url, params = {})
     const queryString = new URLSearchParams(params).toString();
     const fullUrl = queryString ? url + '?' + queryString : url;
     try {
-        const response = await fetch(fullUrl);
-        return await response.textContent;
+        const response = await fetch(GestionIES.backendUrl(fullUrl), { credentials: 'same-origin' });
+        if (!response.ok) throw new Error('Error HTTP ' + response.status);
+        return await response.text();
     } catch (error) {
         console.error('Error en GET text:', error);
         return null;
@@ -109,13 +113,13 @@ async function cargarModalProfesor(idDepartamento)
             formprof.addEventListener('submit', function(e) {
                 e.preventDefault();
                 const formData = new FormData(formprof);
-                fetch('ajax/profesores/insertar_profesor.php', { method: 'POST', body: formData })
-                .then(response => response.textContent)
+                fetch(GestionIES.backendUrl('ajax/profesores/insertar_profesor.php'), { method: 'POST', body: formData, credentials: 'same-origin' })
+                .then(response => response.text())
                 .then(res => {
                     const modalElement = document.getElementById('formprofesor');
                     if (modalElement) {
                         const modal = bootstrap.Modal.getInstance(modalElement);
-                        if (modal) modal.style.display = 'none';
+                        if (modal) modal.hide();
                     }
                     if (res.trim().startsWith('si'))
                         mostrarMensaje("Error al realizar la operación solicitada: " + res.trim().substring(2), 0);
@@ -151,7 +155,7 @@ async function cargarModalProfesor(idDepartamento)
     }
 }
 
-// Carga la ventana modal "modales/profesor.php" para editar los datos de un profesor
+// Carga la ventana modal "modales/profesores.php" para editar los datos de un profesor
 async function cargarPerfil(idProf, idDep, editarAbreviatura = true)
 {
     await cargarModalProfesor(idDep);
@@ -183,7 +187,7 @@ async function cargarPerfil(idProf, idDep, editarAbreviatura = true)
         const formprofesor = document.getElementById('formprofesor');
         if (formprofesor) {
             const modal = bootstrap.Modal.getInstance(formprofesor) || new bootstrap.Modal(formprofesor);
-            modal.style.display = 'block';
+            modal.show();
         }
     }
 }
@@ -210,8 +214,8 @@ function seleccionarDepartamento()
 {
     const seleccionDepartamento = document.getElementById('seleccionDepartamento');
     if (seleccionDepartamento && seleccionDepartamento.value != "") {
-        const pagina = window.location.pathname;
-        window.location.href = pagina + "?idDepartamento=" + seleccionDepartamento.value;
+        const pagina = (window.location.hash.replace(/^#\/?/, '').split('?')[0] || 'index') + '.php';
+        GestionIES.navigate(pagina + "?idDepartamento=" + seleccionDepartamento.value);
     }
 }
 

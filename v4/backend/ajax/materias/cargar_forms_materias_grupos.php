@@ -100,11 +100,11 @@ if (!empty($_REQUEST['idCurso']) && !empty($_REQUEST['idMateria']))
 
 <script type="text/javascript">
 // Evento "submit" en cada subformulario para editar las características de la materia en cada grupo
-$(".subformulario").on("submit", function(e)
+dom(".subformulario").on("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(this);
-    $.ajax({
+    http.ajax({
         url: "ajax/materias/insertar_materia_grupo.php",
         type: "post",
         dataType: "html",

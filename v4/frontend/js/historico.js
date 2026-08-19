@@ -3,14 +3,14 @@
 // Función para mostrar los datos del escenario seleccionado
 function seleccionarEscenarioHistorico()
 {
-    var selEscenarioHistorico = document.getElementById('escenarioHistorico').value;
+    var selEscenarioHistorico = dom('#escenarioHistorico').val();
     if (selEscenarioHistorico <= 0)
     {
-        document.getElementById('historico').style.display = 'none';
+        dom('#historico').hide();
     } else {
-        document.getElementById('historico').load("ajax/escenarios/cargar_historico.php", {idEscenario: selEscenarioHistorico}, function()
+        dom('#historico').load("ajax/escenarios/cargar_historico.php", {idEscenario: selEscenarioHistorico}, function()
         {
-            document.getElementById('historico').style.display = 'block';            
+            dom('#historico').show();            
         });
     }
 }

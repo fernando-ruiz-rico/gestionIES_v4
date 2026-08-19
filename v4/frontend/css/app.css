@@ -1,0 +1,10 @@
+[v-cloak] { display: none; }
+.login-card { width: min(100%, 28rem); }
+.app-sidebar { width: 19rem; flex: 0 0 19rem; }
+.min-w-0 { min-width: 0; }
+.app-sidebar .list-group-item.active { color: var(--bs-primary-text-emphasis); background: var(--bs-primary-bg-subtle); border-color: var(--bs-primary-border-subtle); }
+#legacy-page .panelcentral { max-width: 100%; }
+#legacy-page img.icono-migrado { width: 1em; height: 1em; object-fit: contain; }
+.gestion-sortable [draggable="true"] { cursor: grab; }
+.gestion-sortable .gestion-dragging { opacity: .45; }
+@media (min-width: 992px) { .app-sidebar { position: sticky; top: 0; height: 100vh; visibility: visible !important; transform: none !important; } }

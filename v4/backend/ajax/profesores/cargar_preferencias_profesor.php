@@ -42,8 +42,8 @@ echo '<table class="preferencias">';
 
 <script type="text/javascript">
     // Guardamos en los campos "hidden" las preferencias actuales del profesor
-    $('#prefRojas').val('<?=$prefRojas?>');
-    $('#prefAmarillas').val('<?=$prefAmarillas?>');
+    dom('#prefRojas').val('<?=$prefRojas?>');
+    dom('#prefAmarillas').val('<?=$prefAmarillas?>');
     
     // Restricción con el máximo número de casillas rojas permitidas
     // Cambiar valor de variable "maxRojas" para permitir otro máximo
@@ -124,37 +124,37 @@ include ('../../includes/database2.php');
     // - Si está roja se pone amarilla y se descuenta una casilla roja
     // - Si está amarilla se deja sin color
     
-    $('.pref').click(function()
+    dom('.pref').click(function()
     {
-        var id = $(this).attr('id');
+        var id = dom(this).attr('id');
         // Entraremos aquí si la casilla elegida no tiene color
-        if ($(this).attr('class') == 'pref')
+        if (dom(this).attr('class') == 'pref')
         {
             // Si no tiene color y caben más rojas, se pone roja
             if (contRojas < maxRojas)
             {
                 preferencia(id, 1);
-                $(this).attr('class', 'pref rojo');
+                dom(this).attr('class', 'pref rojo');
                 contRojas++;
             // Si no tiene color y no caben más rojas, se pone amarilla
             } else {
                 preferencia(id, 2)
-                $(this).attr('class', 'pref amarillo');                
+                dom(this).attr('class', 'pref amarillo');                
             }
         }
         // Si tiene color rojo, se cambia a amarillo
         // y se descuenta una casilla roja
-        else if ($(this).attr('class') == 'pref rojo')
+        else if (dom(this).attr('class') == 'pref rojo')
         {
             preferencia(id, 2)
-            $(this).attr('class', 'pref amarillo');
+            dom(this).attr('class', 'pref amarillo');
             contRojas--;
         }
         // Si no, es que está amarilla, y se deja sin color
         else
         {
             preferencia(id, 0);
-            $(this).attr('class', 'pref');
+            dom(this).attr('class', 'pref');
         }
     });    
 

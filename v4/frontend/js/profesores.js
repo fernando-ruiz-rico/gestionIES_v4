@@ -4,7 +4,7 @@
 function seleccionarDepartamento()
 {
     // Se obtiene el departamento seleccionado actualmente
-    const selDepartamento = document.getElementById('seleccionDepartamento').value;
+    const selDepartamento = dom('#seleccionDepartamento').val();
     // Se muestran los profesores de ese departamento
     cargarProfesores(selDepartamento);
     // Se carga el modal para dar de alta o editar un profesor en ese departamento
@@ -15,10 +15,10 @@ function seleccionarDepartamento()
 // el departamento al que pertenece
 async function nuevoProfesor()
 {
-    if(document.getElementById('seleccionDepartamento').value > 0)
+    if(dom('#seleccionDepartamento').val() > 0)
     {
         limpiarFormularioProfesores();
-        document.getElementById('formprofesor').show();
+        dom('#formprofesor').modal('show');
     } else {
         mostrarMensaje("Debes seleccionar un departamento", 0);
     }
@@ -29,7 +29,7 @@ function borrarProfesor (id, nombre)
 {    
     if (confirm("Confirmas el borrado del profesor '" + nombre + "'?"))
     {
-        $.post("ajax/profesores/borrar_profesor.php", {id:id}, function(res)
+        http.post("ajax/profesores/borrar_profesor.php", {id:id}, function(res)
         {
             if (res.trim() == 'si')
                  mostrarMensaje("Error al borrar el profesor", 0);
@@ -41,22 +41,22 @@ function borrarProfesor (id, nombre)
 // Borra los campos del formulario de profesores
 function limpiarFormularioProfesores()
 {
-    document.getElementById('idPerfil').value = "";
-    document.getElementById('nombrePerfil').value = "";
-    document.getElementById('abreviaturaPerfil').value = "";
-    document.getElementById('usuarioPerfil').value = "";
-    document.getElementById('clavePerfil').value = "";
-    document.getElementById('telefonoPerfil').value = "";
-    document.getElementById('emailPerfil').value = "";
-    document.getElementById('idEspecialidadPerfil').value = "";
-    document.getElementById('observacionesPerfil').value = "";
-    document.getElementById('prefhoras').load('ajax/profesores/cargar_preferencias_profesor.php');
+    dom('#idPerfil').val("");
+    dom('#nombrePerfil').val("");
+    dom('#abreviaturaPerfil').val("");
+    dom('#usuarioPerfil').val("");
+    dom('#clavePerfil').val("");
+    dom('#telefonoPerfil').val("");
+    dom('#emailPerfil').val("");
+    dom('#idEspecialidadPerfil').val("");
+    dom('#observacionesPerfil').val("");
+    dom('#prefhoras').load('ajax/profesores/cargar_preferencias_profesor.php');
 }
 
 // Cambia el jefe del departamento indicado
 function cambiarJefe(idProfesor, idDepartamento)
 {
-    $.post("ajax/profesores/actualizar_jefe_departamento.php", {idProfesor: idProfesor, idDepartamento: idDepartamento}, function()
+    http.post("ajax/profesores/actualizar_jefe_departamento.php", {idProfesor: idProfesor, idDepartamento: idDepartamento}, function()
     {
         cargarProfesores();
     });    
@@ -65,7 +65,7 @@ function cambiarJefe(idProfesor, idDepartamento)
 // Activa/Desactiva el profesor indicado
 function cambiarActivo(idProfesor)
 {
-    $.post("ajax/profesores/actualizar_profesor_activo.php", {idProfesor: idProfesor}, function()
+    http.post("ajax/profesores/actualizar_profesor_activo.php", {idProfesor: idProfesor}, function()
     {
         cargarProfesores();
     });    
@@ -73,13 +73,13 @@ function cambiarActivo(idProfesor)
 
 // Evento drag & drop sobre la lista de profesores
 // Son ordenables todos los elementos de "listaprofesores" que tengan class="profesor"
-document.getElementById('listaprofesores').sortable({ items: '.profesor', update: function()
+dom('#listaprofesores').sortable({ items: '.profesor', update: function()
     {
-        var elementos = $(this).sortable("toArray").toString();
+        var elementos = dom(this).sortable("toArray").toString();
         // Enviamos como parámetro los "ids" de las cajas en el parámetro "orden"
         // Cada "id" se compone del prefijo "pr" seguido del id del profesor, y se colocan
         // en el orden en que han quedado.
-        $.get("ajax/profesores/ordenar_profesores.php", {orden: elementos}, function()
+        http.get("ajax/profesores/ordenar_profesores.php", {orden: elementos}, function()
         {
             cargarProfesores();
         });

@@ -3,30 +3,31 @@
 // Carga los apartados en el "div" habilitado para ello
 function cargarApartados()
 {
-    $("#apartadosprog").load("ajax/programaciones_apartados/cargar_apartados.php");
+    dom("#apartadosprog").load("ajax/programaciones_apartados/cargar_apartados.php");
 }
 
 // Muestra los datos de un apartado en el formulario modal
 function cargarApartadoModal(id)
 {
-    fetch("ajax/programaciones_apartados/cargar_apartado.php?" + new URLSearchParams(idApartado:id)).then(response => response.text()).then(res => {
-        document.getElementById('idApartado').value = id;
-        document.getElementById('titulo').value = res.titulo;
-        document.getElementById('categoria').value = res.categoria;
-        document.getElementById('tipo').value = res.tipo;
+    http.get("ajax/programaciones_apartados/cargar_apartado.php", {idApartado:id}, function(res)
+    {
+        dom('#idApartado').val(id);
+        dom('#titulo').val(res.titulo);
+        dom('#categoria').val(res.categoria);
+        dom('#tipo').val(res.tipo);
         if (res.subapartado == 1)
-            document.getElementById('subapartado').prop('checked', true);
+            dom('#subapartado').prop('checked', true);
         else
-            document.getElementById('subapartado').prop('checked', false);
+            dom('#subapartado').prop('checked', false);
         if (res.requerido == 1)
-            document.getElementById('requerido').prop('checked', true);
+            dom('#requerido').prop('checked', true);
         else
-            document.getElementById('requerido').prop('checked', false);
+            dom('#requerido').prop('checked', false);
         if (res.contenido_defecto == 1)
-            document.getElementById('contenidoDefecto').prop('checked', true);
+            dom('#contenidoDefecto').prop('checked', true);
         else
-            document.getElementById('contenidoDefecto').prop('checked', false);
-        $("#formapartadoprogramacion").show();
+            dom('#contenidoDefecto').prop('checked', false);
+        dom("#formapartadoprogramacion").modal('show');
     });    
 }
 
@@ -34,7 +35,7 @@ function cargarApartadoModal(id)
 function nuevoApartado()
 {
     limpiarFormularioApartados();
-    document.getElementById('formapartadoprogramacion').show();
+    dom('#formapartadoprogramacion').modal('show');
 }
 
 // Borra un apartado, previa confirmación
@@ -42,7 +43,7 @@ function borrarApartado (id, titulo)
 {
     if (confirm("Confirmas el borrado del apartado '" + titulo + "'? Se eliminarán todos los contenidos de las programaciones relativos a dicho apartado."))
     {
-        $.post("ajax/programaciones_apartados/borrar_apartado.php", {id:id}, function(res)
+        http.post("ajax/programaciones_apartados/borrar_apartado.php", {id:id}, function(res)
         {
             cargarApartados();
         });            
@@ -52,20 +53,20 @@ function borrarApartado (id, titulo)
 // Limpia los campos del formulario modal
 function limpiarFormularioApartados()
 {
-    document.getElementById('idApartado').value = "";
-    document.getElementById('titulo').value = "";
-    document.getElementById('categoria').value = "";
-    document.getElementById('tipo').value = "";
-    document.getElementById('subapartado').removeAttr("checked");
-    document.getElementById('requerido').attr("checked", "checked");    
-    document.getElementById('contenidoDefecto').removeAttr("checked");
+    dom('#idApartado').val("");
+    dom('#titulo').val("");
+    dom('#categoria').val("");
+    dom('#tipo').val("");
+    dom('#subapartado').removeAttr("checked");
+    dom('#requerido').attr("checked", "checked");    
+    dom('#contenidoDefecto').removeAttr("checked");
 }
 
 // Evento de ordenación de los apartados
-document.getElementById('apartadosprog').sortable({ items: '.apartado', update: function()
+dom('#apartadosprog').sortable({ items: '.apartado', update: function()
     {
-        var elementos = $(this).sortable("toArray").toString();
-        $.get("ajax/programaciones_apartados/ordenar_apartados.php", {orden: elementos}, function()
+        var elementos = dom(this).sortable("toArray").toString();
+        http.get("ajax/programaciones_apartados/ordenar_apartados.php", {orden: elementos}, function()
         {
             cargarApartados();
         });
@@ -73,10 +74,11 @@ document.getElementById('apartadosprog').sortable({ items: '.apartado', update: 
 });
 
 // Evento de envío del formulario modal para crear/modificar apartados
-$("#formapartado").addEventListener('submit', function(e) {
+dom("#formapartado").on("submit", function(e)
+{
     e.preventDefault();
     var formData = new FormData(document.forms.formapartado);
-    $.ajax({
+    http.ajax({
 	url: "ajax/programaciones_apartados/insertar_apartado.php",
 	type: "post",
 	dataType: "html",
@@ -87,7 +89,7 @@ $("#formapartado").addEventListener('submit', function(e) {
     })
     .done(function(res){
         limpiarFormularioApartados();
-	    $("#formapartadoprogramacion").hide();
+	    dom("#formapartadoprogramacion").modal('hide');
         cargarApartados();
     });
 });

@@ -14,13 +14,13 @@ var selSel = -1;
 // Función que se activa cuando se selecciona un escenario del desplegable
 function seleccionarEscenario()
 {
-    selEscenario = document.getElementById('escenario').value;
+    selEscenario = dom('#escenario').val();
     if (selEscenario <= 0)
     {
-        document.querySelectorAll('.panelseleccion').style.display = 'none';
+        dom('.panelseleccion').hide();
     } else {
         
-        document.querySelectorAll('.panelseleccion').style.display = 'block';
+        dom('.panelseleccion').show();
         listarProfesores();
         listarCursos();
         listarSeleccion();
@@ -32,10 +32,10 @@ function seleccionarProfesor(id, especialidad)
 {
     selProf = id;
     selEspecialidadProf= especialidad;
-    document.querySelectorAll('.profesor').className = 'profesor izquierda claro';
+    dom('.profesor').attr('class', 'profesor izquierda claro');
     if (id > 0)
     {
-        $('#prof'+id).className = 'profesor izquierda oscuro';
+        dom('#prof'+id).attr('class', 'profesor izquierda oscuro');
         listarSeleccion()
     }
 }
@@ -52,7 +52,7 @@ function listarProfesores()
 {
     if(selEscenario > 0)
     {
-        document.getElementById('listaprof').load("ajax/seleccion/listar_profesores.php", {idEspecialidad:selEspecialidad, idEscenario:selEscenario}, function()
+        dom('#listaprof').load("ajax/seleccion/listar_profesores.php", {idEspecialidad:selEspecialidad, idEscenario:selEscenario}, function()
         {
             seleccionarProfesor(selProf, selEspecialidadProf);
         });
@@ -62,10 +62,10 @@ function listarProfesores()
 // Carga los cursos disponibles para seleccionar materias
 function listarCursos()
 {
-    document.getElementById('listacur').load("ajax/seleccion/listar_cursos.php", {idEscenario:selEscenario}, function()
+    dom('#listacur').load("ajax/seleccion/listar_cursos.php", {idEscenario:selEscenario}, function()
     {
-        document.getElementById('listacur').accordion("refresh");
-        document.getElementById('listacur').accordion({active: false});        
+        dom('#listacur').accordion("refresh");
+        dom('#listacur').accordion({active: false});        
     });    
 }
 
@@ -74,10 +74,10 @@ function listarSeleccion()
 {
     if(selProf > 0 && selEscenario > 0)
     {
-        document.getElementById('listasel').load("ajax/seleccion/listar_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);
-        document.getElementById('profsel').load("ajax/seleccion/profesor_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);
-        document.getElementById('totalsel').load("ajax/seleccion/sumar_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);    
-        document.getElementById('botonsel').load("ajax/seleccion/botones_seleccion.php?idEscenario="+selEscenario);
+        dom('#listasel').load("ajax/seleccion/listar_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);
+        dom('#profsel').load("ajax/seleccion/profesor_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);
+        dom('#totalsel').load("ajax/seleccion/sumar_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);    
+        dom('#botonsel').load("ajax/seleccion/botones_seleccion.php?idEscenario="+selEscenario);
     }
 }
 
@@ -100,12 +100,12 @@ function seleccionarHorasMateria(idMateria, idGrupo, especialidadMateria, horas,
             res = confirm("La materia seleccionada no corresponde a tu especialidad (" + selEspecialidadProf + ")\n¿Confirmas que quieres seleccionarla?");
         if (res)
         {
-            document.getElementById('idMateria').value = idMateria;
-            document.getElementById('idGrupo').value = idGrupo;
-            document.getElementById('horas').value = horas;
+            dom('#idMateria').val(idMateria);
+            dom('#idGrupo').val(idGrupo);
+            dom('#horas').val(horas);
             // Las horas no se pueden modificar si la materia no se puede dividir entre varios profesores
-            document.getElementById('horas').prop("readonly", !divisible);
-            document.getElementById('formhorasseleccion').show();
+            dom('#horas').prop("readonly", !divisible);
+            dom('#formhorasseleccion').modal('show');
         }
     }
 }
@@ -116,9 +116,9 @@ function borrarSeleccion()
     if (selSel > 0)
     {
         if (confirm("¿Seguro que deseas quitar la materia seleccionada de tu lista?"))
-            document.getElementById('listasel').load("ajax/seleccion/borrar_seleccion.php?id="+selSel+"&idProfesor="+selProf+"&idEscenario="+selEscenario, function()
+            dom('#listasel').load("ajax/seleccion/borrar_seleccion.php?id="+selSel+"&idProfesor="+selProf+"&idEscenario="+selEscenario, function()
             {
-                document.getElementById('totalsel').load("ajax/seleccion/sumar_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);
+                dom('#totalsel').load("ajax/seleccion/sumar_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);
                 seleccionarSeleccion(-1);
                 listarProfesores();
                 listarCursos();
@@ -130,9 +130,9 @@ function borrarSeleccion()
 function borrarTodaSeleccion()
 {
     if (confirm("¿Seguro que deseas vaciar toda tu selección?"))
-        document.getElementById('listasel').load("ajax/seleccion/borrar_toda_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario, function()
+        dom('#listasel').load("ajax/seleccion/borrar_toda_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario, function()
         {
-            document.getElementById('totalsel').load("ajax/seleccion/sumar_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);
+            dom('#totalsel').load("ajax/seleccion/sumar_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);
             seleccionarSeleccion(-1);
             listarProfesores();
             listarCursos();
@@ -143,7 +143,7 @@ function borrarTodaSeleccion()
 function borrarTodasSelecciones()
 {
     if (selEscenario > 0 && confirm("¿Seguro que deseas eliminar todas las selecciones de todos los profesores para el escenario actual?"))
-        $.post("ajax/seleccion/borrar_todas_selecciones.php?idEscenario="+selEscenario, function()
+        http.post("ajax/seleccion/borrar_todas_selecciones.php?idEscenario="+selEscenario, function()
         {
             mostrarMensaje("La lista de selecciones ahora está vacía", 1);
             listarProfesores();
@@ -155,74 +155,74 @@ function borrarTodasSelecciones()
 // Marca como seleccionada una de las materias del panel de selección (derecho)
 function seleccionarSeleccion(id)
 {
-    document.querySelectorAll('.seleccion').className = 'seleccion izquierda claro';
+    dom('.seleccion').attr('class', 'seleccion izquierda claro');
     if (id > 0)
-        $('#sel'+id).className = 'seleccion izquierda oscuro';
+        dom('#sel'+id).attr('class', 'seleccion izquierda oscuro');
     selSel = id;
 }
 
 // Función invocada desde el "badge" de cada materia, para ver qué profesores la han elegido
 function cargarSeleccionesMateria(idMateria, idGrupo, idEscenario, nombreMateria, nombreCurso, nombreGrupo)
 {
-    document.getElementById('nombreMateria').innerHTML = nombreMateria;
-    document.getElementById('nombreCurso').innerHTML = nombreCurso + nombreGrupo;
+    dom('#nombreMateria').html(nombreMateria);
+    dom('#nombreCurso').html(nombreCurso + nombreGrupo);
     // Cargamos en el "div" correspondiente del modal los profesores que han elegido esta materia
-    document.getElementById('listadoProfesoresMateria').load('ajax/seleccion/cargar_listado_profesores_materia.php', {idMateria: idMateria, idGrupo: idGrupo, idEscenario: idEscenario}, function()
+    dom('#listadoProfesoresMateria').load('ajax/seleccion/cargar_listado_profesores_materia.php', {idMateria: idMateria, idGrupo: idGrupo, idEscenario: idEscenario}, function()
     {
-        document.getElementById('seleccionesmateria').show();          
+        dom('#seleccionesmateria').modal('show');          
     });
 }
 
 // Abre una ventana con las estadísticas para el escenario actual
 function estadisticas()
 {
-    window.open("estadisticas.php?idEscenario=" + selEscenario);    
+    GestionIES.open("estadisticas.php?idEscenario=" + selEscenario);    
 }
 
 // Genera un Excel con la selección para el escenario actual
 function generarExcel()
 {
-    window.open("excel.php?idEscenario=" + selEscenario);
+    GestionIES.open("excel.php?idEscenario=" + selEscenario);
 }
 
 // Genera un PDF con la selección del profesor indicado para el escenario actual
 function imprimirSeleccion(unProfesor)
 {
     if (unProfesor)
-        window.open("pdf_desiderata.php?idProfesor="+selProf+"&idEscenario="+selEscenario);
+        GestionIES.open("pdf_desiderata.php?idProfesor="+selProf+"&idEscenario="+selEscenario);
     else
-        window.open("pdf_desiderata.php?selEsp="+selEspecialidad+"&idEscenario="+selEscenario);   
+        GestionIES.open("pdf_desiderata.php?selEsp="+selEspecialidad+"&idEscenario="+selEscenario);   
 }
 
 // Genera un PDF con las preferencias horarias del profesor actual
 function imprimirPreferenciasSeleccion(unProfesor)
 {
     if(unProfesor)
-        window.open("pdf_preferencias.php?idProfesor="+selProf);
+        GestionIES.open("pdf_preferencias.php?idProfesor="+selProf);
     else
-        window.open("pdf_preferencias.php?selEsp="+selEspecialidad);   
+        GestionIES.open("pdf_preferencias.php?selEsp="+selEspecialidad);   
 }
 
 // Función invocada desde el formulario donde se selecciona una materia
 function seleccionarHoras()
 {
-    var idMateria = document.getElementById('idMateria').value;
-    var idGrupo = document.getElementById('idGrupo').value;
-    var horas = document.getElementById('horas').value;
-    document.getElementById('listasel').load("ajax/seleccion/insertar_seleccion.php?idMateria="+idMateria+"&idGrupo=" + idGrupo + "&idProfesor="+selProf + "&idEscenario=" + selEscenario + "&horas=" + horas, function()
+    var idMateria = dom('#idMateria').val();
+    var idGrupo = dom('#idGrupo').val();
+    var horas = dom('#horas').val();
+    dom('#listasel').load("ajax/seleccion/insertar_seleccion.php?idMateria="+idMateria+"&idGrupo=" + idGrupo + "&idProfesor="+selProf + "&idEscenario=" + selEscenario + "&horas=" + horas, function()
     {
-        document.getElementById('totalsel').load("ajax/seleccion/sumar_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);        
+        dom('#totalsel').load("ajax/seleccion/sumar_seleccion.php?idProfesor="+selProf+"&idEscenario="+selEscenario);        
         listarProfesores();
         seleccionarSeleccion(-1);
         listarCursos();
     });
-    document.getElementById('formhorasseleccion').hide();
+    dom('#formhorasseleccion').modal('hide');
 }
 
 // Muestra una vista previa general de la selección de todos los profesores para el escenario actual
 function vistaPrevia()
 {
-    window.open("historico.php?idEscenario=" + selEscenario);
+    GestionIES.open("historico.php?idEscenario=" + selEscenario);
 }
 
 // Actualiza la selección actual y las materias disponibles
@@ -238,11 +238,11 @@ function init()
     seleccionarEscenario();
     cambiarEspecialidad('Todos');
     listarCursos();
-    document.getElementById('listacur').accordion({header: '.curso', heightStyle: 'content', active: false, collapsible: true});        
-    document.getElementById('listasel').sortable({update: function()
+    dom('#listacur').accordion({header: '.curso', heightStyle: 'content', active: false, collapsible: true});        
+    dom('#listasel').sortable({update: function()
     {
-       var elementos = $(this).sortable("toArray").toString();
-        $.get("ajax/seleccion/ordenar_seleccion.php", {idEscenario: selEscenario, orden: elementos});
+       var elementos = dom(this).sortable("toArray").toString();
+        http.get("ajax/seleccion/ordenar_seleccion.php", {idEscenario: selEscenario, orden: elementos});
     }
     });
 }

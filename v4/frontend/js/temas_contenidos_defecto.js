@@ -2,10 +2,11 @@
 
 // Cargamos en el campo "hidden" del formulario el departamento seleccionado
 if(selDepartamento !== undefined)
-    document.getElementById('idDepartamento').value = selDepartamento;
+    dom('#idDepartamento').val(selDepartamento);
 
 // Evento de envío del formulario para guardar los cambios
-$("#formtemadefault").addEventListener('submit', function(e) {
+dom("#formtemadefault").on("submit", function(e)
+{
     tinymce.get('contexto').save();
     tinymce.get('recursos').save();
     tinymce.get('metodologia').save();
@@ -16,7 +17,7 @@ $("#formtemadefault").addEventListener('submit', function(e) {
     else
     {
         var formData = new FormData(document.forms.formtemadefault);
-        $.ajax({
+        http.ajax({
             url: "ajax/temas_contenidos_defecto/insertar_contenido_defecto_tema.php",
             type: "post",
             dataType: "html",

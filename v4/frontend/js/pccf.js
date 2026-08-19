@@ -7,12 +7,12 @@ var selApartado = 0;
 // Cambia el ciclo seleccionado
 function cambiarCiclo()
 {    
-    selCiclo = document.getElementById('ciclo').value;
-    document.getElementById('apartado').value = "";
+    selCiclo = dom('#ciclo').val();
+    dom('#apartado').val("");
     selApartado = 0;
-    document.getElementById('idCiclo').value = selCiclo;
-    document.getElementById('idApartado').value = selApartado;
-    document.getElementById('edicionapartado').style.display = 'none';
+    dom('#idCiclo').val(selCiclo);
+    dom('#idApartado').val(selApartado);
+    dom('#edicionapartado').hide();
    if (tinymce.get('texto'))
         tinymce.get('texto').setContent("");
 }
@@ -22,12 +22,12 @@ function cambiarApartado()
 {
     if (tinymce.get('texto'))
         tinymce.get('texto').setContent("");
-    selApartado = document.getElementById('apartado').value;
-    document.getElementById('idApartado').value = selApartado;
+    selApartado = dom('#apartado').val();
+    dom('#idApartado').val(selApartado);
     if (selCiclo > 0 && selApartado > 0)
-        $.post('ajax/pccf/cargar_contenido_pccf.php', {idCiclo: selCiclo, idApartado: selApartado}, function(res)
+        http.post('ajax/pccf/cargar_contenido_pccf.php', {idCiclo: selCiclo, idApartado: selApartado}, function(res)
         {
-            document.getElementById('edicionapartado').style.display = 'block';
+            dom('#edicionapartado').show();
             if (tinymce.get('texto'))
                 tinymce.get('texto').setContent(res);
         });
@@ -39,7 +39,7 @@ function generarPDF()
     if (selCiclo <= 0)
         mostrarMensaje("Debes seleccionar un ciclo", 2);
     else
-        window.open('pdf_pccf.php?idCiclo=' + selCiclo);
+        GestionIES.open('pdf_pccf.php?idCiclo=' + selCiclo);
 }
 
 // Genera un PDF con el contenido de un apartado en concreto
@@ -48,11 +48,12 @@ function generarPDFApartado()
     if (selCiclo <= 0 || selApartado <= 0)
         mostrarMensaje("Debes seleccionar un ciclo y un apartado", 2);
     else
-        window.open('pdf_pccf_apartado.php?idCiclo=' + selCiclo + '&idApartado=' + selApartado);
+        GestionIES.open('pdf_pccf_apartado.php?idCiclo=' + selCiclo + '&idApartado=' + selApartado);
 }
 
 // Guardar cambios al contenido editado
-$("#formpccf").addEventListener('submit', function(e) {
+dom("#formpccf").on("submit", function(e)
+{
     tinymce.get('texto').save();
     e.preventDefault();
     if (selApartado <= 0 || selCiclo <= 0)
@@ -60,7 +61,7 @@ $("#formpccf").addEventListener('submit', function(e) {
     else
     {
         var formData = new FormData(document.forms.formpccf);
-        $.ajax({
+        http.ajax({
             url: "ajax/pccf/insertar_contenido_pccf.php",
             type: "post",
             dataType: "html",
@@ -79,11 +80,11 @@ $("#formpccf").addEventListener('submit', function(e) {
 });
 
 // Configuración de TinyMCE si procede
-if(document.getElementById('edicionapartado').length > 0)
+if(dom('#edicionapartado').length > 0)
 { 
     initTinyMCE('progeditar', 400);
 
     // Si hay TinyMCE hay formulario. Inicialmente lo ocultamos
     // Sólo se mostrará si elegimos un apartado concreto del listado
-    document.getElementById('edicionapartado').style.display = 'none';
+    dom('#edicionapartado').hide();
 }

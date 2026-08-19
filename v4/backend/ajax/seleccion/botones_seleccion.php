@@ -23,7 +23,7 @@ if(!empty($_REQUEST['idEscenario']))
     if($modoRueda && !$super)
     {
         echo '<script type="text/javascript">';
-        echo '$("#listasel").sortable("disable");';
+        echo 'dom("#listasel").sortable("disable");';
         echo '</script>';
     }
     else

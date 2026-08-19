@@ -1,82 +1,62 @@
 <?php
-/**
- * Página de login
- */
-
+/** API de autenticación. Compatible con PHP 5. */
 @session_start();
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
 
-if (!empty($_REQUEST['password']))
+function responder_login($estado, $datos, $codigo)
 {
-    include('includes/database.php');
-    
-    // Miramos primero si el login es de admin
-    $resultAdm = mysqli_query($db, "SELECT * FROM config WHERE clave='admin' AND 'admin' = '" . $_REQUEST['login'] . "' AND valor = '" . md5($_REQUEST['password']) . "'");
-    if (mysqli_num_rows($resultAdm) > 0)
-    {
-        // Credenciales para admin
+    if (function_exists('http_response_code')) http_response_code($codigo);
+    else header('X-PHP-Response-Code: ' . $codigo, true, $codigo);
+    echo json_encode(array_merge(array('ok' => $estado), $datos));
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') responder_login(FALSE, array('message' => 'Método no permitido'), 405);
+
+$login = isset($_POST['login']) ? trim($_POST['login']) : '';
+$password = isset($_POST['password']) ? $_POST['password'] : '';
+if ($login === '' || $password === '') responder_login(FALSE, array('message' => 'Debes indicar usuario y contraseña'), 400);
+
+include('includes/database.php');
+if (!$db) responder_login(FALSE, array('message' => 'No se pudo conectar con la base de datos'), 500);
+
+$authenticated = FALSE;
+$passwordHash = md5($password); // Compatibilidad con las contraseñas almacenadas por v3.
+
+if ($login === 'admin') {
+    $result = mysqli_query($db, "SELECT valor FROM config WHERE clave='admin' LIMIT 1");
+    if ($result && ($row = mysqli_fetch_assoc($result)) && $row['valor'] === $passwordHash) {
         $_SESSION['idUsuario'] = 'admin';
         $_SESSION['rol'] = 'admin';
         $_SESSION['loginUsuario'] = 'admin';
-    } else {
-        // Permitimos entrar a profesores con credenciales correctas y actualmente activos
-        $resultUsu = mysqli_query($db, "SELECT * FROM profesores WHERE usuario='" . $_REQUEST['login'] . "' AND clave = '" . md5($_REQUEST['password']) . "' AND activo = 1");
-        if (mysqli_num_rows($resultUsu) > 0)
-        {
-            // Credenciales para profesor
-            $fila = mysqli_fetch_assoc($resultUsu);
-            $_SESSION['idUsuario'] = $fila['id'];
-            $_SESSION['nombreUsuario'] = $fila['nombre'];
-            $_SESSION['loginUsuario'] = $fila['usuario'];
-            if (!empty($fila['idEspecialidad']))
-                $_SESSION['especialidadUsuario'] = $fila['idEspecialidad'];
-            if (!empty($fila['idDepartamento']))
-                $_SESSION['departamentoUsuario'] = $fila['idDepartamento'];
-            if ($fila['jefe_departamento'])
-                $_SESSION['rol'] = 'jefeDepartamento';
-            else
-                $_SESSION['rol'] = 'profesor';
-        }
-        mysqli_free_result($resultUsu);
+        $authenticated = TRUE;
     }
-    mysqli_free_result($resultAdm);
-    include('includes/database2.php');
-    @header("Location: ../frontend/index.php");
+    if ($result) mysqli_free_result($result);
+} else {
+    $statement = mysqli_prepare($db, 'SELECT id, nombre, usuario, idEspecialidad, idDepartamento, jefe_departamento FROM profesores WHERE usuario=? AND clave=? AND activo=1 LIMIT 1');
+    if ($statement) {
+        mysqli_stmt_bind_param($statement, 'ss', $login, $passwordHash);
+        mysqli_stmt_execute($statement);
+        mysqli_stmt_store_result($statement);
+        if (mysqli_stmt_num_rows($statement) > 0) {
+            mysqli_stmt_bind_result($statement, $id, $nombre, $usuario, $especialidad, $departamento, $jefe);
+            mysqli_stmt_fetch($statement);
+            $_SESSION['idUsuario'] = $id;
+            $_SESSION['nombreUsuario'] = $nombre;
+            $_SESSION['loginUsuario'] = $usuario;
+            if (!empty($especialidad)) $_SESSION['especialidadUsuario'] = $especialidad;
+            if (!empty($departamento)) $_SESSION['departamentoUsuario'] = $departamento;
+            $_SESSION['rol'] = $jefe ? 'jefeDepartamento' : 'profesor';
+            $authenticated = TRUE;
+        }
+        mysqli_stmt_close($statement);
+    }
 }
+
+include('includes/database2.php');
+if (!$authenticated) responder_login(FALSE, array('message' => 'Usuario o contraseña incorrectos'), 401);
+
+@session_regenerate_id(TRUE);
+responder_login(TRUE, array('message' => 'Acceso correcto'), 200);
 ?>
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Gestión interna IESSV - Login</title>
-    <!-- Bootstrap 5.3.8 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <!-- Estilos personalizados -->
-    <link rel="stylesheet" href="../frontend/css/estilos.css" />
-</head>
-<body>
-    <div id="formlogin" class="muyoscuro">
-        <form action="" method="post">
-            <label for="login" class="cabeceraformlogin">
-                Introduce tu nombre de usuario
-            </label>
-            <div class="campoformlogin claro">
-                <input type="text" id="login" name="login" class="form-control" required />
-            </div>
-            <label for="password" class="cabeceraformlogin">
-                Introduce tu clave
-            </label>
-            <div class="campoformlogin claro">
-                <input type="password" id="password" name="password" class="form-control" required />
-            </div>
-            <div class="cabeceraformlogin">
-                <input type="submit" value="Entrar" class="btn btn-light" />
-            </div>
-        </form>
-    </div>
-
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-</body>
-</html>
