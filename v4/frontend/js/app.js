@@ -96,6 +96,15 @@ app.component('grupos-view', GruposView);
 app.component('materias-view', MateriasView);
 app.component('escenarios-view', EscenariosView);
 app.component('programaciones-view', ProgramacionesView);
+app.component('apartados-programaciones-view', ApartadosProgramacionesView);
+app.component('contenidos-defecto-programaciones-view', ContenidosDefectoProgramacionesView);
+app.component('temas-view', TemasView);
+app.component('contenidos-defecto-temas-view', ContenidosDefectoTemasView);
+app.component('seguimiento-programaciones-view', SeguimientoProgramacionesView);
+app.component('programaciones-aula-view', ProgramacionesAulaView);
+app.component('pccf-apartados-view', PccfApartadosView);
+app.component('pccf-contenidos-defecto-view', PccfContenidosDefectoView);
+app.component('pccf-view', PccfView);
 
 // Montar la aplicación
 app.mount('#app');
