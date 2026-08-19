@@ -502,6 +502,30 @@ v4/
   - Previene que el menú tape la nueva pantalla después de navegar
   - Mejora UX en dispositivos móviles y tablets
 
+### v4.1.2 - 2025 - Fase 1.2 Profesores Completada
+- ✅ **Profesores**: Módulo completo con diseño Bootstrap 5
+  - Backend: `backend/api/profesores.php` (CRUD completo, filtrado por departamento)
+  - Frontend View: `frontend/js/views/profesores-view.js`
+  - Frontend API: `frontend/js/api/profesores.js`
+  - Diseño homogéneo con Bootstrap 5.3.8
+  - Iconos Bootstrap Icons (sin imágenes PNG)
+  - CSS personalizado mínimo
+  - SweetAlert2 para mensajes y confirmaciones
+  - Modal centrado con header coloreado
+  - Listado en card con list-group-flush
+  - Funcionalidades implementadas:
+    - Listar profesores filtrados por departamento
+    - Crear profesor con asignación de departamento
+    - Editar profesor (nombre, apellidos, usuario, contraseña)
+    - Eliminar profesor con confirmación
+    - Actualizar jefe de departamento
+    - Activar/desactivar profesor
+    - Ordenar profesores (subir/bajar)
+  - ✅ **Corrección de errores**:
+    - Solucionado error de sintaxis por backticks mal escapados en templates
+    - Corregido orden de carga de scripts en index.html
+    - Backends y frontends cargan en el orden correcto
+
 ### v4.1.0 - Fase 1.1 Departamentos Completada
 - ✅ **Departamentos**: Módulo completo con diseño Bootstrap 5
   - Backend: `backend/api/departamentos.php` (CRUD completo)
