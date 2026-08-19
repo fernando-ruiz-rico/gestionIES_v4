@@ -2,15 +2,14 @@
 # Compiled and build artifacts
 *.pyc
 __pycache__/
-
-# Dependencies
-vendor/
-node_modules/
-
-# Logs and temp files
+*.o
+*.obj
 *.log
 *.tmp
 *.swp
+
+# Dependencies
+vendor/
 
 # Environment
 .env
@@ -25,24 +24,34 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Logs
+*.log
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Build directories
+build/
+dist/
+target/
+
+# Python specific
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.egg-info/
+
+# Web specific
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Backup files
-*~
 *.bak
-*.backup
-
-# Cache directories
-.cache/
-.php_cs.cache
-
-# Composer/Packagist
-composer.lock
-vendor/
-
-# Session files
-sess_*
+*~
 ```
