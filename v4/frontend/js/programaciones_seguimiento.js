@@ -31,8 +31,7 @@ function ejecutarOperacionSeleccionada(operacion)
     {
         if(actualizarDatos(true))
         {
-            $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php', {curso: selCurso, evaluacion: selEvaluacion}, function (res)
-            {
+            fetch("ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({curso: selCurso, evaluacion: selEvaluacion}).toString() }).then(r => r.text()).then(res => {
                 if (res == "error")
                 {
                     mostrarMensaje("No se encontraron datos", 2);
@@ -64,8 +63,7 @@ function ejecutarOperacionSeleccionada(operacion)
 
         if (actualizarDatos())
         {
-            $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento.php', {idMateria: selMateria, curso: selCurso, evaluacion: selEvaluacion}, function (res)
-            {
+            fetch("ajax/programaciones_seguimiento/cargar_datos_seguimiento.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({idMateria: selMateria, curso: selCurso, evaluacion: selEvaluacion}).toString() }).then(r => r.text()).then(res => {
                 if (res == "error")
                 {
                     mostrarMensaje("No se encontraron datos", 2);
@@ -93,7 +91,7 @@ function ejecutarOperacionSeleccionada(operacion)
         }
     // Importar datos de evaluación anterior
     } else if (operacion == 'importarEvaluacion') {
-        if (confirm("Al importar datos de otra evaluación se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
+        if (confirm ("Al importar datos de otra evaluación se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
         {
             if (actualizarDatos())
             {
@@ -101,8 +99,7 @@ function ejecutarOperacionSeleccionada(operacion)
                 {
                     mostrarMensaje('Esta opción sólo está disponible para la 2ª o 3ª evaluación', 0)
                 } else {
-                    $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento.php', {modo: 'evaluacion', idMateria: selMateria, curso: selCurso, evaluacion: selEvaluacion}, function (res)
-                    {
+                    fetch("ajax/programaciones_seguimiento/cargar_datos_seguimiento.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({modo: 'evaluacion', idMateria: selMateria, curso: selCurso, evaluacion: selEvaluacion}).toString() }).then(r => r.text()).then(res => {
                         if (res == "error")
                         {
                             mostrarMensaje("No se encontraron datos", 2);
@@ -128,7 +125,7 @@ function ejecutarOperacionSeleccionada(operacion)
         }
     // Importar datos de curso anterior
     } else if (operacion == 'importarCursoAnterior') {
-        if (confirm("Al importar datos de otro curso se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
+        if (confirm ("Al importar datos de otro curso se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
         {
             if (actualizarDatos())
             {
@@ -136,8 +133,7 @@ function ejecutarOperacionSeleccionada(operacion)
                 {
                     mostrarMensaje('Esta opción sólo está disponible para el curso actual', 0)
                 } else {
-                    $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento.php', {modo: 'curso', idMateria: selMateria, curso: selCurso, evaluacion: selEvaluacion}, function (res)
-                    {
+                    fetch("ajax/programaciones_seguimiento/cargar_datos_seguimiento.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({modo: 'curso', idMateria: selMateria, curso: selCurso, evaluacion: selEvaluacion}).toString() }).then(r => r.text()).then(res => {
                         if (res == "error")
                         {
                             mostrarMensaje("No se encontraron datos", 2);
@@ -173,8 +169,7 @@ function ejecutarOperacionSeleccionada(operacion)
     {
         if (actualizarDatos(true))
         {
-            $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php', {curso: selCurso, evaluacion: selEvaluacion}, function (res)
-            {
+            fetch("ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({curso: selCurso, evaluacion: selEvaluacion}).toString() }).then(r => r.text()).then(res => {
                 if (res == "error")
                 {
                     mostrarMensaje("No se encontraron datos", 2);
@@ -204,7 +199,7 @@ function ejecutarOperacionSeleccionada(operacion)
                 tinymce.get('temporalizacion_defecto').setContent("");       
         }
     } else if (operacion == 'importarEvaluacionComun') {
-        if (confirm("Al importar datos de otra evaluación se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
+        if (confirm ("Al importar datos de otra evaluación se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
         {
             if (actualizarDatos(true))
             {
@@ -212,8 +207,7 @@ function ejecutarOperacionSeleccionada(operacion)
                 {
                     mostrarMensaje('Esta opción sólo está disponible para la 2ª o 3ª evaluación', 0)
                 } else {
-                    $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php', {modo: 'evaluacion', curso: selCurso, evaluacion: selEvaluacion}, function (res)
-                    {
+                    fetch("ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({modo: 'evaluacion', curso: selCurso, evaluacion: selEvaluacion}).toString() }).then(r => r.text()).then(res => {
                         if (res == "error")
                         {
                             mostrarMensaje("No se encontraron datos", 2);
@@ -240,7 +234,7 @@ function ejecutarOperacionSeleccionada(operacion)
             }
         }
     } else if (operacion == 'importarCursoAnteriorComun') {
-        if (confirm("Al importar datos de otro curso se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
+        if (confirm ("Al importar datos de otro curso se perderá lo que haya introducido hasta ahora. ¿Quieres continuar?"))
         {
             if (actualizarDatos(true))
             {
@@ -248,8 +242,7 @@ function ejecutarOperacionSeleccionada(operacion)
                 {
                     mostrarMensaje('Esta opción sólo está disponible para el curso actual', 0)
                 } else {
-                    $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php', {modo: 'curso', curso: selCurso, evaluacion: selEvaluacion}, function (res)
-                    {
+                    fetch("ajax/programaciones_seguimiento/cargar_datos_seguimiento_comun.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({modo: 'curso', curso: selCurso, evaluacion: selEvaluacion}).toString() }).then(r => r.text()).then(res => {
                         if (res == "error")
                         {
                             mostrarMensaje("No se encontraron datos", 2);
@@ -297,7 +290,8 @@ function generarPDFSeguimiento()
 }
 
 // Guardar datos de seguimiento de materia
-$("#formseguimiento").addEventListener('submit', function(e) {
+document.getElementById("formseguimiento").addEventListener("submit", function(e)
+{
     if (actualizarDatos())
     {
         e.preventDefault();
@@ -307,16 +301,8 @@ $("#formseguimiento").addEventListener('submit', function(e) {
         tinymce.get('temporalizacion').save();
         tinymce.get('resultados').save();
         var formData = new FormData(document.forms.formseguimiento);
-        $.ajax({
-            url: "ajax/programaciones_seguimiento/insertar_seguimiento_programacion.php",
-            type: "post",
-            dataType: "html",
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData: false
-        })
-        .done(function(res){
+        fetch("ajax/programaciones_seguimiento/insertar_seguimiento_programacion.php", { method: "POST", body: formData })
+        .then(function(res) {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al realizar la operación indicada", 0);
             else
@@ -328,7 +314,8 @@ $("#formseguimiento").addEventListener('submit', function(e) {
 });
 
 // Guardar datos de seguimiento comunes
-$("#formseguimientocomun").addEventListener('submit', function(e) {
+document.getElementById("formseguimientocomun").addEventListener("submit", function(e)
+{
     if (actualizarDatos(true))
     {
         e.preventDefault();
@@ -338,16 +325,8 @@ $("#formseguimientocomun").addEventListener('submit', function(e) {
         tinymce.get('actividades').save();
         tinymce.get('temporalizacion_defecto').save();
         var formData = new FormData(document.forms.formseguimientocomun);
-        $.ajax({
-            url: "ajax/programaciones_seguimiento/insertar_seguimiento_comun_programacion.php",
-            type: "post",
-            dataType: "html",
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData: false
-        })
-        .done(function(res){
+        fetch("ajax/programaciones_seguimiento/insertar_seguimiento_comun_programacion.php", { method: "POST", body: formData })
+        .then(function(res) {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al realizar la operación indicada", 0);
             else

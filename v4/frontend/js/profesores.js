@@ -18,7 +18,7 @@ async function nuevoProfesor()
     if(document.getElementById('seleccionDepartamento').value > 0)
     {
         limpiarFormularioProfesores();
-        document.getElementById('formprofesor').show();
+        (() => { const el = document.getElementById("formprofesor"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     } else {
         mostrarMensaje("Debes seleccionar un departamento", 0);
     }
@@ -29,8 +29,7 @@ function borrarProfesor (id, nombre)
 {    
     if (confirm("Confirmas el borrado del profesor '" + nombre + "'?"))
     {
-        $.post("ajax/profesores/borrar_profesor.php", {id:id}, function(res)
-        {
+        fetch("ajax/profesores/borrar_profesor.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({id:id}).toString() }).then(r => r.text()).then(res => {
             if (res.trim() == 'si')
                  mostrarMensaje("Error al borrar el profesor", 0);
            cargarProfesores();
@@ -41,16 +40,16 @@ function borrarProfesor (id, nombre)
 // Borra los campos del formulario de profesores
 function limpiarFormularioProfesores()
 {
-    document.getElementById('idPerfil').value = "";
-    document.getElementById('nombrePerfil').value = "";
-    document.getElementById('abreviaturaPerfil').value = "";
-    document.getElementById('usuarioPerfil').value = "";
-    document.getElementById('clavePerfil').value = "";
-    document.getElementById('telefonoPerfil').value = "";
-    document.getElementById('emailPerfil').value = "";
-    document.getElementById('idEspecialidadPerfil').value = "";
-    document.getElementById('observacionesPerfil').value = "";
-    document.getElementById('prefhoras').load('ajax/profesores/cargar_preferencias_profesor.php');
+    document.getElementById('idPerfil').value = '';
+    document.getElementById('nombrePerfil').value = '';
+    document.getElementById('abreviaturaPerfil').value = '';
+    document.getElementById('usuarioPerfil').value = '';
+    document.getElementById('clavePerfil').value = '';
+    document.getElementById('telefonoPerfil').value = '';
+    document.getElementById('emailPerfil').value = '';
+    document.getElementById('idEspecialidadPerfil').value = '';
+    document.getElementById('observacionesPerfil').value = '';
+    fetch("ajax/profesores/cargar_preferencias_profesor.php").then(r => r.text()).then(html => document.getElementById("prefhoras").innerHTML = html);
 }
 
 // Cambia el jefe del departamento indicado
@@ -75,7 +74,7 @@ function cambiarActivo(idProfesor)
 // Son ordenables todos los elementos de "listaprofesores" que tengan class="profesor"
 document.getElementById('listaprofesores').sortable({ items: '.profesor', update: function()
     {
-        var elementos = $(this).sortable("toArray").toString();
+        var elementos = (() => { const el = this; return Array.from(el.children).map(c => c.id).join(","); })();
         // Enviamos como parámetro los "ids" de las cajas en el parámetro "orden"
         // Cada "id" se compone del prefijo "pr" seguido del id del profesor, y se colocan
         // en el orden en que han quedado.

@@ -17,13 +17,13 @@ function seleccionarDepartamento()
 // Carga las especialidades del departamento actualmente seleccionado
 function cargarEspecialidades()
 {
-    $("#listaespecialidades").load("ajax/especialidades/cargar_especialidades.php", {idDepartamento: selDepartamento});
+    document.getElementById("listaespecialidades").load("ajax/especialidades/cargar_especialidades.php", {idDepartamento: selDepartamento});
 }
 
 // Abre el diálogo modal con los datos de la especialidad indicada por su "id"
 function cargarEspecialidadModal(id)
 {
-    fetch("ajax/especialidades/cargar_especialidad.php?" + new URLSearchParams(idEspecialidad:id)).then(response => response.text()).then(res => {
+    fetch("ajax/especialidades/cargar_especialidad.php?" + new URLSearchParams({idEspecialidad:id}).toString()).then(r => r.json()).then(res => {
         document.getElementById('idAntiguo').value = res.id;
         document.getElementById('idEspecialidad').value = res.id;
         document.getElementById('idDepartamento').value = res.idDepartamento;
@@ -31,7 +31,7 @@ function cargarEspecialidadModal(id)
         document.getElementById('horasTutoria').value = res.horasTutoria;
         document.getElementById('horasIngles').value = res.horasIngles;
         document.getElementById('profesores').value = res.profesores;
-        $("#formespecialidad").show();
+        (() => { const el = document.getElementById("formespecialidad"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });    
 }
 
@@ -41,7 +41,7 @@ function nuevaEspecialidad()
     if(selDepartamento > 0)
     {
         limpiarFormularioEspecialidades();
-        document.getElementById('formespecialidad').show();
+        (() => { const el = document.getElementById("formespecialidad"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     } else {
         mostrarMensaje("Debes seleccionar un departamento", 0);
     }
@@ -52,8 +52,7 @@ function borrarEspecialidad(id)
 {    
     if (confirm("Confirmas el borrado de la especialidad '" + id + "'?"))
     {
-        $.post("ajax/especialidades/borrar_especialidad.php", {id:id}, function(res)
-        {
+        fetch("ajax/especialidades/borrar_especialidad.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({id:id}).toString() }).then(r => r.text()).then(res => {
             if (res.trim() == 'si')
                  mostrarMensaje("Error al borrar la especialidad", 0);
            cargarEspecialidades();
@@ -64,31 +63,24 @@ function borrarEspecialidad(id)
 // Borra los datos del formulario modal de alta/edición de especialidad
 function limpiarFormularioEspecialidades()
 {
-    document.getElementById('idAntiguo').value = "";
-    document.getElementById('idEspecialidad').value = "";
-    document.getElementById('descripcion').value = "";
-    document.getElementById('horasTutoria').value = "";
-    document.getElementById('horasIngles').value = "";
-    document.getElementById('profesores').value = "";
+    document.getElementById('idAntiguo').value = '';
+    document.getElementById('idEspecialidad').value = '';
+    document.getElementById('descripcion').value = '';
+    document.getElementById('horasTutoria').value = '';
+    document.getElementById('horasIngles').value = '';
+    document.getElementById('profesores').value = '';
 }
 
 // Evento de envío del formulario modal de especialidad
-$("#formesp").addEventListener('submit', function(e) {
+document.getElementById("formesp").addEventListener("submit", function(e)
+{
     e.preventDefault();
     var formData = new FormData(document.forms.formesp);
-    $.ajax({
-        url: "ajax/especialidades/insertar_especialidad.php",
-        type: "post",
-        dataType: "html",
-        data: formData,
-        cache: false,
-        contentType: false,
-        processData: false
-    })
-    .done(function(res){
+    fetch("ajax/especialidades/insertar_especialidad.php", { method: "POST", body: formData })
+    .then(function(res) {
         // Recogemos respuesta y mostramos resultado en ventana modal de mensaje
         limpiarFormularioEspecialidades();
-        $("#formespecialidad").hide();
+        (() => { const el = document.getElementById("formespecialidad"); const modal = bootstrap.Modal.getInstance(el); if(modal) modal.hide(); })();
         if (res.trim().startsWith('si'))
             mostrarMensaje("Error al realizar la operación solicitada: " + res.trim().substring(2), 0);
         else

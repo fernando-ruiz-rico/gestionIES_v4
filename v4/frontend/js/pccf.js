@@ -8,7 +8,7 @@ var selApartado = 0;
 function cambiarCiclo()
 {    
     selCiclo = document.getElementById('ciclo').value;
-    document.getElementById('apartado').value = "";
+    document.getElementById('apartado').value = '';
     selApartado = 0;
     document.getElementById('idCiclo').value = selCiclo;
     document.getElementById('idApartado').value = selApartado;
@@ -25,8 +25,7 @@ function cambiarApartado()
     selApartado = document.getElementById('apartado').value;
     document.getElementById('idApartado').value = selApartado;
     if (selCiclo > 0 && selApartado > 0)
-        $.post('ajax/pccf/cargar_contenido_pccf.php', {idCiclo: selCiclo, idApartado: selApartado}, function(res)
-        {
+        fetch("ajax/pccf/cargar_contenido_pccf.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({idCiclo: selCiclo, idApartado: selApartado}).toString() }).then(r => r.text()).then(res => {
             document.getElementById('edicionapartado').style.display = 'block';
             if (tinymce.get('texto'))
                 tinymce.get('texto').setContent(res);
@@ -52,7 +51,8 @@ function generarPDFApartado()
 }
 
 // Guardar cambios al contenido editado
-$("#formpccf").addEventListener('submit', function(e) {
+document.getElementById("formpccf").addEventListener("submit", function(e)
+{
     tinymce.get('texto').save();
     e.preventDefault();
     if (selApartado <= 0 || selCiclo <= 0)
@@ -60,16 +60,8 @@ $("#formpccf").addEventListener('submit', function(e) {
     else
     {
         var formData = new FormData(document.forms.formpccf);
-        $.ajax({
-            url: "ajax/pccf/insertar_contenido_pccf.php",
-            type: "post",
-            dataType: "html",
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData: false
-        })
-        .done(function(res){
+        fetch("ajax/pccf/insertar_contenido_pccf.php", { method: "POST", body: formData })
+        .then(function(res) {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al realizar la operación indicada. Si no has hecho cambios respecto al contenido previamente guardado, ignora este mensaje", 0);
             else

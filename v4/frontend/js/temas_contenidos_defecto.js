@@ -5,7 +5,8 @@ if(selDepartamento !== undefined)
     document.getElementById('idDepartamento').value = selDepartamento;
 
 // Evento de envío del formulario para guardar los cambios
-$("#formtemadefault").addEventListener('submit', function(e) {
+document.getElementById("formtemadefault").addEventListener("submit", function(e)
+{
     tinymce.get('contexto').save();
     tinymce.get('recursos').save();
     tinymce.get('metodologia').save();
@@ -16,16 +17,8 @@ $("#formtemadefault").addEventListener('submit', function(e) {
     else
     {
         var formData = new FormData(document.forms.formtemadefault);
-        $.ajax({
-            url: "ajax/temas_contenidos_defecto/insertar_contenido_defecto_tema.php",
-            type: "post",
-            dataType: "html",
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData: false
-        })
-        .done(function(res){
+        fetch("ajax/temas_contenidos_defecto/insertar_contenido_defecto_tema.php", { method: "POST", body: formData })
+        .then(function(res) {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al realizar la operación indicada", 0);
             else

@@ -16,8 +16,7 @@ function cambiarApartado()
         if (tinymce.get('texto'))
             tinymce.get('texto').setContent("");
         document.getElementById('idApartado').value = selApartado;
-        $.post('ajax/programaciones_contenidos_defecto/cargar_contenido_defecto_programacion.php', {idDepartamento: selDepartamento, idApartado: selApartado}, function(res)
-        {
+        fetch("ajax/programaciones_contenidos_defecto/cargar_contenido_defecto_programacion.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({idDepartamento: selDepartamento, idApartado: selApartado}).toString() }).then(r => r.text()).then(res => {
             if (tinymce.get('texto'))
                 tinymce.get('texto').setContent(res);
         });
@@ -29,7 +28,8 @@ function cambiarApartado()
 }
 
 // Evento de envío del formulario para guardar los cambios
-$("#formprogramaciondefault").addEventListener('submit', function(e) {
+document.getElementById("formprogramaciondefault").addEventListener("submit", function(e)
+{
     tinymce.get('texto').save();
     e.preventDefault();
     if (selApartado <= 0)
@@ -37,16 +37,8 @@ $("#formprogramaciondefault").addEventListener('submit', function(e) {
     else
     {
         var formData = new FormData(document.forms.formprogramaciondefault);
-        $.ajax({
-            url: "ajax/programaciones_contenidos_defecto/insertar_contenido_defecto_programacion.php",
-            type: "post",
-            dataType: "html",
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData: false
-        })
-        .done(function(res){
+        fetch("ajax/programaciones_contenidos_defecto/insertar_contenido_defecto_programacion.php", { method: "POST", body: formData })
+        .then(function(res) {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al realizar la operación indicada", 0);
             else
