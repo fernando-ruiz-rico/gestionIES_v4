@@ -39,10 +39,10 @@ function handleLogin() {
     
     $username = escapeString($username, $conn);
     
-    // Consulta compatible con PHP 7+ (mysqli)
-    $query = "SELECT idUsuario, loginUsuario, password, rol, nombre, apellidos 
-              FROM usuarios 
-              WHERE loginUsuario = '$username'";
+    // Consulta compatible con PHP 5+ (tabla profesores, no usuarios)
+    $query = "SELECT id, nombre, usuario, clave, idDepartamento, jefe_departamento, activo 
+              FROM profesores 
+              WHERE usuario = '$username' AND activo = 1";
     
     $result = mysqli_query($conn, $query);
     
@@ -58,16 +58,15 @@ function handleLogin() {
     
     $user = mysqli_fetch_assoc($result);
     
-    // Verificar contraseña (asumiendo que está en texto plano o hash MD5 como en v3)
-    // Ajustar según cómo esté implementado en v3
+    // Verificar contraseña (MD5 como en v3)
     $validPassword = false;
     
     // Intentar con MD5 primero (común en apps antiguas)
-    if (md5($password) == $user['password']) {
+    if (md5($password) == $user['clave']) {
         $validPassword = true;
     }
     // Si no, comparar directo (texto plano)
-    else if ($password == $user['password']) {
+    else if ($password == $user['clave']) {
         $validPassword = true;
     }
     
@@ -78,20 +77,20 @@ function handleLogin() {
     
     // Iniciar sesión y guardar datos del usuario
     @session_start();
-    $_SESSION['idUsuario'] = $user['idUsuario'];
-    $_SESSION['loginUsuario'] = $user['loginUsuario'];
-    $_SESSION['rol'] = $user['rol'];
+    $_SESSION['idUsuario'] = $user['id'];
+    $_SESSION['loginUsuario'] = $user['usuario'];
+    $_SESSION['rol'] = ($user['jefe_departamento'] == 1) ? 'admin' : 'profesor';
     $_SESSION['nombre'] = $user['nombre'];
-    $_SESSION['apellidos'] = $user['apellidos'];
+    $_SESSION['idDepartamento'] = $user['idDepartamento'];
     
     closeDBConnection($conn);
     
     sendJSONSuccess(array(
-        'idUsuario' => $user['idUsuario'],
-        'loginUsuario' => $user['loginUsuario'],
-        'rol' => $user['rol'],
+        'idUsuario' => $user['id'],
+        'loginUsuario' => $user['usuario'],
+        'rol' => ($_SESSION['rol'] == 'admin') ? 'admin' : 'profesor',
         'nombre' => $user['nombre'],
-        'apellidos' => $user['apellidos']
+        'idDepartamento' => $user['idDepartamento']
     ), 'Login correcto');
 }
 
@@ -113,7 +112,7 @@ function checkAuth() {
         'loginUsuario' => $_SESSION['loginUsuario'],
         'rol' => $_SESSION['rol'],
         'nombre' => $_SESSION['nombre'],
-        'apellidos' => $_SESSION['apellidos']
+        'idDepartamento' => isset($_SESSION['idDepartamento']) ? $_SESSION['idDepartamento'] : null
     ));
 }
 ?>
