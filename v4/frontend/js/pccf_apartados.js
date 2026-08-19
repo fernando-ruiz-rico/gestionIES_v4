@@ -9,24 +9,23 @@ function cargarApartados()
 // Muestra los datos de un apartado en el formulario modal
 function cargarApartadoModal(id)
 {
-    $.get("ajax/pccf_apartados/cargar_apartado.php", {idApartado:id}, function(res)
-    {
-        $('#idApartado').val(id);
-        $('#titulo').val(res.titulo);
-        $('#tipo').val(res.tipo);
+    fetch("ajax/pccf_apartados/cargar_apartado.php?" + new URLSearchParams(idApartado:id)).then(response => response.text()).then(res => {
+        document.getElementById('idApartado').value = id;
+        document.getElementById('titulo').value = res.titulo;
+        document.getElementById('tipo').value = res.tipo;
         if (res.subapartado == 1)
-            $('#subapartado').prop('checked', true);
+            document.getElementById('subapartado').prop('checked', true);
         else
-            $('#subapartado').prop('checked', false);
+            document.getElementById('subapartado').prop('checked', false);
         if (res.requerido == 1)
-            $('#requerido').prop('checked', true);
+            document.getElementById('requerido').prop('checked', true);
         else
-            $('#requerido').prop('checked', false);
+            document.getElementById('requerido').prop('checked', false);
         if (res.contenido_defecto == 1)
-            $('#contenidoDefecto').prop('checked', true);
+            document.getElementById('contenidoDefecto').prop('checked', true);
         else
-            $('#contenidoDefecto').prop('checked', false);
-        $("#formapartadopccf").modal('show');
+            document.getElementById('contenidoDefecto').prop('checked', false);
+        $("#formapartadopccf").show();
     });    
 }
 
@@ -34,7 +33,7 @@ function cargarApartadoModal(id)
 function nuevoApartado()
 {
     limpiarFormularioApartados();
-    $('#formapartadopccf').modal('show');
+    document.getElementById('formapartadopccf').show();
 }
 
 // Borra un apartado, previa confirmación
@@ -52,16 +51,16 @@ function borrarApartado (id, titulo)
 // Limpia los campos del formulario modal
 function limpiarFormularioApartados()
 {
-    $('#idApartado').val("");
-    $('#titulo').val("");
-    $('#tipo').val("");
-    $('#subapartado').removeAttr("checked");
-    $('#requerido').attr("checked", "checked");    
-    $('#contenidoDefecto').removeAttr("checked");
+    document.getElementById('idApartado').value = "";
+    document.getElementById('titulo').value = "";
+    document.getElementById('tipo').value = "";
+    document.getElementById('subapartado').removeAttr("checked");
+    document.getElementById('requerido').attr("checked", "checked");    
+    document.getElementById('contenidoDefecto').removeAttr("checked");
 }
 
 // Evento de ordenación de los apartados
-$('#apartadospccf').sortable({ items: '.apartado', update: function()
+document.getElementById('apartadospccf').sortable({ items: '.apartado', update: function()
     {
         var elementos = $(this).sortable("toArray").toString();
         $.get("ajax/pccf_apartados/ordenar_apartados.php", {orden: elementos}, function()
@@ -72,8 +71,7 @@ $('#apartadospccf').sortable({ items: '.apartado', update: function()
 });
 
 // Evento de envío del formulario modal para crear/modificar apartados
-$("#formapartado").on("submit", function(e)
-{
+$("#formapartado").addEventListener('submit', function(e) {
     e.preventDefault();
     var formData = new FormData(document.forms.formapartado);
     $.ajax({
@@ -87,7 +85,7 @@ $("#formapartado").on("submit", function(e)
     })
     .done(function(res){
         limpiarFormularioApartados();
-	    $("#formapartadopccf").modal('hide');
+	    $("#formapartadopccf").hide();
         cargarApartados();
     });
 });

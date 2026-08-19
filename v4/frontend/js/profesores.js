@@ -4,7 +4,7 @@
 function seleccionarDepartamento()
 {
     // Se obtiene el departamento seleccionado actualmente
-    const selDepartamento = $('#seleccionDepartamento').val();
+    const selDepartamento = document.getElementById('seleccionDepartamento').value;
     // Se muestran los profesores de ese departamento
     cargarProfesores(selDepartamento);
     // Se carga el modal para dar de alta o editar un profesor en ese departamento
@@ -15,10 +15,10 @@ function seleccionarDepartamento()
 // el departamento al que pertenece
 async function nuevoProfesor()
 {
-    if($('#seleccionDepartamento').val() > 0)
+    if(document.getElementById('seleccionDepartamento').value > 0)
     {
         limpiarFormularioProfesores();
-        $('#formprofesor').modal('show');
+        document.getElementById('formprofesor').show();
     } else {
         mostrarMensaje("Debes seleccionar un departamento", 0);
     }
@@ -41,16 +41,16 @@ function borrarProfesor (id, nombre)
 // Borra los campos del formulario de profesores
 function limpiarFormularioProfesores()
 {
-    $('#idPerfil').val("");
-    $('#nombrePerfil').val("");
-    $('#abreviaturaPerfil').val("");
-    $('#usuarioPerfil').val("");
-    $('#clavePerfil').val("");
-    $('#telefonoPerfil').val("");
-    $('#emailPerfil').val("");
-    $('#idEspecialidadPerfil').val("");
-    $('#observacionesPerfil').val("");
-    $('#prefhoras').load('ajax/profesores/cargar_preferencias_profesor.php');
+    document.getElementById('idPerfil').value = "";
+    document.getElementById('nombrePerfil').value = "";
+    document.getElementById('abreviaturaPerfil').value = "";
+    document.getElementById('usuarioPerfil').value = "";
+    document.getElementById('clavePerfil').value = "";
+    document.getElementById('telefonoPerfil').value = "";
+    document.getElementById('emailPerfil').value = "";
+    document.getElementById('idEspecialidadPerfil').value = "";
+    document.getElementById('observacionesPerfil').value = "";
+    document.getElementById('prefhoras').load('ajax/profesores/cargar_preferencias_profesor.php');
 }
 
 // Cambia el jefe del departamento indicado
@@ -73,7 +73,7 @@ function cambiarActivo(idProfesor)
 
 // Evento drag & drop sobre la lista de profesores
 // Son ordenables todos los elementos de "listaprofesores" que tengan class="profesor"
-$('#listaprofesores').sortable({ items: '.profesor', update: function()
+document.getElementById('listaprofesores').sortable({ items: '.profesor', update: function()
     {
         var elementos = $(this).sortable("toArray").toString();
         // Enviamos como parámetro los "ids" de las cajas en el parámetro "orden"

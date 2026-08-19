@@ -2,20 +2,20 @@
 
 // Cargamos en el campo "hidden" del formulario el departamento seleccionado
 if(selDepartamento !== undefined)
-    $('#idDepartamento').val(selDepartamento);
+    document.getElementById('idDepartamento').value = selDepartamento;
 // Variable para guardar el apartado elegido
 var selApartado = 0;
 
 // Cambia el apartado seleccionado
 function cambiarApartado()
 {
-    selApartado = $('#seleccionApartado').val();
+    selApartado = document.getElementById('seleccionApartado').value;
     if (selApartado > 0)
     {
-        $('#edicionapartado').show();
+        document.getElementById('edicionapartado').style.display = 'block';
         if (tinymce.get('texto'))
             tinymce.get('texto').setContent("");
-        $('#idApartado').val(selApartado);
+        document.getElementById('idApartado').value = selApartado;
         $.post('ajax/programaciones_contenidos_defecto/cargar_contenido_defecto_programacion.php', {idDepartamento: selDepartamento, idApartado: selApartado}, function(res)
         {
             if (tinymce.get('texto'))
@@ -24,13 +24,12 @@ function cambiarApartado()
     }
     else
     {
-        $('#edicionapartado').hide();
+        document.getElementById('edicionapartado').style.display = 'none';
     }
 }
 
 // Evento de envío del formulario para guardar los cambios
-$("#formprogramaciondefault").on("submit", function(e)
-{
+$("#formprogramaciondefault").addEventListener('submit', function(e) {
     tinymce.get('texto').save();
     e.preventDefault();
     if (selApartado <= 0)
@@ -57,11 +56,11 @@ $("#formprogramaciondefault").on("submit", function(e)
 });
 
 // Configuración de TinyMCE si procede
-if($('#edicionapartado').length > 0)
+if(document.getElementById('edicionapartado').length > 0)
 {
     initTinyMCE('progeditar');
 
     // Si hay TinyMCE hay formulario. Inicialmente lo ocultamos
     // Sólo se mostrará si elegimos un apartado concreto del listado
-    $('#edicionapartado').hide();
+    document.getElementById('edicionapartado').style.display = 'none';
 }

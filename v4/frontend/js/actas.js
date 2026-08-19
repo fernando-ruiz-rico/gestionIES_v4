@@ -3,199 +3,109 @@
 // el fichero js/main.js
 
 // Hacemos que el campo "fecha" tenga un "datepicker" para elegir la fecha
-const fechaInput = document.getElementById('fecha');
-if (fechaInput) {
-    // Usamos flatpickr si está disponible, o fallback a input type="date" nativo
-    if (typeof flatpickr !== 'undefined') {
-        flatpickr(fechaInput, {
-            dateFormat: "d/m/Y",
-            locale: { firstDayOfWeek: 1 }
-        });
-    } else {
-        fechaInput.type = 'date';
-        fechaInput.setAttribute('data-date-format', 'dd/mm/yy');
-    }
-}
+if(document.getElementById('fecha'))
+    document.getElementById('fecha').datepicker({dateFormat: "dd/mm/yy"});
 
 // Función para rellenar el desplegable de fechas de actas disponibles para el departamento actual
 function cargarActas()
 {
-    fetch('ajax/actas/cargar_actas_departamento.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    })
-    .then(response => response.text())
-    .then(res => {
-        const fechasActas = document.getElementById('fechasActas');
-        if (fechasActas) {
-            fechasActas.innerHTML = res;
-        }
-    })
-    .catch(error => {
-        console.error('Error al cargar actas:', error);
-        mostrarMensaje("Error al cargar las actas", 0);
+    $.post('ajax/actas/cargar_actas_departamento.php', function(res)
+    {
+        document.getElementById('fechasActas').innerHTML = res;
     });
 }
 
 // Función para cargar el acta seleccionada
 function cambiarActa(edicion)
 {
-    const fechasActas = document.getElementById('fechasActas');
-    const idActaInput = document.getElementById('idActa');
-    const fechaInput = document.getElementById('fecha');
-    const edicionacta = document.getElementById('edicionacta');
-    
-    if (!fechasActas || !idActaInput || !edicionacta) return;
-    
-    const selActa = fechasActas.value;
-    idActaInput.value = selActa;
-    
-    if (selActa != "" && selActa != "0")
+    var selActa = document.getElementById('fechasActas').value;
+    document.getElementById('idActa').value = selActa;
+    if (selActa != "")
     {
-        edicionacta.style.display = 'block';
-        
-        // Cargar fecha del acta
-        fetch('ajax/actas/cargar_fecha_acta.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'idActa=' + encodeURIComponent(selActa)
-        })
-        .then(response => response.text())
-        .then(res => {
-            if (fechaInput) {
-                fechaInput.value = res.trim();
-            }
+        document.getElementById('edicionacta').style.display = 'block';
+        $.post('ajax/actas/cargar_fecha_acta.php', {idActa: selActa}, function(res)
+        {
+            document.getElementById('fecha').value = res;
         });
-        
-        // Cargar contenido del acta
-        fetch('ajax/actas/cargar_contenido_acta.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: 'idActa=' + encodeURIComponent(selActa)
-        })
-        .then(response => response.text())
-        .then(res => {
-            if (tinymce.get('texto')) {
+        $.post('ajax/actas/cargar_contenido_acta.php', {idActa: selActa}, function(res)
+        {
+            if (tinymce.get('texto'))
                 tinymce.get('texto').setContent(res);
-            }
         });
     } else {
-        edicionacta.style.display = 'none';
-        if (fechaInput) {
-            fechaInput.value = "";
-        }
-        if (tinymce.get('texto')) {
-            tinymce.get('texto').setContent("");
-        }
+        document.getElementById('edicionacta').style.display = 'none';
+        document.getElementById('fecha').value = "";
+        if (tinymce.get('texto'))
+            tinymce.get('texto').setContent("");        
     }
 }
 
 // Función para preparar el formulario con datos de una nueva acta
 function nuevaActa()
 {
-    const idActaInput = document.getElementById('idActa');
-    const fechaInput = document.getElementById('fecha');
-    const edicionacta = document.getElementById('edicionacta');
-    
-    fetch('ajax/actas/nueva_acta_departamento.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    })
-    .then(response => response.text())
-    .then(res => {
-        if (edicionacta) {
-            edicionacta.style.display = 'block';
-        }
-        if (idActaInput) {
-            idActaInput.value = "";
-        }
-        if (fechaInput) {
-            fechaInput.value = "";
-        }
-        if (tinymce.get('texto')) {
+    $.post('ajax/actas/nueva_acta_departamento.php', function(res)
+    {
+        document.getElementById('edicionacta').style.display = 'block';
+        document.getElementById('idActa').value = "";
+        document.getElementById('fecha').value = "";
+        if (tinymce.get('texto'))
             tinymce.get('texto').setContent(res);
-        }
-    })
-    .catch(error => {
-        console.error('Error al crear nueva acta:', error);
-        mostrarMensaje("Error al crear nueva acta", 0);
     });
 }
 
 // Función para generar el PDF con el contenido del acta
 function generarPDFActa()
 {
-    const fechasActas = document.getElementById('fechasActas');
-    if (!fechasActas) return;
-    
-    const selActa = fechasActas.value;
-    if (selActa <= 0 || selActa == "") {
+    var selActa = document.getElementById('fechasActas').value;
+    if (selActa <= 0)
         mostrarMensaje("Debes seleccionar una fecha", 2);
-    } else {
+    else
         window.open('pdf_acta.php?idActa=' + selActa);
-    }
 }
 
 // Envío del formulario para el acta
-const formActa = document.getElementById('formacta');
-if (formActa) {
-    formActa.addEventListener('submit', function(e) {
-        e.preventDefault();
+$("#formacta").addEventListener('submit', function(e) {
+    tinymce.get('texto').save();
+    e.preventDefault();
 
-        if (tinymce.get('texto')) {
-            tinymce.get('texto').save();
-        }
-
-        const fechaInput = document.getElementById('fecha');
-        if (!fechaInput || fechaInput.value == "") {
-            mostrarMensaje("Debes establecer una fecha para el acta", 2);
-            return;
-        }
-
-        const formData = new FormData(formActa);
-        
-        fetch('ajax/actas/insertar_acta_departamento.php', {
-            method: 'POST',
-            body: formData
+    if(document.getElementById('fecha').value == "")
+    {
+        mostrarMensaje("Debes establecer una fecha para el acta", 2);
+    }
+    else
+    {
+        var formData = new FormData(document.forms.formacta);
+        $.ajax({
+            url: "ajax/actas/insertar_acta_departamento.php",
+            type: "post",
+            dataType: "html",
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false
         })
-        .then(response => response.text())
-        .then(res => {
-            res = res.trim();
-            if (res == 'si' || res == '0') {
+        .done(function(res){            
+            if (res.trim() == 'si' || res.trim() == '0')
                 mostrarMensaje("Error al realizar la operación indicada", 0);
-            } else {
-                const idActaInput = document.getElementById('idActa');
-                if (idActaInput) {
-                    idActaInput.value = res;
-                }
+            else
+            {
+                document.getElementById('idActa').value = res.trim();                
                 mostrarMensaje("Datos guardados correctamente", 1);
             }
             cargarActas();
-        })
-        .catch(error => {
-            console.error('Error al guardar acta:', error);
-            mostrarMensaje("Error al guardar el acta", 0);
         });
-    });
-}
+    }
+});
 
 // Configuración de TinyMCE si procede
-const edicionacta = document.getElementById('edicionacta');
-if (edicionacta) {
+if(document.getElementById('edicionacta').length > 0)
+{
     initTinyMCE('textoacta');
 
     // Si hay TinyMCE hay formulario. Inicialmente lo ocultamos
     // Sólo se mostrará si elegimos una fecha de acta (y aparecerá cargado con los datos de ese acta)
     // o si elegimos crear nueva acta (y aparecerá con el contenido inicial por defecto de las actas)
-    edicionacta.style.display = 'none';
+    document.getElementById('edicionacta').style.display = 'none';
 }
 
 cargarActas();

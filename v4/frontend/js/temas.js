@@ -27,8 +27,7 @@ async function calcularPorcentajesRAyCE()
             processData: false
         })
         .done(function(res){
-            $.get("ajax/temas/recalcular_porcentajes_ra_ce.php", {idMateria: selMateria}, function(res)
-            {
+            fetch("ajax/temas/recalcular_porcentajes_ra_ce.php?" + new URLSearchParams(idMateria: selMateria)).then(response => response.text()).then(res => {
                 cargarAccordionRAyCE();
             });
         });
@@ -39,14 +38,14 @@ async function calcularPorcentajesRAyCE()
 function nuevoTema()
 {
     limpiarFormularioNuevo();
-    $("#formnuevotema").modal('show');
+    $("#formnuevotema").show();
 }
 
 // Limpia los datos del formulario para nuevo tema
 function limpiarFormularioNuevo()
 {
-    $('#ordenNuevo').val("");
-    $('#tituloNuevo').val("");
+    document.getElementById('ordenNuevo').value = "";
+    document.getElementById('tituloNuevo').value = "";
 }
 
 // Borra el tema indicado, previa confirmación
@@ -82,11 +81,10 @@ async function repetirEvaluacion()
 // Función auxiliar para actualizar los checkboxes en el formulario de edición de temas
 function actualizarCheckboxes(id)
 {
-    $('.check_ce').prop('checked', false);
-    $('.check_com').prop('checked', false);
+    document.querySelectorAll('.check_ce').prop('checked', false);
+    document.querySelectorAll('.check_com').prop('checked', false);
 
-    $.get("ajax/temas/cargar_checkboxes.php", {idTema: id}, function(res)
-    {
+    fetch("ajax/temas/cargar_checkboxes.php?" + new URLSearchParams(idTema: id)).then(response => response.text()).then(res => {
         $.each(res.criterios, function(i, val) {
             $('#' + val).prop("checked", true);
         });        
@@ -104,8 +102,7 @@ function marcarDesmarcar(id)
 }
 
 // Evento de envío del formulario modal para inserción
-$("#formnuevo").on("submit", function(e)
-{ 
+$("#formnuevo").addEventListener('submit', function(e) { 
     e.preventDefault();
     var formData = new FormData(document.forms.formnuevo);
     $.ajax({
@@ -139,8 +136,7 @@ function enviarDatosAccordionRAyCE() {
 }
 
 // Evento de envío del formulario modal para edición
-$("#formeditar").on("submit", function(e)
-{
+$("#formeditar").addEventListener('submit', function(e) {
     tinymce.get('descripcion').save();
     tinymce.get('justificacion').save();
     tinymce.get('contexto').save();
@@ -181,14 +177,13 @@ $("#formeditar").on("submit", function(e)
 // Muestra los datos del resultado indicado en el formulario modal, para su edición
 function cargarModalActualizarRaTemas(id)
 {
-    $.get("ajax/resultados_aprendizaje/cargar_resultado_aprendizaje.php", {idResultado:id}, function(res)
-    {
-        $('#idResultado').val(id);
-        $('#spanOrden').text(res.orden);
-        $('#spanTexto').text(res.texto);
-        $('#porcentajeEvaluacion').val(res.porcentaje_evaluacion);
-        $('#esClave').prop('checked', res.es_clave == 1).trigger('change'); 
-        $("#formresultado_ra").modal('show');
+    fetch("ajax/resultados_aprendizaje/cargar_resultado_aprendizaje.php?" + new URLSearchParams(idResultado:id)).then(response => response.text()).then(res => {
+        document.getElementById('idResultado').value = id;
+        document.getElementById('spanOrden').textContent = res.orden;
+        document.getElementById('spanTexto').textContent = res.texto;
+        document.getElementById('porcentajeEvaluacion').value = res.porcentaje_evaluacion;
+        document.getElementById('esClave').prop('checked', res.es_clave == 1).trigger('change'); 
+        $("#formresultado_ra").show();
     });    
 }
 

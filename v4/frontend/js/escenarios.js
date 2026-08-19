@@ -9,13 +9,12 @@ function cargarEscenarios()
 // Muestra los datos del escenario indicado en el formulario modal, para su edición
 function cargarEscenarioModal(id)
 {
-    $.get("ajax/escenarios/cargar_escenario.php", {idEscenario:id}, function(res)
-    {
-        $('#idEscenario').val(id);
-        $('#nombre').val(res.nombre);
-        $('#listadoDepartamentosEscenario').load('ajax/escenarios/cargar_departamentos_escenario.php', {idEscenario:id}, function(res)
+    fetch("ajax/escenarios/cargar_escenario.php?" + new URLSearchParams(idEscenario:id)).then(response => response.text()).then(res => {
+        document.getElementById('idEscenario').value = id;
+        document.getElementById('nombre').value = res.nombre;
+        document.getElementById('listadoDepartamentosEscenario').load('ajax/escenarios/cargar_departamentos_escenario.php', {idEscenario:id}, function(res)
         {
-            $("#formescenario").modal('show');
+            $("#formescenario").show();
         });
     });    
 }
@@ -24,9 +23,9 @@ function cargarEscenarioModal(id)
 function nuevoEscenario()
 {
     limpiarFormularioEscenarios();
-    $('#listadoDepartamentosEscenario').load('ajax/escenarios/cargar_departamentos_escenario.php', function(res)
+    document.getElementById('listadoDepartamentosEscenario').load('ajax/escenarios/cargar_departamentos_escenario.php', function(res)
     {
-        $("#formescenario").modal('show');
+        $("#formescenario").show();
     });
 }
 
@@ -49,8 +48,8 @@ function borrarEscenario (id, nombre)
 // Borra el contenido del formulario modal
 function limpiarFormularioEscenarios()
 {
-    $('#idEscenario').val("");
-    $('#nombreEscenario').val("");
+    document.getElementById('idEscenario').value = "";
+    document.getElementById('nombreEscenario').value = "";
 }
 
 // Establece el escenario indicado como el actualmente vigente
@@ -95,8 +94,7 @@ function duplicarEscenario(id)
 }
 
 // Evento de envío del formulario modal para insertar/modificar escenarios
-$("#formesc").on("submit", function(e)
-{
+$("#formesc").addEventListener('submit', function(e) {
     e.preventDefault();
     var formData = new FormData(document.forms.formesc);
     $.ajax({
@@ -110,7 +108,7 @@ $("#formesc").on("submit", function(e)
     })
     .done(function(res){
         limpiarFormularioEscenarios();
-        $("#formescenario").modal('hide');
+        $("#formescenario").hide();
         cargarEscenarios();
     });
 });

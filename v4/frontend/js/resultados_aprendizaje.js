@@ -6,10 +6,10 @@ let selMateria = 0;
 // Función para cambiar la materia seleccionada
 function cambiarMateria()
 {
-    selMateria = $('#seleccionMateria').val();
+    selMateria = document.getElementById('seleccionMateria').value;
     if(selMateria > 0)
     {
-        $('#idMateria').val(selMateria);
+        document.getElementById('idMateria').value = selMateria;
         cargarResultados();
     }
 }
@@ -19,20 +19,19 @@ function cargarResultados()
 {
     if(selMateria > 0)
     {
-        $('#resultados').load("ajax/resultados_aprendizaje/cargar_resultados_aprendizaje.php", {idMateria: selMateria});
+        document.getElementById('resultados').load("ajax/resultados_aprendizaje/cargar_resultados_aprendizaje.php", {idMateria: selMateria});
     }
 }
 
 // Muestra los datos del resultado indicado en el formulario modal, para su edición
 function cargarResultadoModal(id)
 {
-    $.get("ajax/resultados_aprendizaje/cargar_resultado_aprendizaje.php", {idResultado:id}, function(res)
-    {
-        $('#idResultado').val(id);
-        $('#texto').val(res.texto);
-        $('#orden').val(res.orden);
-        $('#porcentajeEmpresa').val(res.porcentaje_empresa);
-        $("#formresultado").modal('show');
+    fetch("ajax/resultados_aprendizaje/cargar_resultado_aprendizaje.php?" + new URLSearchParams(idResultado:id)).then(response => response.text()).then(res => {
+        document.getElementById('idResultado').value = id;
+        document.getElementById('texto').value = res.texto;
+        document.getElementById('orden').value = res.orden;
+        document.getElementById('porcentajeEmpresa').value = res.porcentaje_empresa;
+        $("#formresultado").show();
     });    
 }
 
@@ -42,7 +41,7 @@ function nuevoResultado()
     if(selMateria > 0)
     {
         limpiarFormularioResultados();
-        $('#formresultado').modal('show');
+        document.getElementById('formresultado').show();
     } else {
         mostrarMensaje("Debes elegir una materia primero", 2);
     }
@@ -63,16 +62,16 @@ function borrarResultado (id, texto)
 // Borra el contenido de los campos del formulario modal de alta/edición de cursos
 function limpiarFormularioResultados()
 {
-    $('#idResultado').val("");
-    $('#texto').val("");
-    $('#orden').val("");
-    $('#porcentajeEmpresa').val("0");    
+    document.getElementById('idResultado').value = "";
+    document.getElementById('texto').value = "";
+    document.getElementById('orden').value = "";
+    document.getElementById('porcentajeEmpresa').value = "0";    
 }
 
 // Actualiza las horas asignadas de la materia indicada para impartir en la empresa
 function actualizarHorasEmpresa(idMateria)
 {
-    var horas = $('#horasEmpresa').val();
+    var horas = document.getElementById('horasEmpresa').value;
     $.post("ajax/materias/actualizar_horas_empresa.php", {idMateria:idMateria, horas: horas});
     mostrarMensaje("Datos actualizados", 1);
 }
@@ -80,10 +79,9 @@ function actualizarHorasEmpresa(idMateria)
 // Carga el modal para asociar criterios de evaluación al RA indicado
 function asociarCriterios(id)
 {
-    $.get("ajax/resultados_aprendizaje/cargar_criterios_evaluacion.php", {idResultado:id}, function(res)
-    {
-        $('#listadocriterios').html(res);
-        $('#formcriterio').modal('show');
+    fetch("ajax/resultados_aprendizaje/cargar_criterios_evaluacion.php?" + new URLSearchParams(idResultado:id)).then(response => response.text()).then(res => {
+        document.getElementById('listadocriterios').innerHTML = res;
+        document.getElementById('formcriterio').show();
     });
 }
 
@@ -99,8 +97,8 @@ function borrarCriterio(idRA, codigo)
 // Actualiza los datos del criterio de evaluación indicado
 function actualizarCriterio(idRA, codigo)
 {
-    let nuevoCodigo = $('#cce' + codigo).val();
-    let nuevoTexto = $('#tce' + codigo).val();
+    let nuevoCodigo = $('#cce' + codigo).value;
+    let nuevoTexto = $('#tce' + codigo).value;
     $.post("ajax/resultados_aprendizaje/actualizar_criterio_evaluacion.php", {idResultado:idRA, codigo: codigo, nuevoCodigo: nuevoCodigo, nuevoTexto: nuevoTexto}, function(res)
     {
         asociarCriterios(idRA);
@@ -110,8 +108,8 @@ function actualizarCriterio(idRA, codigo)
 // Inserta un nuevo criterio para el RA indicado
 function insertarCriterio(idRA)
 {
-    let nuevoCodigo = $('#codigoCE').val();
-    let nuevoTexto = $('#textoCE').val();
+    let nuevoCodigo = document.getElementById('codigoCE').value;
+    let nuevoTexto = document.getElementById('textoCE').value;
 
     $.post("ajax/resultados_aprendizaje/insertar_criterio_evaluacion.php", {idResultado:idRA, nuevoCodigo: nuevoCodigo, nuevoTexto: nuevoTexto}, function(res)
     {
@@ -120,8 +118,7 @@ function insertarCriterio(idRA)
 }
 
 // Evento de envío del formulario modal para inserción/modificación
-$("#formres").on("submit", function(e)
-{
+$("#formres").addEventListener('submit', function(e) {
     e.preventDefault();
     let formData = new FormData(document.forms.formres);
     $.ajax({
@@ -135,7 +132,7 @@ $("#formres").on("submit", function(e)
     })
     .done(function(res){
         limpiarFormularioResultados();
-        $("#formresultado").modal('hide');
+        $("#formresultado").hide();
         cargarResultados();
     });
 });

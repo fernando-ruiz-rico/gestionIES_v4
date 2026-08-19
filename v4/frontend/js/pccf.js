@@ -7,12 +7,12 @@ var selApartado = 0;
 // Cambia el ciclo seleccionado
 function cambiarCiclo()
 {    
-    selCiclo = $('#ciclo').val();
-    $('#apartado').val("");
+    selCiclo = document.getElementById('ciclo').value;
+    document.getElementById('apartado').value = "";
     selApartado = 0;
-    $('#idCiclo').val(selCiclo);
-    $('#idApartado').val(selApartado);
-    $('#edicionapartado').hide();
+    document.getElementById('idCiclo').value = selCiclo;
+    document.getElementById('idApartado').value = selApartado;
+    document.getElementById('edicionapartado').style.display = 'none';
    if (tinymce.get('texto'))
         tinymce.get('texto').setContent("");
 }
@@ -22,12 +22,12 @@ function cambiarApartado()
 {
     if (tinymce.get('texto'))
         tinymce.get('texto').setContent("");
-    selApartado = $('#apartado').val();
-    $('#idApartado').val(selApartado);
+    selApartado = document.getElementById('apartado').value;
+    document.getElementById('idApartado').value = selApartado;
     if (selCiclo > 0 && selApartado > 0)
         $.post('ajax/pccf/cargar_contenido_pccf.php', {idCiclo: selCiclo, idApartado: selApartado}, function(res)
         {
-            $('#edicionapartado').show();
+            document.getElementById('edicionapartado').style.display = 'block';
             if (tinymce.get('texto'))
                 tinymce.get('texto').setContent(res);
         });
@@ -52,8 +52,7 @@ function generarPDFApartado()
 }
 
 // Guardar cambios al contenido editado
-$("#formpccf").on("submit", function(e)
-{
+$("#formpccf").addEventListener('submit', function(e) {
     tinymce.get('texto').save();
     e.preventDefault();
     if (selApartado <= 0 || selCiclo <= 0)
@@ -80,11 +79,11 @@ $("#formpccf").on("submit", function(e)
 });
 
 // Configuración de TinyMCE si procede
-if($('#edicionapartado').length > 0)
+if(document.getElementById('edicionapartado').length > 0)
 { 
     initTinyMCE('progeditar', 400);
 
     // Si hay TinyMCE hay formulario. Inicialmente lo ocultamos
     // Sólo se mostrará si elegimos un apartado concreto del listado
-    $('#edicionapartado').hide();
+    document.getElementById('edicionapartado').style.display = 'none';
 }
