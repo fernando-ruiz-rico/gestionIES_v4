@@ -89,6 +89,12 @@ app.component('header-bar', HeaderBar);
 app.component('home-view', HomeView);
 app.component('departamentos-view', DepartamentosView);
 app.component('profesores-view', ProfesoresView);
+app.component('especialidades-view', EspecialidadesView);
+app.component('ciclos-view', CiclosView);
+app.component('cursos-view', CursosView);
+app.component('grupos-view', GruposView);
+app.component('materias-view', MateriasView);
+app.component('escenarios-view', EscenariosView);
 
 // Montar la aplicación
 app.mount('#app');

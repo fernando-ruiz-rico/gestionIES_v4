@@ -415,12 +415,12 @@ v4/
 | App Layout | ✅ | ✅ | Completado |
 | Departamentos | ✅ | ✅ | Completado |
 | Profesores | ✅ | ✅ | Completado |
-| Especialidades | ❌ | ❌ | Pendiente |
-| Ciclos | ❌ | ❌ | Pendiente |
-| Cursos | ❌ | ❌ | Pendiente |
-| Grupos | ❌ | ❌ | Pendiente |
-| Materias | ❌ | ❌ | Pendiente |
-| Escenarios | ❌ | ❌ | Pendiente |
+| Especialidades | ✅ | ✅ | Completado |
+| Ciclos | ✅ | ✅ | Completado |
+| Cursos | ✅ | ✅ | Completado |
+| Grupos | ✅ | ✅ | Completado |
+| Materias | ✅ | ✅ | Completado |
+| Escenarios | ✅ | ✅ | Completado |
 | Programaciones | ❌ | ❌ | Pendiente |
 | Temas | ❌ | ❌ | Pendiente |
 | PCCF | ❌ | ❌ | Pendiente |
@@ -618,3 +618,43 @@ frontend/
 ### Registro de Decisiones Técnicas
 
 Las decisiones importantes de diseño e implementación se documentan en este README bajo la sección correspondiente de cada versión.
+
+## Historial de cambios
+
+### v4.1.3 - Fase 1 completa (Módulos básicos de mantenimiento)
+
+**Fecha**: Implementación completada
+
+**Módulos implementados**:
+- ✅ **1.3 Especialidades**: CRUD completo
+  - Backend: `backend/api/especialidades/{listar,obtener,guardar,eliminar}.php`
+  - Frontend: `frontend/js/views/especialidades-view.js`, `frontend/js/api/especialidades.js`
+
+- ✅ **1.4 Ciclos Formativos**: CRUD con asociación a especialidades
+  - Backend: `backend/api/ciclos/{listar,obtener,guardar,eliminar}.php`
+  - Frontend: `frontend/js/views/ciclos-view.js`, `frontend/js/api/ciclos.js`
+
+- ✅ **1.5 Cursos**: CRUD con categorías (ESO/BACH/FP/OTROS)
+  - Backend: `backend/api/cursos/{listar,obtener,guardar,eliminar}.php`
+  - Frontend: `frontend/js/views/cursos-view.js`, `frontend/js/api/cursos.js`
+
+- ✅ **1.6 Grupos**: CRUD básico
+  - Backend: `backend/api/grupos/{listar,obtener,guardar,eliminar}.php`
+  - Frontend: `frontend/js/views/grupos-view.js`, `frontend/js/api/grupos.js`
+
+- ✅ **1.7 Materias**: CRUD básico
+  - Backend: `backend/api/materias/{listar,obtener,guardar,eliminar}.php`
+  - Frontend: `frontend/js/views/materias-view.js`, `frontend/js/api/materias.js`
+
+- ✅ **1.8 Escenarios**: CRUD básico (aulas, salas, etc.)
+  - Backend: `backend/api/escenarios/{listar,obtener,guardar,eliminar}.php`
+  - Frontend: `frontend/js/views/escenarios-view.js`, `frontend/js/api/escenarios.js`
+
+**Consideraciones técnicas**:
+1. Todos los módulos siguen el mismo patrón de diseño para facilitar mantenimiento
+2. Backend compatible con PHP 5.x usando `mysqli_*` functions
+3. Frontend Vue 3 desde CDN sin proceso de compilación
+4. Uso consistente de Bootstrap 5.3.8 y SweetAlert2
+5. Los nombres de campos en frontend coinciden con las claves primarias de BD (idEspecialidad, idCiclo, etc.)
+
+**Próximos pasos**: Fase 2 - Programaciones Didácticas

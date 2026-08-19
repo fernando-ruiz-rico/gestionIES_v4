@@ -1,0 +1,7 @@
+const CursosAPI = {
+    baseUrl: '../backend/api/cursos/',
+    async listar() { try { const r = await fetch(this.baseUrl + 'listar.php', { credentials: 'include' }); return await r.json(); } catch (e) { return []; } },
+    async obtener(id) { try { const r = await fetch(this.baseUrl + `obtener.php?id=${id}`, { credentials: 'include' }); return await r.json(); } catch (e) { return null; } },
+    async guardar(c) { try { const r = await fetch(this.baseUrl + 'guardar.php', { method: 'POST', credentials: 'include', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(c) }); return await r.json(); } catch (e) { return { success: false, error: 'Error' }; } },
+    async eliminar(id) { try { const r = await fetch(this.baseUrl + 'eliminar.php', { method: 'POST', credentials: 'include', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ idCurso: id }) }); return await r.json(); } catch (e) { return { success: false, error: 'Error' }; } }
+};
