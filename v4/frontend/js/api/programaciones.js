@@ -1,6 +1,6 @@
 const API_URL = 'backend/api/programaciones/index.php';
 
-export const programacionesAPI = {
+const programacionesAPI = {
     async listar(idMateria = null) {
         try {
             let url = `${API_URL}?action=listar`;
