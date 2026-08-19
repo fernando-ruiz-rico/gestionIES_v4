@@ -20,7 +20,7 @@ if (!empty($_REQUEST['idCiclo']))
     {
         $codigo = $fila['codigo'];
         $texto = $fila['texto'];
-        echo '<p><button class="btn btn-light" onclick="borrarAsociacion(' . $_REQUEST['idCiclo'] . ", '" . $codigo . "'" . ')"><img src="img/delete.png"></button>';
+        echo '<p><button class="btn btn-light" onclick="borrarAsociacion(' . $_REQUEST['idCiclo'] . ", '" . $codigo . "'" . ')"><i class="bi bi-trash"></i></button>';
         echo "$codigo - $texto</p>";
     }
     mysqli_free_result($result);

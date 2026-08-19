@@ -13,7 +13,7 @@ while ($fila = mysqli_fetch_assoc($result))
     echo '<div class="listado claro izquierda">';
     echo '<div class="izquierda">'. $nombre . '</div>';
     // Botones para borrar y editar el ciclo
-    echo '<div class="derecha"><button title="Asociar cursos al ciclo" class="btn btn-light" onclick="asociarCursos(' . $id . ')"><img src="img/tree2.png"></button><button title="Asociar unidades de competencia" class="btn btn-light" onclick="asociarUnidades(' . $id . ')"><img src="img/qualification.png"></button><button class="btn btn-light" onclick="borrarCiclo(' . $id . ",'" . $nombre . "'" . ')"><img src="img/delete.png"></button><button class="btn btn-light" onclick="cargarCicloModal(' . $id . ')"><img src="img/edit.png"></button></div>';
+    echo '<div class="derecha"><button title="Asociar cursos al ciclo" class="btn btn-light" onclick="asociarCursos(' . $id . ')"><i class="bi bi-bezier2"></i></button><button title="Asociar unidades de competencia" class="btn btn-light" onclick="asociarUnidades(' . $id . ')"><i class="bi bi-patch-check"></i></button><button class="btn btn-light" onclick="borrarCiclo(' . $id . ",'" . $nombre . "'" . ')"><i class="bi bi-trash"></i></button><button class="btn btn-light" onclick="cargarCicloModal(' . $id . ')"><i class="bi bi-pencil-square"></i></button></div>';
     echo '</div>';
 }
 

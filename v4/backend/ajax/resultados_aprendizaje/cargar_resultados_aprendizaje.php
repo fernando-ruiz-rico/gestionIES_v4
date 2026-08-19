@@ -38,12 +38,12 @@ if(!empty($_REQUEST['idMateria']))
         if($permisos)
         {
             // Botón para editar criterios de evaluación
-            echo '<button title="Asociar criterios de evaluación" class="btn btn-light" onclick="asociarCriterios(' . $id . ')"><img src="img/fill.png"></button>';
+            echo '<button title="Asociar criterios de evaluación" class="btn btn-light" onclick="asociarCriterios(' . $id . ')"><i class="bi bi-input-cursor-text"></i></button>';
             // Botón para borrar
-            echo '<button class="btn btn-light" onclick="borrarResultado(' . $id . ",'" . $texto . "'" . ')"><img src="img/delete.png"></button>';
+            echo '<button class="btn btn-light" onclick="borrarResultado(' . $id . ",'" . $texto . "'" . ')"><i class="bi bi-trash"></i></button>';
         }
         // Botón de editar
-        echo '<button class="btn btn-light" onclick="cargarResultadoModal(' . $id . ')"><img src="img/edit.png"></button>';
+        echo '<button class="btn btn-light" onclick="cargarResultadoModal(' . $id . ')"><i class="bi bi-pencil-square"></i></button>';
         echo '</div>';
         echo '</div>';
     }

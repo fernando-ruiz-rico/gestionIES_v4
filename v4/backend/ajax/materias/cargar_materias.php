@@ -19,11 +19,11 @@ if (!empty($_REQUEST['idCurso']))
         echo '<div class="listado claro izquierda" id="gr' . $id . '">';
         echo '<div class="izquierda">'. $nombre . '</div>';
         echo '<div class="derecha">';
-        echo'<button class="btn btn-light" title="Asociar competencias a materia" onclick="asociarCompetencias(' . $id . ')"><img src="img/capability.png"></button>';        
+        echo'<button class="btn btn-light" title="Asociar competencias a materia" onclick="asociarCompetencias(' . $id . ')"><i class="bi bi-award"></i></button>';        
         // Botón para editar la información de la materia para cada grupo para borrar o editar la materia. Si tiene grupos, añadimos botón para editar información para cada grupo
         if($tieneGrupos)
-            echo'<button class="btn btn-light" title="Gestionar datos específicos para cada grupo" onclick="cargarMateriasGrupos(' . $id . ',' . $idCurso . ')"><img src="img/conflicts.png"></button>';
-        echo'<button class="btn btn-light" title="Borrar materia" onclick="borrarMateria(' . $id . ",'" . $nombre . "'" . ')"><img src="img/delete.png"></button><button class="btn btn-light" title="Editar datos de materia" onclick="cargarMateriaModal(' . $id . ')"><img src="img/edit.png"></button>';
+            echo'<button class="btn btn-light" title="Gestionar datos específicos para cada grupo" onclick="cargarMateriasGrupos(' . $id . ',' . $idCurso . ')"><i class="bi bi-diagram-3"></i></button>';
+        echo'<button class="btn btn-light" title="Borrar materia" onclick="borrarMateria(' . $id . ",'" . $nombre . "'" . ')"><i class="bi bi-trash"></i></button><button class="btn btn-light" title="Editar datos de materia" onclick="cargarMateriaModal(' . $id . ')"><i class="bi bi-pencil-square"></i></button>';
         echo '</div>';
         echo '</div>';
     }

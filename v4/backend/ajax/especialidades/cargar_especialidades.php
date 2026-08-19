@@ -16,7 +16,7 @@ if (!empty($_REQUEST['idDepartamento']))
         echo '<div class="listado claro izquierda">';
         echo '<div class="izquierda">('. $id . ') - ' . $descripcion . '</div>';
         // Enlaces para borrar o editar la especialidad
-        echo '<div class="derecha"><button class="btn btn-light" onclick="borrarEspecialidad(\'' . $id . '\')"><img src="img/delete.png"></button><button class="btn btn-light" onclick="cargarEspecialidadModal(\'' . $id . '\')"><img src="img/edit.png"></button></div>';
+        echo '<div class="derecha"><button class="btn btn-light" onclick="borrarEspecialidad(\'' . $id . '\')"><i class="bi bi-trash"></i></button><button class="btn btn-light" onclick="cargarEspecialidadModal(\'' . $id . '\')"><i class="bi bi-pencil-square"></i></button></div>';
         echo '</div>';
     }
 

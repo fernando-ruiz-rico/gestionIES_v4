@@ -82,7 +82,7 @@ include('includes/cabecera.php');
                 </div>
             </div>
 
-            <div style="text-align:center"><button class="btn btn-light" type="submit"><img src="img/save.png" /> Guardar cambios</button></div>
+            <div style="text-align:center"><button class="btn btn-light" type="submit"><i class="bi bi-floppy"></i> Guardar cambios</button></div>
         </form>
     </div>
 

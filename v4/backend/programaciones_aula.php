@@ -59,7 +59,7 @@ $permisos = isset($_SESSION['rol']) && ($_SESSION['rol'] === 'admin' || $_SESSIO
 
             <div class="col-md-2 d-flex align-items-center justify-content-center">
                 <button class="btn btn-light w-100" onclick="generarPDF()">
-                    <img src="img/pdf.png" alt="PDF completo"> PDF Programación de aula
+                    <i class="bi bi-file-earmark-pdf"></i> PDF Programación de aula
                 </button>
             </div>
         </div>
@@ -68,13 +68,13 @@ $permisos = isset($_SESSION['rol']) && ($_SESSION['rol'] === 'admin' || $_SESSIO
         <div class="row mb-3">
             <div class="col-md-6 d-flex align-items-center justify-content-center">
                 <button class="btn btn-light w-100" onclick="generarPDFSeparataCE()">
-                    <img src="img/pdf.png" alt="PDF completo"> PDF Separata CE
+                    <i class="bi bi-file-earmark-pdf"></i> PDF Separata CE
                 </button>
             </div>
 
             <div class="col-md-6 d-flex align-items-center justify-content-center">
                 <button class="btn btn-light w-100" onclick="generarPDF()">
-                    <img src="img/pdf.png" alt="PDF completo"> PDF Programación de aula
+                    <i class="bi bi-file-earmark-pdf"></i> PDF Programación de aula
                 </button>
             </div>
         </div>
@@ -90,7 +90,7 @@ $permisos = isset($_SESSION['rol']) && ($_SESSION['rol'] === 'admin' || $_SESSIO
                 <textarea name="texto" class="progeditar" id="texto"></textarea>
                 <div class="text-center mt-3">
                     <button type="submit" class="btn btn-light">
-                        <img src="img/save.png" alt="Guardar"> Guardar cambios
+                        <i class="bi bi-floppy"></i> Guardar cambios
                     </button>
                 </div>
             </form>

@@ -28,7 +28,7 @@
     <br>
     <p><em>Haz clic en el icono del lápiz para editar los datos de cada materia, y en el icono de Nueva al final para añadir nuevas. Puedes eliminar materias con el icono de borrar junto a cada apartado.</em></p>
     <div id="listamaterias"></div>
-    <div style="text-align: center"><button class="btn btn-light" onclick="nuevaMateria()"><img src="img/add.png" /> Nueva Materia</button></div>
+    <div style="text-align: center"><button class="btn btn-light" onclick="nuevaMateria()"><i class="bi bi-plus-circle"></i> Nueva Materia</button></div>
 </div>
 
 <?php

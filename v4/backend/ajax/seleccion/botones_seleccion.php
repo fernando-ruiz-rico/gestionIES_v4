@@ -28,16 +28,16 @@ if(!empty($_REQUEST['idEscenario']))
     }
     else
     {
-        echo '<img class="botonRueda" src="img/delete2.png" title="Quitar la materia seleccionada de la lista" onclick="borrarSeleccion()">&nbsp;&nbsp;&nbsp;&nbsp;';
-        echo '<img class="botonRueda" src="img/deleteall.png" title="Vaciar lista" onclick="borrarTodaSeleccion()">&nbsp;&nbsp;&nbsp;&nbsp;';
+        echo '<i class="bi bi-trash botonRueda" title="Quitar la materia seleccionada de la lista" onclick="borrarSeleccion()"></i>&nbsp;&nbsp;&nbsp;&nbsp;';
+        echo '<i class="bi bi-trash3 botonRueda" title="Vaciar lista" onclick="borrarTodaSeleccion()"></i>&nbsp;&nbsp;&nbsp;&nbsp;';
     }
 
-    echo '<img src="img/stats.png" title="Mostrar estadísticas y conflictos" onclick="estadisticas()">&nbsp;&nbsp;&nbsp;&nbsp;';
-    echo '<img src="img/print.png" title="Imprimir la ficha del profesor" onclick="imprimirSeleccion(true)">&nbsp;&nbsp;&nbsp;&nbsp;';
-    echo '<img src="img/timetable.png" title="Imprimir las preferencias de horario del profesor" onclick="imprimirPreferenciasSeleccion(true)">&nbsp;&nbsp;&nbsp;&nbsp;';
-    echo '<img src="img/excel.png" title="Generar hoja Excel con los datos introducidos" onclick="generarExcel()">&nbsp;&nbsp;&nbsp;&nbsp;';
-    echo '<img src="img/preview.png" title="Vista general de selecciones de todos los profesores" onclick="vistaPrevia()">&nbsp;&nbsp;&nbsp;&nbsp;';
-    echo '<img src="img/reset.png" title="Actualizar estado de selección" onclick="actualizar()">';
+    echo '<i class="bi bi-bar-chart"></i>&nbsp;&nbsp;&nbsp;&nbsp;';
+    echo '<i class="bi bi-printer"></i>&nbsp;&nbsp;&nbsp;&nbsp;';
+    echo '<i class="bi bi-calendar-week"></i>&nbsp;&nbsp;&nbsp;&nbsp;';
+    echo '<i class="bi bi-file-earmark-spreadsheet"></i>&nbsp;&nbsp;&nbsp;&nbsp;';
+    echo '<i class="bi bi-eye"></i>&nbsp;&nbsp;&nbsp;&nbsp;';
+    echo '<i class="bi bi-arrow-counterclockwise"></i>';
 
     include ('../../includes/database2.php');
     

@@ -19,7 +19,7 @@ if (!empty($_REQUEST['idCiclo']))
         echo '<div class="listado claro izquierda competencia" id="cm' . $id . '">';
         echo '<div class="izquierda">'. $codigo . '. ' . $texto . '</div>';
         // Botones para borrar o editar la competencia
-        echo '<div class="derecha"><button class="btn btn-light" onclick="borrarCompetencia(' . $id . ",'" . $codigo . "'" . ')"><img src="img/delete.png"></button><button class="btn btn-light" onclick="cargarCompetenciaModal(' . $id . ')"><img src="img/edit.png"></button></div>';
+        echo '<div class="derecha"><button class="btn btn-light" onclick="borrarCompetencia(' . $id . ",'" . $codigo . "'" . ')"><i class="bi bi-trash"></i></button><button class="btn btn-light" onclick="cargarCompetenciaModal(' . $id . ')"><i class="bi bi-pencil-square"></i></button></div>';
         echo '</div>';
     }
 

@@ -86,7 +86,7 @@ $existeCursoActual = false;
             <button class="btn btn-light form-control" onclick="ejecutarOperacionSeleccionada('vistaPreviaComun')"><img src="img/preview.png"/> Vista previa</button>
         </div>
         <div class="col-md-3">
-            <button class="btn btn-light form-control" onclick="generarPDFSeguimiento()"><img src="img/pdf.png" /> Generar PDF</button>
+            <button class="btn btn-light form-control" onclick="generarPDFSeguimiento()"><i class="bi bi-file-earmark-pdf"></i> Generar PDF</button>
         </div>
     </div>
 
@@ -100,7 +100,7 @@ $existeCursoActual = false;
             <textarea name="actividades" class="form-control seguimiento" rows="5" id="actividades"></textarea>
             <label class="control-label" for="temporalizacion_defecto">Temporalización (contenido por defecto)</label>
             <textarea name="temporalizacion_defecto" class="form-control seguimiento" rows="5" id="temporalizacion_defecto"></textarea>
-            <div style="text-align:center"><button class="btn btn-light" type="submit"><img src="img/save.png" /> Guardar cambios</button></div>
+            <div style="text-align:center"><button class="btn btn-light" type="submit"><i class="bi bi-floppy"></i> Guardar cambios</button></div>
         </form>
     </div> 
 

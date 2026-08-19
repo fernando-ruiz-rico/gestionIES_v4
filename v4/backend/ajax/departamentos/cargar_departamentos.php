@@ -15,7 +15,7 @@ while ($fila = mysqli_fetch_assoc($result))
     echo '<div class="listado claro izquierda">';
     echo '<div class="izquierda">'. $nombre . '</div>';
     // Enlaces para borrar o editar el departamento
-    echo '<div class="derecha"><button class="btn btn-light" onclick="borrarDepartamento(' . $id . ",'" . $nombre . "'" . ')"><img src="img/delete.png"></button><button class="btn btn-light" onclick="cargarDepartamentoModal(' . $id . ')"><img src="img/edit.png"></button></div>';
+    echo '<div class="derecha"><button class="btn btn-light" onclick="borrarDepartamento(' . $id . ",'" . $nombre . "'" . ')"><i class="bi bi-trash"></i></button><button class="btn btn-light" onclick="cargarDepartamentoModal(' . $id . ')"><i class="bi bi-pencil-square"></i></button></div>';
     echo '</div>';
 }
 

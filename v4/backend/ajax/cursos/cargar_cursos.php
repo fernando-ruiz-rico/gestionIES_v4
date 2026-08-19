@@ -14,7 +14,7 @@ while ($fila = mysqli_fetch_assoc($result))
     echo '<div class="listado claro izquierda curso" id="cu' . $id . '">';
     echo '<div class="izquierda">'. $nombre . '</div>';
     // Botones para borrar y editar el curso
-    echo '<div class="derecha"><button class="btn btn-light" onclick="borrarCurso(' . $id . ",'" . $nombre . "'" . ')"><img src="img/delete.png"></button><button class="btn btn-light" onclick="cargarCursoModal(' . $id . ')"><img src="img/edit.png"></button></div>';
+    echo '<div class="derecha"><button class="btn btn-light" onclick="borrarCurso(' . $id . ",'" . $nombre . "'" . ')"><i class="bi bi-trash"></i></button><button class="btn btn-light" onclick="cargarCursoModal(' . $id . ')"><i class="bi bi-pencil-square"></i></button></div>';
     echo '</div>';
 }
 

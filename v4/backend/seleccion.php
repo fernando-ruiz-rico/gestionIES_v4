@@ -101,9 +101,9 @@ $mensajeAyuda =
             ?>
         </p>
         <p style="text-align:center">
-            <img src="img/printall.png" title="Imprimir las fichas de todos los profesores" onclick="imprimirSeleccion(false)" />&nbsp;&nbsp;&nbsp;&nbsp;
-            <img src="img/timetable.png" title="Imprimir las preferencias de horario de todos los profesores" onclick="imprimirPreferenciasSeleccion(false)">&nbsp;&nbsp;&nbsp;&nbsp;
-            <img src="img/reset.png" title="Borrar las selecciones de todos los profesores" onclick="borrarTodasSelecciones()" />&nbsp;&nbsp;&nbsp;&nbsp;
+            <i class="bi bi-printer-fill"></i>&nbsp;&nbsp;&nbsp;&nbsp;
+            <i class="bi bi-calendar-week"></i>&nbsp;&nbsp;&nbsp;&nbsp;
+            <i class="bi bi-arrow-counterclockwise"></i>&nbsp;&nbsp;&nbsp;&nbsp;
         </p>
         <div id="listaprof">
         </div>

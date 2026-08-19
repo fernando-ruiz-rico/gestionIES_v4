@@ -4,15 +4,18 @@
   var backendBase = '../backend/';
   var iconMap = {
     add: 'bi-plus-circle', archive: 'bi-archive', backup: 'bi-database-down', book: 'bi-journal-text', capability: 'bi-award',
-    check: 'bi-check-circle', choose: 'bi-ui-checks', classroom: 'bi-easel', conflicts: 'bi-diagram-3', copy: 'bi-copy',
-    delete: 'bi-trash', delete2: 'bi-trash', deleteall: 'bi-trash3', document: 'bi-file-earmark-text', edit: 'bi-pencil-square',
-    education: 'bi-mortarboard', excel: 'bi-file-earmark-spreadsheet', fill: 'bi-input-cursor-text', filter: 'bi-funnel', hand: 'bi-hand-index-thumb',
-    help: 'bi-question-circle', history: 'bi-clock-history', import: 'bi-box-arrow-in-down', list: 'bi-list-ul', lock: 'bi-lock',
-    logout: 'bi-box-arrow-right', medal: 'bi-award', menu: 'bi-list', off: 'bi-toggle-off', on: 'bi-toggle-on', paths: 'bi-signpost-split',
-    pdf: 'bi-file-earmark-pdf', preview: 'bi-eye', print: 'bi-printer', printall: 'bi-printer-fill', qualification: 'bi-patch-check',
-    reset: 'bi-arrow-counterclockwise', results: 'bi-clipboard-data', save: 'bi-floppy', select: 'bi-check2-square', select2: 'bi-list-check',
-    settings: 'bi-gear', stats: 'bi-bar-chart', teacher: 'bi-people', timetable: 'bi-calendar-week', tracking: 'bi-graph-up-arrow',
-    tree: 'bi-diagram-2', tree2: 'bi-bezier2', unlock: 'bi-unlock', user: 'bi-person-circle', wheel: 'bi-sliders'
+    cart: 'bi-cart', chat: 'bi-chat-dots', check: 'bi-check-circle', choose: 'bi-ui-checks', classroom: 'bi-easel',
+    conflicts: 'bi-diagram-3', connections: 'bi-plug', copy: 'bi-copy', delete: 'bi-trash', delete2: 'bi-trash',
+    deleteall: 'bi-trash3', document: 'bi-file-earmark-text', edit: 'bi-pencil-square', education: 'bi-mortarboard',
+    excel: 'bi-file-earmark-spreadsheet', fill: 'bi-input-cursor-text', filter: 'bi-funnel', hand: 'bi-hand-index-thumb',
+    help: 'bi-question-circle', history: 'bi-clock-history', import: 'bi-box-arrow-in-down', list: 'bi-list-ul',
+    lock: 'bi-lock', logout: 'bi-box-arrow-right', medal: 'bi-award', menu: 'bi-list', off: 'bi-toggle-off',
+    on: 'bi-toggle-on', paths: 'bi-signpost-split', pdf: 'bi-file-earmark-pdf', preview: 'bi-eye',
+    print: 'bi-printer', printall: 'bi-printer-fill', qualification: 'bi-patch-check', reset: 'bi-arrow-counterclockwise',
+    results: 'bi-clipboard-data', save: 'bi-floppy', select: 'bi-check2-square', select2: 'bi-list-check',
+    settings: 'bi-gear', stats: 'bi-bar-chart', teacher: 'bi-people', thumb_up: 'bi-hand-thumbs-up',
+    timetable: 'bi-calendar-week', tracking: 'bi-graph-up-arrow', tree: 'bi-diagram-2', tree2: 'bi-bezier2',
+    unlock: 'bi-unlock', user: 'bi-person-circle', wheel: 'bi-sliders'
   };
 
   function api(path, options) {

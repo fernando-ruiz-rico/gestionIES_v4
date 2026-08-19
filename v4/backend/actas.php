@@ -28,7 +28,7 @@ include('includes/cabecera.php');
         </div>    
         <div class="col-sm-4" id="generarpdf">
             <!-- Botón para ver el acta en formato PDF -->
-            <button class="form-control btn btn-light" onclick="generarPDFActa()"><img src="img/pdf.png"> Generar PDF</button>
+            <button class="form-control btn btn-light" onclick="generarPDFActa()"><i class="bi bi-file-earmark-pdf"></i> Generar PDF</button>
         </div>
     </div>
     <br>
@@ -41,7 +41,7 @@ include('includes/cabecera.php');
 
     <div class="row" style="text-align:center; margin-bottom: 10px" id="nuevaActa">
         <div class="col">
-            <button class="btn btn-light" onclick="nuevaActa()"><img src="img/add.png"> Nueva Acta</button>
+            <button class="btn btn-light" onclick="nuevaActa()"><i class="bi bi-plus-circle"></i> Nueva Acta</button>
         </div>
     </div>
     <div class="row" id="edicionacta">
@@ -56,7 +56,7 @@ include('includes/cabecera.php');
                     <input type="text" name="fecha" id="fecha" class="form-control" required>
                 </div>
                 <textarea name="texto" id="texto" class="textoacta"></textarea>
-                <div style="text-align:center"><button class="btn btn-light" type="submit"><img src="img/save.png"> Guardar cambios</button></div>
+                <div style="text-align:center"><button class="btn btn-light" type="submit"><i class="bi bi-floppy"></i> Guardar cambios</button></div>
             </form>
         </div>
     </div>

@@ -2,7 +2,7 @@
 
 <div class="bg-light">
     <button class="btn btn-light menu-toggle" id="menu-toggle">
-        <img src="img/menu.png" />
+        <i class="bi bi-list"></i>
     </button>
 </div>
 <div class="bg-light border-right" id="sidebar-wrapper" style="z-index:100;">

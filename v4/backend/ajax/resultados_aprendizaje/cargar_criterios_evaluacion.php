@@ -16,8 +16,8 @@ if (!empty($_REQUEST['idResultado']))
 
         echo '<input type="text" maxlength="2" size="2" id="cce' . $codigo .'" name="cce' . $codigo . '" value="' . $codigo . '">&nbsp;';
         echo '<input type="text" size="60" id="tce' . $codigo .'" name="tce' . $codigo . '" value="' . $texto . '">&nbsp;';
-        echo '<button class="btn btn-light" onclick="borrarCriterio(' . $id . ",'" . $codigo . "'" . ')"><img src="img/delete.png"></button>';
-        echo '<button class="btn btn-light" onclick="actualizarCriterio(' . $id . ",'" . $codigo . "'" . ')"><img src="img/edit.png"></button>';
+        echo '<button class="btn btn-light" onclick="borrarCriterio(' . $id . ",'" . $codigo . "'" . ')"><i class="bi bi-trash"></i></button>';
+        echo '<button class="btn btn-light" onclick="actualizarCriterio(' . $id . ",'" . $codigo . "'" . ')"><i class="bi bi-pencil-square"></i></button>';
         echo '<br>';
     }
 
