@@ -1,1 +1,46 @@
-(empty)
+```php
+# Compiled and build artifacts
+*.pyc
+*.o
+*.obj
+dist/
+build/
+target/
+
+# Dependencies
+node_modules/
+vendor/
+composer.lock
+*.lock
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# PHP specific
+*.php~
+*.bak
+.htaccess.bak
+
+# Cache directories
+.cache/
+__pycache__/
+*.cache
+```
