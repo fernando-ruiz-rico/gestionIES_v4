@@ -70,7 +70,7 @@ dom('#listacompetencias').sortable({ items: '.competencia', update: function()
         // Se envían los datos en un string. Cada competencia con el prefijo "cm" y su id, separados por comas
         // En el servidor se procesa esa cadena, se parte y se le asigna un número de orden a cada competencia
         var elementos = (() => { const el = this; return Array.from(el.children).map(c => c.id).join(","); })();
-        $.get("ajax/competencias_ciclos/ordenar_competencias.php", {orden: elementos}, function()
+        http.get("ajax/competencias_ciclos/ordenar_competencias.php", {orden: elementos}, function()
         {
             cargarCompetencias();
         });

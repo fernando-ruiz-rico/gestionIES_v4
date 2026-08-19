@@ -69,15 +69,15 @@ function cargarEspecialidades(idEspecialidad)
             // Accedemos al "select" de especialidad del formulario y rellenamos las opciones
             dom('#especialidad').empty();
             // Añadimos una opción vacía inicial
-            var option = document.createElement('option')
-                .attr('value', '')
-                .text('--Selecciona una especialidad--');
-            dom('#especialidad').append($option);
+            var option = document.createElement('option');
+            option.value = '';
+            option.text = '--Selecciona una especialidad--';
+            dom('#especialidad').append(option);
             for(var i = 0; i < resultado.length; i++) {
-                var option = document.createElement('option')
-                    .attr('value', resultado[i].id)
-                    .text(resultado[i].descripcion);
-                dom('#especialidad').append($option);
+                var option = document.createElement('option');
+                option.value = resultado[i].id;
+                option.text = resultado[i].descripcion;
+                dom('#especialidad').append(option);
             }
 
             if(idEspecialidad)

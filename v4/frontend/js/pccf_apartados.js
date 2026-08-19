@@ -62,7 +62,7 @@ function limpiarFormularioApartados()
 dom('#apartadospccf').sortable({ items: '.apartado', update: function()
     {
         var elementos = (() => { const el = this; return Array.from(el.children).map(c => c.id).join(","); })();
-        $.get("ajax/pccf_apartados/ordenar_apartados.php", {orden: elementos}, function()
+        http.get("ajax/pccf_apartados/ordenar_apartados.php", {orden: elementos}, function()
         {
             cargarApartados();
         });

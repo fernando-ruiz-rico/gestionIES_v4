@@ -56,8 +56,8 @@ function cargarProfesores(selDepartamento)
 async function cargarModalProfesor(idDepartamento) 
 {
     // Si el modal para mostrar el perfil del profesor no existe en el DOM, lo cargamos
-    if (document.getElementById('formprofesor').length === 0) {
-        const modal = await $.get('modales/profesores.php');
+    if (dom('#formprofesor').length === 0) {
+        const modal = await http.get('modales/profesores.php');
         document.body.insertAdjacentHTML('beforeend', modal); // Insertamos el modal al final del body
         
         // Evento de envío del formulario de datos de profesor
@@ -82,15 +82,15 @@ async function cargarModalProfesor(idDepartamento)
 
     if (document.getElementById('idDepartamentoPerfil').value != idDepartamento) {
         // Cargamos las especialidades del departamento para poder rellenar el select del formulario
-        const resEsp = await $.get("ajax/especialidades/cargar_especialidades_json.php", {idDepartamento:idDepartamento});
+        const resEsp = await http.get("ajax/especialidades/cargar_especialidades_json.php", {idDepartamento:idDepartamento});
         const resultado = JSON.parse(resEsp);
         // Accedemos al "select" de especialidad del formulario y rellenamos las opciones
         document.getElementById('idEspecialidadPerfil').innerHTML = '';
         for(var i = 0; i < resultado.length; i++) {
-            var option = document.createElement('option')
-                .attr('value', resultado[i].id)
-                .textContent = resultado[i].descripcion;
-            document.getElementById('idEspecialidadPerfil').append($option);
+            var option = document.createElement('option');
+            option.value = resultado[i].id;
+            option.textContent = resultado[i].descripcion;
+            document.getElementById('idEspecialidadPerfil').appendChild(option);
         }
 
         document.getElementById('idDepartamentoPerfil').value = idDepartamento;
@@ -120,9 +120,9 @@ async function cargarPerfil(idProf, idDep, editarAbreviatura = true)
         document.getElementById('prefhoras').load('ajax/profesores/cargar_preferencias_profesor.php', {idProfesor:idProf});
         // Marcamos como solo lectura la abreviatura si no se puede editar
         if(editarAbreviatura)
-            document.getElementById('abreviaturaPerfil').prop('readonly', false);
+            dom('#abreviaturaPerfil').prop('readonly', false);
         else
-            document.getElementById('abreviaturaPerfil').prop('readonly', true);
+            dom('#abreviaturaPerfil').prop('readonly', true);
 
         (() => { const el = document.getElementById("formprofesor"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });
