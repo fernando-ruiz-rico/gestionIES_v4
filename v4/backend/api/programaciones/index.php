@@ -1,149 +1,125 @@
 <?php
-session_start();
+header('Content-Type: application/json');
 require_once '../../config.php';
 
-header('Content-Type: application/json');
-
-if (!isset($_SESSION['usuario'])) {
-    echo json_encode(['success' => false, 'message' => 'No autorizado']);
-    exit;
-}
-
-$accion = isset($_GET['accion']) ? $_GET['accion'] : '';
+$method = $_SERVER['REQUEST_METHOD'];
+$action = isset($_GET['action']) ? $_GET['action'] : '';
 
 try {
-    switch ($accion) {
-        case 'listar':
-            $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
-            
-            if ($idMateria > 0) {
-                $sql = "SELECT p.*, m.titulo as materia, g.nombre as grupo 
-                        FROM programaciones p 
-                        LEFT JOIN materias m ON p.idMateria = m.id 
-                        LEFT JOIN grupos g ON p.idGrupo = g.id 
-                        WHERE p.idMateria = $idMateria 
-                        ORDER BY p.curso DESC";
-            } else {
-                $sql = "SELECT p.*, m.titulo as materia, g.nombre as grupo 
-                        FROM programaciones p 
-                        LEFT JOIN materias m ON p.idMateria = m.id 
-                        LEFT JOIN grupos g ON p.idGrupo = g.id 
-                        ORDER BY p.curso DESC";
-            }
-            
-            $result = mysql_query($sql);
-            $programaciones = [];
-            
-            if ($result) {
-                while ($row = mysql_fetch_assoc($result)) {
-                    $programaciones[] = $row;
+    switch ($method) {
+        case 'GET':
+            if ($action === 'listar') {
+                $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
+                
+                if ($idMateria > 0) {
+                    $sql = "SELECT p.*, m.titulo as materia, g.nombre as grupo 
+                            FROM programaciones p 
+                            LEFT JOIN materias m ON p.idMateria = m.id 
+                            LEFT JOIN grupos g ON p.idGrupo = g.id 
+                            WHERE p.idMateria = ? 
+                            ORDER BY p.curso DESC";
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute([$idMateria]);
+                } else {
+                    $sql = "SELECT p.*, m.titulo as materia, g.nombre as grupo 
+                            FROM programaciones p 
+                            LEFT JOIN materias m ON p.idMateria = m.id 
+                            LEFT JOIN grupos g ON p.idGrupo = g.id 
+                            ORDER BY p.curso DESC";
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute();
                 }
-            }
-            
-            echo json_encode(['success' => true, 'data' => $programaciones]);
-            break;
-            
-        case 'obtener':
-            $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-            
-            if ($id == 0) {
-                echo json_encode(['success' => false, 'message' => 'ID no válido']);
-                break;
-            }
-            
-            $sql = "SELECT * FROM programaciones WHERE id = $id";
-            $result = mysql_query($sql);
-            
-            if ($result && mysql_num_rows($result) > 0) {
-                $programacion = mysql_fetch_assoc($result);
-                echo json_encode(['success' => true, 'data' => $programacion]);
+                echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+            } elseif ($action === 'obtener' && isset($_GET['id'])) {
+                $sql = "SELECT * FROM programaciones WHERE id = ?";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([$_GET['id']]);
+                $data = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($data) {
+                    echo json_encode(['success' => true, 'data' => $data]);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'error' => 'Programación no encontrada']);
+                }
             } else {
-                echo json_encode(['success' => false, 'message' => 'Programación no encontrada']);
+                throw new Exception('Acción no válida');
             }
             break;
+
+        case 'POST':
+            $data = json_decode(file_get_contents('php://input'), true);
             
-        case 'guardar':
-            $datos = json_decode(file_get_contents('php://input'), true);
-            
-            if (!$datos) {
-                echo json_encode(['success' => false, 'message' => 'Datos no válidos']);
-                break;
-            }
-            
-            $idMateria = intval($datos['idMateria']);
-            $idGrupo = isset($datos['idGrupo']) ? intval($datos['idGrupo']) : 0;
-            $curso = mysql_real_escape_string($datos['curso']);
-            $anyo = isset($datos['anyo']) ? mysql_real_escape_string($datos['anyo']) : '';
-            $profesor = isset($datos['profesor']) ? mysql_real_escape_string($datos['profesor']) : '';
-            $objetivos = isset($datos['objetivos']) ? mysql_real_escape_string($datos['objetivos']) : '';
-            $metodologia = isset($datos['metodologia']) ? mysql_real_escape_string($datos['metodologia']) : '';
-            $evaluacion = isset($datos['evaluacion']) ? mysql_real_escape_string($datos['evaluacion']) : '';
-            $atencion_diversidad = isset($datos['atencion_diversidad']) ? mysql_real_escape_string($datos['atencion_diversidad']) : '';
-            $materiales = isset($datos['materiales']) ? mysql_real_escape_string($datos['materiales']) : '';
-            $bibliografia = isset($datos['bibliografia']) ? mysql_real_escape_string($datos['bibliografia']) : '';
-            
-            if (isset($datos['id']) && $datos['id'] > 0) {
+            if (isset($data['id']) && $data['id'] > 0) {
                 // Actualizar
-                $id = intval($datos['id']);
                 $sql = "UPDATE programaciones SET 
-                        idMateria = $idMateria,
-                        idGrupo = $idGrupo,
-                        curso = '$curso',
-                        anyo = '$anyo',
-                        profesor = '$profesor',
-                        objetivos = '$objetivos',
-                        metodologia = '$metodologia',
-                        evaluacion = '$evaluacion',
-                        atencion_diversidad = '$atencion_diversidad',
-                        materiales = '$materiales',
-                        bibliografia = '$bibliografia'
-                        WHERE id = $id";
-                
-                $result = mysql_query($sql);
-                
-                if ($result) {
-                    echo json_encode(['success' => true, 'message' => 'Programación actualizada correctamente', 'id' => $id]);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Error al actualizar: ' . mysql_error()]);
-                }
+                        idMateria = ?, 
+                        idGrupo = ?, 
+                        curso = ?, 
+                        anyo = ?, 
+                        profesor = ?, 
+                        objetivos = ?, 
+                        metodologia = ?, 
+                        evaluacion = ?, 
+                        atencion_diversidad = ?, 
+                        materiales = ?, 
+                        bibliografia = ? 
+                        WHERE id = ?";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    $data['idMateria'],
+                    $data['idGrupo'] ?: null,
+                    $data['curso'],
+                    $data['anyo'] ?: '',
+                    $data['profesor'] ?: '',
+                    $data['objetivos'] ?: '',
+                    $data['metodologia'] ?: '',
+                    $data['evaluacion'] ?: '',
+                    $data['atencion_diversidad'] ?: '',
+                    $data['materiales'] ?: '',
+                    $data['bibliografia'] ?: '',
+                    $data['id']
+                ]);
+                $id = $data['id'];
             } else {
-                // Crear nueva
+                // Crear
                 $sql = "INSERT INTO programaciones (idMateria, idGrupo, curso, anyo, profesor, objetivos, metodologia, evaluacion, atencion_diversidad, materiales, bibliografia) 
-                        VALUES ($idMateria, $idGrupo, '$curso', '$anyo', '$profesor', '$objetivos', '$metodologia', '$evaluacion', '$atencion_diversidad', '$materiales', '$bibliografia')";
-                
-                $result = mysql_query($sql);
-                
-                if ($result) {
-                    $id = mysql_insert_id();
-                    echo json_encode(['success' => true, 'message' => 'Programación creada correctamente', 'id' => $id]);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Error al crear: ' . mysql_error()]);
-                }
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([
+                    $data['idMateria'],
+                    $data['idGrupo'] ?: null,
+                    $data['curso'],
+                    $data['anyo'] ?: '',
+                    $data['profesor'] ?: '',
+                    $data['objetivos'] ?: '',
+                    $data['metodologia'] ?: '',
+                    $data['evaluacion'] ?: '',
+                    $data['atencion_diversidad'] ?: '',
+                    $data['materiales'] ?: '',
+                    $data['bibliografia'] ?: ''
+                ]);
+                $id = $pdo->lastInsertId();
             }
+            
+            echo json_encode(['success' => true, 'id' => $id]);
             break;
-            
-        case 'eliminar':
-            $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-            
-            if ($id == 0) {
-                echo json_encode(['success' => false, 'message' => 'ID no válido']);
-                break;
-            }
-            
-            $sql = "DELETE FROM programaciones WHERE id = $id";
-            $result = mysql_query($sql);
-            
-            if ($result) {
-                echo json_encode(['success' => true, 'message' => 'Programación eliminada correctamente']);
+
+        case 'DELETE':
+            if (isset($_GET['id'])) {
+                $sql = "DELETE FROM programaciones WHERE id = ?";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([$_GET['id']]);
+                echo json_encode(['success' => true]);
             } else {
-                echo json_encode(['success' => false, 'message' => 'Error al eliminar: ' . mysql_error()]);
+                throw new Exception('ID no proporcionado');
             }
             break;
-            
+
         default:
-            echo json_encode(['success' => false, 'message' => 'Acción no válida']);
+            throw new Exception('Método no permitido');
     }
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
 ?>

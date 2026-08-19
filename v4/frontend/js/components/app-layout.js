@@ -41,7 +41,8 @@ const AppLayout = {
         'cursos-view': CursosView,
         'grupos-view': GruposView,
         'materias-view': MateriasView,
-        'escenarios-view': EscenariosView
+        'escenarios-view': EscenariosView,
+        'programaciones-view': ProgramacionesView
     },
     
     methods: {
@@ -64,7 +65,8 @@ const AppLayout = {
                 'cursos.php': 'cursos-view',
                 'grupos.php': 'grupos-view',
                 'materias.php': 'materias-view',
-                'escenarios.php': 'escenarios-view'
+                'escenarios.php': 'escenarios-view',
+                'programaciones.php': 'programaciones-view'
             };
             
             this.vistaActual = vistaMap[link] || 'home-view';

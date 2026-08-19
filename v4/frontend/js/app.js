@@ -95,6 +95,7 @@ app.component('cursos-view', CursosView);
 app.component('grupos-view', GruposView);
 app.component('materias-view', MateriasView);
 app.component('escenarios-view', EscenariosView);
+app.component('programaciones-view', ProgramacionesView);
 
 // Montar la aplicación
 app.mount('#app');
