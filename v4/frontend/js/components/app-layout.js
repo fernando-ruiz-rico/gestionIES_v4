@@ -34,7 +34,8 @@ const AppLayout = {
     
     components: {
         'home-view': HomeView,
-        'departamentos-view': DepartamentosView
+        'departamentos-view': DepartamentosView,
+        'profesores-view': ProfesoresView
     },
     
     methods: {
@@ -51,6 +52,8 @@ const AppLayout = {
             // Mapear links a vistas
             if (link === 'departamentos.php') {
                 this.vistaActual = 'departamentos-view';
+            } else if (link === 'profesores.php') {
+                this.vistaActual = 'profesores-view';
             } else {
                 this.vistaActual = 'home-view';
             }

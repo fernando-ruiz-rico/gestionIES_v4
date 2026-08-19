@@ -4,14 +4,12 @@
 __pycache__/
 
 # Dependencies
-node_modules/
 vendor/
 composer.lock
 
 # Logs and temp files
 *.log
 *.tmp
-*.swp
 
 # Environment
 .env
@@ -25,8 +23,4 @@ composer.lock
 # OS generated files
 .DS_Store
 Thumbs.db
-
-# PHP specific
-*.php~
-phpunit.xml.dist
 ```
