@@ -20,9 +20,9 @@ include('includes/cabecera.php');
     <p><em>Haz clic en el icono del lápiz para editar los datos de cada resultado, y en el icono de Nuevo al final para añadir nuevos. Puedes eliminar resultados con el icono de borrar junto a cada uno, y asociarles criterios de evaluación con el botón correspondiente.</em></p>
 
     <div class="text-center mb-2">
-        <a class="btn btn-light" href="resultados_aprendizaje_vista_previa.php" target="_blank"><img src="img/preview.png" /> Ver resumen general</a>
-        <a class="btn btn-light ms-3" href="resultados_aprendizaje_vista_previa_empresa.php" target="_blank"><img src="img/preview.png" /> RAs empresa</a>
-        <a class="btn btn-light ms-3" href="criterios_evaluacion_vista_previa_empresa.php" target="_blank"><img src="img/preview.png" /> CEs empresa</a>
+        <a class="btn btn-light" href="resultados_aprendizaje_vista_previa.php" target="_blank"><i class="bi bi-eye"></i> Ver resumen general</a>
+        <a class="btn btn-light ms-3" href="resultados_aprendizaje_vista_previa_empresa.php" target="_blank"><i class="bi bi-eye"></i> RAs empresa</a>
+        <a class="btn btn-light ms-3" href="criterios_evaluacion_vista_previa_empresa.php" target="_blank"><i class="bi bi-eye"></i> CEs empresa</a>
     </div>
 
     <select class="form-control" name="seleccionMateria" id="seleccionMateria" onchange="cambiarMateria()">
@@ -37,7 +37,7 @@ include('includes/cabecera.php');
     if($permisos)
     {
     ?>
-        <div class="text-center mt-2"><button class="btn btn-light" onclick="nuevoResultado()"><img src="img/add.png" /> Nuevo resultado</button></div>
+        <div class="text-center mt-2"><button class="btn btn-light" onclick="nuevoResultado()"><i class="bi bi-plus"></i> Nuevo resultado</button></div>
     <?php
     }
     ?>
