@@ -10,7 +10,7 @@
     <!-- En este div se carga por AJAX el listado de departamentos -->
     <div id="listadepartamentos"></div>
     <!-- Botón para abrir el diálogo modal para crear nuevos departamentos -->
-    <div style="text-align: center"><button class="btn btn-light" onclick="nuevoDepartamento()"><img src="img/add.png" /> Nuevo Departamento</button></div>
+    <div style="text-align: center"><button class="btn btn-light" onclick="nuevoDepartamento()"><i class="bi bi-plus"></i> Nuevo Departamento</button></div>
 </div>
 
 <?php

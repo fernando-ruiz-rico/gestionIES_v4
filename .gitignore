@@ -1,1 +1,26 @@
-Nothing should be ignored based on the provided file changes. The modified files ('v4/frontend/includes/cabecera.php', 'v4/frontend/includes/menu.php') are PHP source files that should be tracked in version control. No build artifacts, dependencies, or temporary files are present in the changes.
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+
+# Dependencies
+vendor/
+composer.lock
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+```

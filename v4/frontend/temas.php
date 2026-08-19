@@ -80,7 +80,7 @@ function mostrarTemasPorMateria($idMateria)
     <h2><?= $datosMateria['materia'] ?> (<?= $datosMateria['curso'] ?>)</h2>
 
     <div id="listatemas"><?= mostrarTemasPorMateria($idMateria) ?></div>
-    <div class="text-center"><button class="btn btn-light" onclick="nuevoTema()"><img src="img/add.png" /> Nueva Unidad</button></div>
+    <div class="text-center"><button class="btn btn-light" onclick="nuevoTema()"><i class="bi bi-plus"></i> Nueva Unidad</button></div>
 </div>
 
 <script src="js/temas.js?v=8"></script>

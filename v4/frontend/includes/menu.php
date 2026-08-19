@@ -2,7 +2,7 @@
 
 <div class="bg-light">
     <button class="btn btn-light menu-toggle" id="menu-toggle">
-        <img src="img/menu.png" alt="Menú" />
+        <i class="bi bi-list"></i>
     </button>
 </div>
 <div class="bg-light border-right" id="sidebar-wrapper" style="z-index:100;">
@@ -40,7 +40,7 @@
         ?>
 
                     <a href="<?= $menu["link"] ?>" class="<?= $class ?>list-group-item list-group-item-action">
-                        <img src="img/<?= $menu["icono"]?>.png" alt="<?= $menu["texto"] ?>" />
+                        <i class="bi <?= $menu["icono"] ?>"></i>
                         <?= $menu["texto"] ?>
                     </a>        
 
@@ -54,7 +54,7 @@
 
                     <a href="#" class="list-group-item list-group-item-action bg-light" 
                         onclick="showSubmenu(<?= $menu["id"] ?>)">
-                        <img src="img/<?= $menu["icono"]?>.png" alt="<?= $menu["texto"] ?>" />
+                        <i class="bi <?= $menu["icono"] ?>"></i>
                         <?= $menu["texto"] ?>
                     </a>        
 

@@ -9,7 +9,7 @@
     <h1>Ciclos formativos</h1>
 
     <div id="listaciclos"></div>
-    <div style="text-align: center"><button class="btn btn-light" onclick="nuevoCiclo()"><img src="img/add.png" /> Nuevo Ciclo</button></div>
+    <div style="text-align: center"><button class="btn btn-light" onclick="nuevoCiclo()"><i class="bi bi-plus"></i> Nuevo Ciclo</button></div>
 </div>
 
 <?php

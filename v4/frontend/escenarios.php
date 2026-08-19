@@ -25,7 +25,7 @@ if($permisos)
 
     <p><em>Elige un posible escenario de la lista para editarlo, o crea nuevos con el botón "Nuevo escenario"</em></p>
     <div id="escenariosdesid"></div>
-    <div style="text-align: center"><button class="btn btn-light" onclick="nuevoEscenario()"><img src="img/add.png" /> Nuevo escenario</button></div>
+    <div style="text-align: center"><button class="btn btn-light" onclick="nuevoEscenario()"><i class="bi bi-plus"></i> Nuevo escenario</button></div>
 </div>
 
 <?php

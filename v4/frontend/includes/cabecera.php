@@ -31,6 +31,7 @@
         <link rel="stylesheet" href="css/menu.css?v=1" />
 
         <!-- Carga de librerías JavaScript -->	
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css">
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>        <script src="../backend/lib/js/tinymce/tinymce.min.js?v=7.9.1"></script>
     </head>
