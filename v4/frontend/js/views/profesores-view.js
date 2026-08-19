@@ -401,7 +401,7 @@ const ProfesoresView = {
         async borrarProfesor(id, nombre) {
             const confirmed = await Swal.fire({
                 title: '¿Borrar profesor?',
-                text: `Se eliminará al profesor "${nombre}" y todos sus vínculos (selección de materias, preferencias de horario...)`,
+                text: 'Se eliminará al profesor "' + nombre + '" y todos sus vínculos (selección de materias, preferencias de horario...)',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, borrar',
