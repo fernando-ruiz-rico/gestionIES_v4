@@ -9,7 +9,7 @@ if (!$db) {
     exit;
 }
 
-$result = mysqli_query($db, "SELECT c.*, e.nombre as especialidad FROM ciclos c LEFT JOIN especialidades e ON c.idEspecialidad = e.idEspecialidad ORDER BY c.nombre");
+$result = mysqli_query($db, "SELECT * FROM ciclos ORDER BY nombre");
 if (!$result) {
     http_response_code(500);
     echo json_encode(['error' => mysqli_error($db)]);
