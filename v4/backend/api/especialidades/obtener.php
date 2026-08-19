@@ -1,39 +1,34 @@
 <?php
-// API endpoint para obtener una especialidad específica
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
 $db = getDBConnection();
-
 if (!$db) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión a la base de datos']);
+    echo json_encode(['error' => 'Error de conexión']);
     exit;
 }
 
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-
-if ($id <= 0) {
+$id = trim($_GET['id'] ?? '');
+if (empty($id)) {
     http_response_code(400);
-    echo json_encode(['error' => 'ID de especialidad inválido']);
+    echo json_encode(['error' => 'ID inválido']);
     exit;
 }
 
-$stmt = mysqli_prepare($db, "SELECT * FROM especialidades WHERE idEspecialidad = ?");
-mysqli_stmt_bind_param($stmt, "i", $id);
+$stmt = mysqli_prepare($db, "SELECT e.*, d.nombre as departamento FROM especialidades e LEFT JOIN departamentos d ON e.idDepartamento = d.idDepartamento WHERE e.id = ?");
+mysqli_stmt_bind_param($stmt, "s", $id);
 mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$especialidad = mysqli_fetch_assoc($result);
+$res = mysqli_stmt_get_result($stmt);
+$row = mysqli_fetch_assoc($res);
 
-if (!$especialidad) {
+if (!$row) {
     http_response_code(404);
-    echo json_encode(['error' => 'Especialidad no encontrada']);
+    echo json_encode(['error' => 'No encontrado']);
     exit;
 }
 
-mysqli_free_result($result);
-mysqli_stmt_close($stmt);
+echo json_encode($row);
+mysqli_free_result($res);
 mysqli_close($db);
-
-echo json_encode($especialidad);
 ?>
