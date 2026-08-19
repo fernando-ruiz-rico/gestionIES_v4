@@ -7,10 +7,11 @@ const Sidebar = {
                 <em>{{ usuario.loginUsuario }}</em>
             </div>
             <div class="list-group list-group-flush">
-                <template v-for="menu in menusFiltrados" :key="menu.id + '-' + menu.texto">
+                <template v-for="menu in menusFiltrados" :key="menu.id + '-' + menu.texto + '-' + (menu.submenu ? 'sub' : 'main')">
                     <!-- Menú principal con link -->
                     <a v-if="!menu.submenu && menu.link" 
-                       :href="getLink(menu.link)" 
+                       href="#" 
+                       @click.prevent="navigate(menu.link)"
                        class="list-group-item list-group-item-action bg-light">
                         <i :class="'bi ' + menu.icono"></i>
                         {{ menu.texto }}
@@ -79,21 +80,14 @@ const Sidebar = {
         },
         
         getParentMenuId(submenuId) {
-            return submenuId;
-        },
-        
-        getLink(link) {
-            // Si es un link externo o javascript, devolverlo tal cual
-            if (link.startsWith('javascript:') || link.startsWith('http')) {
-                return link;
-            }
-            // Para rutas internas, usar hash routing simple
-            return '#' + link;
+            // Buscar el menú padre que contiene este submenu
+            const parent = this.menus.find(m => !m.submenu && m.id === submenuId);
+            return parent ? parent.id : submenuId;
         },
         
         navigate(link) {
             if (link && !link.startsWith('javascript:')) {
-                this.$emit('navigate', link);
+                this.$emit('navigate', link + '.php');
             }
         }
     }
