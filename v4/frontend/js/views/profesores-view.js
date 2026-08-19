@@ -22,7 +22,7 @@ const ProfesoresView = {
                     <div class="row align-items-end">
                         <div class="col-md-4">
                             <label class="form-label fw-bold" for="selectorDepartamento">Departamento</label>
-                            <select class="form-select" id="selectorDepartamento" @change="cargarProfesores">
+                            <select class="form-select" id="selectorDepartamento" v-model="idDepartamentoSeleccionado">
                                 <option value="">-- Seleccionar departamento --</option>
                                 <option v-for="dept in departamentos" :key="dept.id" :value="dept.id">
                                     {{ dept.nombre }}

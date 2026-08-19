@@ -413,8 +413,8 @@ v4/
 |--------|-------------|---------------|--------|
 | Autenticación | ✅ | ✅ | Completado |
 | App Layout | ✅ | ✅ | Completado |
-| Departamentos | ❌ | ❌ | Pendiente |
-| Profesores | ❌ | ❌ | Pendiente |
+| Departamentos | ✅ | ✅ | Completado |
+| Profesores | ✅ | ✅ | Completado |
 | Especialidades | ❌ | ❌ | Pendiente |
 | Ciclos | ❌ | ❌ | Pendiente |
 | Cursos | ❌ | ❌ | Pendiente |
