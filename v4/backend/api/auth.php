@@ -39,24 +39,24 @@ function handleLogin() {
     
     $username = escapeString($username, $conn);
     
-    // Consulta compatible con PHP 5
+    // Consulta compatible con PHP 7+ (mysqli)
     $query = "SELECT idUsuario, loginUsuario, password, rol, nombre, apellidos 
               FROM usuarios 
               WHERE loginUsuario = '$username'";
     
-    $result = mysql_query($query, $conn);
+    $result = mysqli_query($conn, $query);
     
     if (!$result) {
         closeDBConnection($conn);
         sendJSONError('Error en la consulta');
     }
     
-    if (mysql_num_rows($result) == 0) {
+    if (mysqli_num_rows($result) == 0) {
         closeDBConnection($conn);
         sendJSONError('Usuario o contraseña incorrectos');
     }
     
-    $user = mysql_fetch_assoc($result);
+    $user = mysqli_fetch_assoc($result);
     
     // Verificar contraseña (asumiendo que está en texto plano o hash MD5 como en v3)
     // Ajustar según cómo esté implementado en v3

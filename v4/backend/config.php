@@ -19,20 +19,15 @@ define('ROLE_ADMIN', 'admin');
 define('ROLE_JEFE_DEPARTAMENTO', 'jefeDepartamento');
 define('ROLE_PROFESOR', 'profesor');
 
-// Función para conectar a la base de datos (compatible con PHP 5)
+// Función para conectar a la base de datos (compatible con PHP 7+)
 function getDBConnection() {
-    $conn = mysql_connect(DB_HOST, DB_USER, DB_PASS);
+    $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     if (!$conn) {
         return null;
     }
     
-    if (!mysql_select_db(DB_NAME, $conn)) {
-        mysql_close($conn);
-        return null;
-    }
-    
     // Establecer charset utf8
-    mysql_query("SET NAMES 'utf8'");
+    mysqli_set_charset($conn, 'utf8');
     
     return $conn;
 }
@@ -40,13 +35,13 @@ function getDBConnection() {
 // Función para cerrar conexión
 function closeDBConnection($conn) {
     if ($conn) {
-        mysql_close($conn);
+        mysqli_close($conn);
     }
 }
 
 // Función para escapar strings (prevención SQL injection básica)
 function escapeString($str, $conn) {
-    return mysql_real_escape_string($str, $conn);
+    return mysqli_real_escape_string($conn, $str);
 }
 
 // Función para enviar respuesta JSON
