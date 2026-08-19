@@ -24,7 +24,8 @@
         <title>Gestión interna IESSV</title>
 
         <!-- Carga de CSS -->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">        <!-- Estilos generales de la web (aparte de los de Bootstrap) -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <!-- Estilos generales de la web (aparte de los de Bootstrap) -->
         <link rel="stylesheet" href="css/estilos.css?v=3" />
         <!-- Estilos específicos para el menú -->
         <link rel="stylesheet" href="css/menu.css?v=1" />
