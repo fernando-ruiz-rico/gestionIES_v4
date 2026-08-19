@@ -3,21 +3,32 @@ header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
 $db = getDBConnection();
-if (!$db) { http_response_code(500); echo json_encode(['error' => 'Error de conexión']); exit; }
+if (!$db) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de conexión']);
+    exit;
+}
 
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-if ($id <= 0) { http_response_code(400); echo json_encode(['error' => 'ID inválido']); exit; }
+$idCiclo = intval($_GET['idCiclo'] ?? 0);
+if ($idCiclo <= 0) {
+    http_response_code(400);
+    echo json_encode(['error' => 'ID inválido']);
+    exit;
+}
 
-$stmt = mysqli_prepare($db, "SELECT * FROM ciclos WHERE idCiclo = ?");
-mysqli_stmt_bind_param($stmt, "i", $id);
+$stmt = mysqli_prepare($db, "SELECT c.*, e.nombre as especialidad FROM ciclos c LEFT JOIN especialidades e ON c.idEspecialidad = e.idEspecialidad WHERE c.idCiclo = ?");
+mysqli_stmt_bind_param($stmt, "i", $idCiclo);
 mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$ciclo = mysqli_fetch_assoc($result);
+$res = mysqli_stmt_get_result($stmt);
+$row = mysqli_fetch_assoc($res);
 
-if (!$ciclo) { http_response_code(404); echo json_encode(['error' => 'No encontrado']); exit; }
+if (!$row) {
+    http_response_code(404);
+    echo json_encode(['error' => 'No encontrado']);
+    exit;
+}
 
-mysqli_free_result($result);
-mysqli_stmt_close($stmt);
+echo json_encode($row);
+mysqli_free_result($res);
 mysqli_close($db);
-echo json_encode($ciclo);
 ?>
