@@ -1,1 +1,53 @@
-Nothing needs to be added to the .gitignore file based on the provided changes. The modified file 'v4/frontend/includes/cabecera.php' is a PHP source file that should not be ignored.
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+
+# Dependencies
+vendor/
+node_modules/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Backup files
+*~
+*.bak
+*.swp
+
+# Cache directories
+.cache/
+.php_cs.cache
+
+# Distribution / packaging
+dist/
+build/
+*.tar.gz
+*.zip
+
+# PHP specific
+*.php~
+.htaccess
+
+# Session files
+sess_*
+
+# Uploads / media (if not versioned)
+uploads/
+files/
+storage/
+```
