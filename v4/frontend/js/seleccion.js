@@ -17,10 +17,10 @@ function seleccionarEscenario()
     selEscenario = document.getElementById('escenario').value;
     if (selEscenario <= 0)
     {
-        document.querySelectorAll('.panelseleccion').style.display = 'none';
+        document.querySelector(".panelseleccion").style.display = 'none';
     } else {
         
-        document.querySelectorAll('.panelseleccion').style.display = 'block';
+        document.querySelector(".panelseleccion").style.display = 'block';
         listarProfesores();
         listarCursos();
         listarSeleccion();
@@ -32,10 +32,10 @@ function seleccionarProfesor(id, especialidad)
 {
     selProf = id;
     selEspecialidadProf= especialidad;
-    document.querySelectorAll('.profesor').className = 'profesor izquierda claro';
+    document.querySelector(".profesor").setAttribute('class', 'profesor izquierda claro');
     if (id > 0)
     {
-        $('#prof'+id).className = 'profesor izquierda oscuro';
+        document.getElementById('prof' + id).setAttribute('class', 'profesor izquierda oscuro');
         listarSeleccion()
     }
 }
@@ -105,7 +105,7 @@ function seleccionarHorasMateria(idMateria, idGrupo, especialidadMateria, horas,
             document.getElementById('horas').value = horas;
             // Las horas no se pueden modificar si la materia no se puede dividir entre varios profesores
             document.getElementById('horas').prop("readonly", !divisible);
-            document.getElementById('formhorasseleccion').show();
+            (() => { const el = document.getElementById("formhorasseleccion"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
         }
     }
 }
@@ -155,9 +155,9 @@ function borrarTodasSelecciones()
 // Marca como seleccionada una de las materias del panel de selección (derecho)
 function seleccionarSeleccion(id)
 {
-    document.querySelectorAll('.seleccion').className = 'seleccion izquierda claro';
+    document.querySelector(".seleccion").setAttribute('class', 'seleccion izquierda claro');
     if (id > 0)
-        $('#sel'+id).className = 'seleccion izquierda oscuro';
+        document.getElementById('sel' + id).setAttribute('class', 'seleccion izquierda oscuro');
     selSel = id;
 }
 
@@ -169,7 +169,7 @@ function cargarSeleccionesMateria(idMateria, idGrupo, idEscenario, nombreMateria
     // Cargamos en el "div" correspondiente del modal los profesores que han elegido esta materia
     document.getElementById('listadoProfesoresMateria').load('ajax/seleccion/cargar_listado_profesores_materia.php', {idMateria: idMateria, idGrupo: idGrupo, idEscenario: idEscenario}, function()
     {
-        document.getElementById('seleccionesmateria').show();          
+        (() => { const el = document.getElementById("seleccionesmateria"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();          
     });
 }
 
@@ -216,7 +216,7 @@ function seleccionarHoras()
         seleccionarSeleccion(-1);
         listarCursos();
     });
-    document.getElementById('formhorasseleccion').hide();
+    (() => { const el = document.getElementById("formhorasseleccion"); const modal = bootstrap.Modal.getInstance(el); if(modal) modal.hide(); })();
 }
 
 // Muestra una vista previa general de la selección de todos los profesores para el escenario actual
@@ -241,7 +241,7 @@ function init()
     document.getElementById('listacur').accordion({header: '.curso', heightStyle: 'content', active: false, collapsible: true});        
     document.getElementById('listasel').sortable({update: function()
     {
-       var elementos = $(this).sortable("toArray").toString();
+       var elementos = (() => { const el = this; return Array.from(el.children).map(c => c.id).join(","); })();
         $.get("ajax/seleccion/ordenar_seleccion.php", {idEscenario: selEscenario, orden: elementos});
     }
     });

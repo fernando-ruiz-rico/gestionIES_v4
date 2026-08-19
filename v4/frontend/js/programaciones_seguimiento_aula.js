@@ -29,9 +29,9 @@ function cambiarMateria()
 
     // Actualizamos los grupos según la materia elegida
     document.getElementById('idGrupo').prop('disabled', true).innerHTML = '<option value="0">Cargando…</option>';
-    $.ajax({ url: 'ajax/programaciones_aula/cargar_grupos.php', method: 'POST', dataType: 'json',
+    fetch("ajax/programaciones_aula/cargar_grupos.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" } }).then(r => r.json())
         data: { idMateria: selMateria, idProfesor: selProfesor }})
-    .done(function (res) {
+    .then(function(res) {
         let opciones = '<option value="0">--Selecciona un grupo--</option>';
         res.forEach(function (a) {
             opciones += `<option value="${a.id}">${a.nombre}</option>`;
@@ -61,7 +61,7 @@ function calcularTotalAlumnos()
 {
     let total = 0;
     camposNumero.forEach(function(idCampo) {
-        total += parseInt($('#' + idCampo).value);
+        total += parseInt(document.getElementById(idCampo).value);
     });
     document.getElementById('alumnostotal').value = total;
 }    
@@ -71,9 +71,7 @@ function cargarContenido()
 {
     if(selMateria > 0 && selGrupo > 0 && selEvaluacion > 0)
     {
-        $.post('ajax/programaciones_seguimiento/cargar_datos_seguimiento_aula.php', 
-               {idMateria: selMateria, idGrupo: selGrupo, idProfesor: selProfesor, curso: selCurso, idEvaluacion: selEvaluacion}, function(res) 
-        {
+        fetch("ajax/programaciones_seguimiento/cargar_datos_seguimiento_aula.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({idMateria: selMateria, idGrupo: selGrupo, idProfesor: selProfesor, curso: selCurso, idEvaluacion: selEvaluacion}).toString() }).then(r => r.text()).then(res => {
             document.getElementById('edicionseguimientoaula').style.display = 'block';
             camposTexto.forEach(function(idCampo) {
                 if (tinymce.get(idCampo)) {
@@ -81,7 +79,7 @@ function cargarContenido()
                 }
             });
             camposNumero.forEach(function(idCampo) {
-                $('#' + idCampo).value = res[idCampo] ? res[idCampo] : 0;
+                document.getElementById(idCampo).value = res[idCampo] ? res[idCampo] : 0;
             });
             calcularTotalAlumnos();
         });
@@ -104,7 +102,8 @@ function generarPDFSeguimientoAula(categoria)
 }
 
 // Guardar cambios al contenido editado
-$("#formSeguimientoAula").addEventListener('submit', function(e) {
+document.getElementById("formSeguimientoAula").addEventListener("submit", function(e)
+{
     e.preventDefault();
     calcularTotalAlumnos();
     camposTexto.forEach(function(idCampo) {
@@ -113,16 +112,8 @@ $("#formSeguimientoAula").addEventListener('submit', function(e) {
         }
     });
     const formData = new FormData(document.forms.formSeguimientoAula);
-    $.ajax({
-        url: "ajax/programaciones_seguimiento/insertar_seguimiento_programacion_aula.php",
-        type: "post",
-        dataType: "html",
-        data: formData,
-        cache: false,
-        contentType: false,
-        processData: false
-    })
-    .done(function(res){
+    fetch("ajax/programaciones_seguimiento/insertar_seguimiento_programacion_aula.php", { method: "POST", body: formData })
+    .then(function(res) {
         if (res.trim() == 'si')
             mostrarMensaje("Error al realizar la operación indicada. Si no has hecho cambios respecto al contenido previamente guardado, ignora este mensaje", 0);
         else

@@ -26,12 +26,12 @@ function cargarResultados()
 // Muestra los datos del resultado indicado en el formulario modal, para su edición
 function cargarResultadoModal(id)
 {
-    fetch("ajax/resultados_aprendizaje/cargar_resultado_aprendizaje.php?" + new URLSearchParams(idResultado:id)).then(response => response.text()).then(res => {
+    fetch("ajax/resultados_aprendizaje/cargar_resultado_aprendizaje.php?" + new URLSearchParams({idResultado:id}).toString()).then(r => r.json()).then(res => {
         document.getElementById('idResultado').value = id;
         document.getElementById('texto').value = res.texto;
         document.getElementById('orden').value = res.orden;
         document.getElementById('porcentajeEmpresa').value = res.porcentaje_empresa;
-        $("#formresultado").show();
+        (() => { const el = document.getElementById("formresultado"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });    
 }
 
@@ -41,7 +41,7 @@ function nuevoResultado()
     if(selMateria > 0)
     {
         limpiarFormularioResultados();
-        document.getElementById('formresultado').show();
+        (() => { const el = document.getElementById("formresultado"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     } else {
         mostrarMensaje("Debes elegir una materia primero", 2);
     }
@@ -52,8 +52,7 @@ function borrarResultado (id, texto)
 {
     if (confirm("Confirmas el borrado del resultado '" + texto + "'?"))
     {
-        $.post("ajax/resultados_aprendizaje/borrar_resultado_aprendizaje.php", {id:id}, function(res)
-        {
+        fetch("ajax/resultados_aprendizaje/borrar_resultado_aprendizaje.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({id:id}).toString() }).then(r => r.text()).then(res => {
             cargarResultados();
         });            
     }
@@ -62,9 +61,9 @@ function borrarResultado (id, texto)
 // Borra el contenido de los campos del formulario modal de alta/edición de cursos
 function limpiarFormularioResultados()
 {
-    document.getElementById('idResultado').value = "";
-    document.getElementById('texto').value = "";
-    document.getElementById('orden').value = "";
+    document.getElementById('idResultado').value = '';
+    document.getElementById('texto').value = '';
+    document.getElementById('orden').value = '';
     document.getElementById('porcentajeEmpresa').value = "0";    
 }
 
@@ -79,17 +78,16 @@ function actualizarHorasEmpresa(idMateria)
 // Carga el modal para asociar criterios de evaluación al RA indicado
 function asociarCriterios(id)
 {
-    fetch("ajax/resultados_aprendizaje/cargar_criterios_evaluacion.php?" + new URLSearchParams(idResultado:id)).then(response => response.text()).then(res => {
+    fetch("ajax/resultados_aprendizaje/cargar_criterios_evaluacion.php?" + new URLSearchParams({idResultado:id}).toString()).then(r => r.json()).then(res => {
         document.getElementById('listadocriterios').innerHTML = res;
-        document.getElementById('formcriterio').show();
+        (() => { const el = document.getElementById("formcriterio"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });
 }
 
 // Borra el criterio de evaluación indicado por el id del RA y el código de criterio
 function borrarCriterio(idRA, codigo)
 {
-    $.post("ajax/resultados_aprendizaje/borrar_criterio_evaluacion.php", {idResultado:idRA, codigo: codigo}, function(res)
-    {
+    fetch("ajax/resultados_aprendizaje/borrar_criterio_evaluacion.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({idResultado:idRA, codigo: codigo}).toString() }).then(r => r.text()).then(res => {
         asociarCriterios(idRA);
     });
 }
@@ -97,10 +95,9 @@ function borrarCriterio(idRA, codigo)
 // Actualiza los datos del criterio de evaluación indicado
 function actualizarCriterio(idRA, codigo)
 {
-    let nuevoCodigo = $('#cce' + codigo).value;
-    let nuevoTexto = $('#tce' + codigo).value;
-    $.post("ajax/resultados_aprendizaje/actualizar_criterio_evaluacion.php", {idResultado:idRA, codigo: codigo, nuevoCodigo: nuevoCodigo, nuevoTexto: nuevoTexto}, function(res)
-    {
+    let nuevoCodigo = document.getElementById('cce' + codigo).value;
+    let nuevoTexto = document.getElementById('tce' + codigo).value;
+    fetch("ajax/resultados_aprendizaje/actualizar_criterio_evaluacion.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({idResultado:idRA, codigo: codigo, nuevoCodigo: nuevoCodigo, nuevoTexto: nuevoTexto}).toString() }).then(r => r.text()).then(res => {
         asociarCriterios(idRA);
     });
 }
@@ -111,28 +108,20 @@ function insertarCriterio(idRA)
     let nuevoCodigo = document.getElementById('codigoCE').value;
     let nuevoTexto = document.getElementById('textoCE').value;
 
-    $.post("ajax/resultados_aprendizaje/insertar_criterio_evaluacion.php", {idResultado:idRA, nuevoCodigo: nuevoCodigo, nuevoTexto: nuevoTexto}, function(res)
-    {
+    fetch("ajax/resultados_aprendizaje/insertar_criterio_evaluacion.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({idResultado:idRA, nuevoCodigo: nuevoCodigo, nuevoTexto: nuevoTexto}).toString() }).then(r => r.text()).then(res => {
         asociarCriterios(idRA);
     });
 }
 
 // Evento de envío del formulario modal para inserción/modificación
-$("#formres").addEventListener('submit', function(e) {
+document.getElementById("formres").addEventListener("submit", function(e)
+{
     e.preventDefault();
     let formData = new FormData(document.forms.formres);
-    $.ajax({
-        url: "ajax/resultados_aprendizaje/insertar_resultado_aprendizaje.php",
-        type: "post",
-        dataType: "html",
-        data: formData,
-        cache: false,
-        contentType: false,
-        processData: false
-    })
-    .done(function(res){
+    fetch("ajax/resultados_aprendizaje/insertar_resultado_aprendizaje.php", { method: "POST", body: formData })
+    .then(function(res) {
         limpiarFormularioResultados();
-        $("#formresultado").hide();
+        (() => { const el = document.getElementById("formresultado"); const modal = bootstrap.Modal.getInstance(el); if(modal) modal.hide(); })();
         cargarResultados();
     });
 });

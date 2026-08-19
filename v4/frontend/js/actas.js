@@ -3,14 +3,14 @@
 // el fichero js/main.js
 
 // Hacemos que el campo "fecha" tenga un "datepicker" para elegir la fecha
+// Datepicker eliminado - usar input type='date' nativo de HTML5
 if(document.getElementById('fecha'))
-    document.getElementById('fecha').datepicker({dateFormat: "dd/mm/yy"});
+    document.getElementById('fecha').type = 'date';
 
 // Función para rellenar el desplegable de fechas de actas disponibles para el departamento actual
 function cargarActas()
 {
-    $.post('ajax/actas/cargar_actas_departamento.php', function(res)
-    {
+    fetch('ajax/actas/cargar_actas_departamento.php', { method: 'POST' }).then(r => r.text()).then(res => {
         document.getElementById('fechasActas').innerHTML = res;
     });
 }
@@ -23,18 +23,16 @@ function cambiarActa(edicion)
     if (selActa != "")
     {
         document.getElementById('edicionacta').style.display = 'block';
-        $.post('ajax/actas/cargar_fecha_acta.php', {idActa: selActa}, function(res)
-        {
+        fetch("ajax/actas/cargar_fecha_acta.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({idActa: selActa}).toString() }).then(r => r.text()).then(res => {
             document.getElementById('fecha').value = res;
         });
-        $.post('ajax/actas/cargar_contenido_acta.php', {idActa: selActa}, function(res)
-        {
+        fetch("ajax/actas/cargar_contenido_acta.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({idActa: selActa}).toString() }).then(r => r.text()).then(res => {
             if (tinymce.get('texto'))
                 tinymce.get('texto').setContent(res);
         });
     } else {
         document.getElementById('edicionacta').style.display = 'none';
-        document.getElementById('fecha').value = "";
+        document.getElementById('fecha').value = '';
         if (tinymce.get('texto'))
             tinymce.get('texto').setContent("");        
     }
@@ -43,11 +41,10 @@ function cambiarActa(edicion)
 // Función para preparar el formulario con datos de una nueva acta
 function nuevaActa()
 {
-    $.post('ajax/actas/nueva_acta_departamento.php', function(res)
-    {
+    fetch('ajax/actas/nueva_acta_departamento.php', { method: 'POST' }).then(r => r.text()).then(res => {
         document.getElementById('edicionacta').style.display = 'block';
-        document.getElementById('idActa').value = "";
-        document.getElementById('fecha').value = "";
+        document.getElementById('idActa').value = '';
+        document.getElementById('fecha').value = '';
         if (tinymce.get('texto'))
             tinymce.get('texto').setContent(res);
     });
@@ -64,7 +61,8 @@ function generarPDFActa()
 }
 
 // Envío del formulario para el acta
-$("#formacta").addEventListener('submit', function(e) {
+document.getElementById("formacta").addEventListener("submit", function(e)
+{
     tinymce.get('texto').save();
     e.preventDefault();
 
@@ -75,16 +73,8 @@ $("#formacta").addEventListener('submit', function(e) {
     else
     {
         var formData = new FormData(document.forms.formacta);
-        $.ajax({
-            url: "ajax/actas/insertar_acta_departamento.php",
-            type: "post",
-            dataType: "html",
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData: false
-        })
-        .done(function(res){            
+        fetch("ajax/actas/insertar_acta_departamento.php", { method: "POST", body: formData })
+        .then(function(res) {            
             if (res.trim() == 'si' || res.trim() == '0')
                 mostrarMensaje("Error al realizar la operación indicada", 0);
             else
