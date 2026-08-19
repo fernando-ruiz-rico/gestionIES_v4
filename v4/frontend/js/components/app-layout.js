@@ -66,7 +66,16 @@ const AppLayout = {
                 'grupos.php': 'grupos-view',
                 'materias.php': 'materias-view',
                 'escenarios.php': 'escenarios-view',
-                'programaciones.php': 'programaciones-view'
+                'programaciones.php': 'programaciones-view',
+                'apartados-programaciones.php': 'apartados-programaciones-view',
+                'contenidos-defecto-programaciones.php': 'contenidos-defecto-programaciones-view',
+                'temas.php': 'temas-view',
+                'contenidos-defecto-temas.php': 'contenidos-defecto-temas-view',
+                'seguimiento-programaciones.php': 'seguimiento-programaciones-view',
+                'programaciones-aula.php': 'programaciones-aula-view',
+                'pccf-apartados.php': 'pccf-apartados-view',
+                'pccf-contenidos-defecto.php': 'pccf-contenidos-defecto-view',
+                'pccf.php': 'pccf-view',
             };
             
             this.vistaActual = vistaMap[link] || 'home-view';
