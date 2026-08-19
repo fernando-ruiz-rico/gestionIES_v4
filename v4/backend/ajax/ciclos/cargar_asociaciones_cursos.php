@@ -22,8 +22,8 @@ if (!empty($_REQUEST['idCiclo']))
         $nombre = $fila['nombre'];
         $orden = $fila['orden'];
         echo '<input type="number" min="1" max="10" size="2" id="orden' . $id .'" name="orden' . $id . '" value="' . $orden . '">&nbsp;';
-        echo '<button class="btn btn-light" onclick="borrarCurso(' . $_REQUEST['idCiclo'] . "," . $id . ')"><img src="img/delete.png"></button>';
-        echo '<button class="btn btn-light" onclick="actualizarCurso(' . $_REQUEST['idCiclo'] . "," . $id . ')"><img src="img/edit.png"></button>&nbsp;';
+        echo '<button class="btn btn-light" onclick="borrarCurso(' . $_REQUEST['idCiclo'] . "," . $id . ')"><i class="bi bi-trash"></i></button>';
+        echo '<button class="btn btn-light" onclick="actualizarCurso(' . $_REQUEST['idCiclo'] . "," . $id . ')"><i class="bi bi-pencil-square"></i></button>&nbsp;';
         echo $nombre . '&nbsp;';
         echo '<br>';
 

@@ -45,14 +45,14 @@ $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin';
             <?php if ($permisos) { ?>
                 <div class="col-md">
                     <button class="btn btn-light w-100" id="generarpdfapartado" onclick="generarPDFApartado()">
-                        <img src="img/pdf.png" alt="PDF por apartado"> Generar PDF de Apartado
+                        <i class="bi bi-file-earmark-pdf"></i> Generar PDF de Apartado
                     </button>
                 </div>
             <?php } ?>
 
             <div class="col-md">
                 <button class="btn btn-light w-100" id="generarpdfcompleto" onclick="generarPDF()">
-                    <img src="img/pdf.png" alt="PDF completo"> Generar PDF
+                    <i class="bi bi-file-earmark-pdf"></i> Generar PDF
                 </button>
             </div>
         </div>
@@ -65,7 +65,7 @@ $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin';
                     <input type="hidden" name="idApartado" id="idApartado" value="">
                     <textarea name="texto" class="progeditar" id="texto"></textarea>
                     <div class="text-center mt-3">
-                        <button class="btn btn-light" type="submit"><img src="img/save.png"> 
+                        <button class="btn btn-light" type="submit"><i class="bi bi-floppy"></i> 
                             Guardar cambios
                         </button>
                     </div>

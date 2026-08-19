@@ -42,7 +42,7 @@ $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin';
             <?php if ($permisos) { ?>
                 <div class="col-md">
                     <button class="btn btn-light w-100" onclick="contenidoDefectoTemas()"> 
-                        <img src="img/backup.png" alt="Contenido por defecto"> Cont. defecto Unidades
+                        <i class="bi bi-database-down"></i> Cont. defecto Unidades
                     </button>
 
                 </div>
@@ -55,7 +55,7 @@ $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin';
                     <form name="temas" id="temas" action="temas.php" method="get" target="_blank">
                         <input type="hidden" name="idMateria" value="">
                         <button type="submit" class="btn btn-light w-100">
-                            <img src="img/list.png" alt="Unidades"> Unidades
+                            <i class="bi bi-list-ul"></i> Unidades
                         </button>
                     </form>
                 </div>
@@ -63,27 +63,27 @@ $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin';
 
             <div class="col-md">
                 <button class="btn btn-light w-100" onclick="generarPDFUnidades()">
-                    <img src="img/pdf.png" alt="PDF de Unidades"> PDF de Unidades
+                    <i class="bi bi-file-earmark-pdf"></i> PDF de Unidades
                 </button>
             </div>
 
             <!-- Desactivado temporalmente hasta tenerlo acabado
             <div class="col-md">
                 <button class="btn btn-light w-100" onclick="vistaPreviaProgramacion()">
-                    <img src="img/preview.png" alt="Vista previa"> Previsualizar
+                    <i class="bi bi-eye"></i> Previsualizar
                 </button>
             </div>
             -->
 
             <div class="col-md">
                 <button class="btn btn-light w-100" onclick="generarPDFApartado()">
-                    <img src="img/pdf.png" alt="PDF por apartado"> PDF de Apartado
+                    <i class="bi bi-file-earmark-pdf"></i> PDF de Apartado
                 </button>
             </div>
 
             <div class="col-md">
                 <button class="btn btn-light w-100" onclick="generarPDF()">
-                    <img src="img/pdf.png" alt="PDF completo"> PDF Completo
+                    <i class="bi bi-file-earmark-pdf"></i> PDF Completo
                 </button>
             </div>
 
@@ -91,7 +91,7 @@ $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin';
             <?php if ($permisos) { ?>
                 <div class="col-md">
                     <button class="btn btn-primary w-100" onclick="importarProgramacion()">
-                        <img src="img/import.png" alt="Importar programación"> Importar
+                        <i class="bi bi-box-arrow-in-down"></i> Importar
                     </button>
                 </div>
             <?php } ?>
@@ -106,7 +106,7 @@ $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin';
                     <textarea name="texto" class="progeditar" id="texto"></textarea>
                     <div class="text-center mt-3">
                         <button type="submit" class="btn btn-light">
-                            <img src="img/save.png" alt="Guardar"> Guardar cambios
+                            <i class="bi bi-floppy"></i> Guardar cambios
                         </button>
                     </div>
                 </form>

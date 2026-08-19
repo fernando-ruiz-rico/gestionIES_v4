@@ -29,7 +29,7 @@
     <br>
     <p><em>Arrastra las competencias para ordenarlas entre sí. Haz clic en el icono del lápiz para editar los datos de cada competencia, y en el icono de Nueva al final para añadir nuevas. Puedes eliminar competencias con el icono de borrar junto a cada apartado.</em></p>
     <div id="listacompetencias"></div>
-    <div style="text-align: center"><button class="btn btn-light" onclick="nuevaCompetencia()"><img src="img/add.png" /> Nueva Competencia</button></div>
+    <div style="text-align: center"><button class="btn btn-light" onclick="nuevaCompetencia()"><i class="bi bi-plus-circle"></i> Nueva Competencia</button></div>
 
 </div>
 

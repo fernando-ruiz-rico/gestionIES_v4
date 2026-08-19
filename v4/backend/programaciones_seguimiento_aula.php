@@ -69,12 +69,12 @@ $cursoActual = cursoActual();
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <button class="btn btn-light w-100" type="button" onclick="generarPDFSeguimientoAula('FP')">
-                            <img src="img/pdf.png"> PDF seguimiento Ciclos Formativos
+                            <i class="bi bi-file-earmark-pdf"></i> PDF seguimiento Ciclos Formativos
                         </button>
                     </div>
                     <div class="col-md-6">
                         <button class="btn btn-light w-100" type="button" onclick="generarPDFSeguimientoAula('ESO/BACH')">
-                            <img src="img/pdf.png"> PDF seguimiento ESO/BACH
+                            <i class="bi bi-file-earmark-pdf"></i> PDF seguimiento ESO/BACH
                         </button>
                     </div>
                 </div>
@@ -123,7 +123,7 @@ $cursoActual = cursoActual();
 
                     <div class="text-center mt-4 mb-2">
                         <button type="submit" class="btn btn-light btn-lg">
-                            <img src="img/save.png" alt="Guardar"> Guardar cambios
+                            <i class="bi bi-floppy"></i> Guardar cambios
                         </button>
                     </div>
                 </div>

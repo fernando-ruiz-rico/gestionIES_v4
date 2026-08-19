@@ -85,7 +85,7 @@ if(isset($_SESSION['departamentoUsuario']))
             if($modoRueda && !$super)
                 echo '<div class="materia izquierda claro"><div class=izquierda>'. $nombreMateria . ' (' . $horas . 'h)&nbsp;' . $info . '</div><div class="derecha" onclick="cargarSeleccionesMateria(' . $idMateria . "," . $idGrupo . "," . $idEscenario . ",'" . $nombreMateria . "'" . ",'" . $nombreCurso . "','" . $nombreGrupo . "')\">" . $datos . '</div></div>';
             else
-                echo '<div class="materia izquierda claro"><div class=izquierda><button onclick="seleccionarHorasMateria(' . $idMateria . ", $idGrupo, '" . $especialidadMateria . "', " . $horas . ', ' . ($divisible?"true":"false") . ')"><img src="img/add.png" width="20" /></button>&nbsp;'. $nombreMateria . ' (' . $horas . 'h)&nbsp;' . $info . '</div><div class="derecha" onclick="cargarSeleccionesMateria(' . $idMateria . "," . $idGrupo . "," . $idEscenario . ",'" . $nombreMateria . "'" . ",'" . $nombreCurso . "','" . $nombreGrupo . "')\">" . $datos . '</div></div>';
+                echo '<div class="materia izquierda claro"><div class=izquierda><button onclick="seleccionarHorasMateria(' . $idMateria . ", $idGrupo, '" . $especialidadMateria . "', " . $horas . ', ' . ($divisible?"true":"false") . ')"><i class="bi bi-plus-circle"></i></button>&nbsp;'. $nombreMateria . ' (' . $horas . 'h)&nbsp;' . $info . '</div><div class="derecha" onclick="cargarSeleccionesMateria(' . $idMateria . "," . $idGrupo . "," . $idEscenario . ",'" . $nombreMateria . "'" . ",'" . $nombreCurso . "','" . $nombreGrupo . "')\">" . $datos . '</div></div>';
         }
         echo '</div>';
 

@@ -20,12 +20,12 @@ if (!empty($_REQUEST['idDepartamento']))
         echo '<div class="izquierda">'. $nombre . '</div>';
         echo '<div class="derecha">';
         // Botón para activar/desactivar al profesor
-        echo '<button title="Activar/Desactivar profesor" class="btn btn-light" onclick="cambiarActivo(' . $id . ')"><img src="img/' . ($activo?'on':'off') . '.png" /></button>';
+        echo '<button title="Activar/Desactivar profesor" class="btn btn-light" onclick="cambiarActivo(' . $id . ')"><i class="bi ' . ($activo?'bi-toggle-on':'bi-toggle-off') . '"></i></button>';
         // Botón para asignar la jefatura de departamento
-        echo '<button title="Elegir jefe de departamento" class="btn ' . ($jefe?'btn-success':'btn-light') . '" onclick="cambiarJefe(' . $id . ', ' . $idDepartamento . ')"><img src="img/medal.png" /></button>';
+        echo '<button title="Elegir jefe de departamento" class="btn ' . ($jefe?'btn-success':'btn-light') . '" onclick="cambiarJefe(' . $id . ', ' . $idDepartamento . ')"><i class="bi bi-award"></i></button>';
         // Botones para borrar profesor o cargar el modal para editar sus datos
-        echo '<button class="btn btn-light" onclick="borrarProfesor(' . $id . ",'" . $nombre . "'" . ')"><img src="img/delete.png"></button>';
-        echo '<button class="btn btn-light" onclick="cargarPerfil(' . $id . ',' . $idDepartamento . ')"><img src="img/edit.png"></button></div>';
+        echo '<button class="btn btn-light" onclick="borrarProfesor(' . $id . ",'" . $nombre . "'" . ')"><i class="bi bi-trash"></i></button>';
+        echo '<button class="btn btn-light" onclick="cargarPerfil(' . $id . ',' . $idDepartamento . ')"><i class="bi bi-pencil-square"></i></button></div>';
         echo '</div>';
     }
 

@@ -17,7 +17,7 @@
     </div>
 
     <div id="listaprincipal"></div>
-    <!--<div style="text-align: center"><button class="btn btn-light" onclick="nuevoCiclo()"><img src="img/add.png" /> Nuevo Ciclo</button></div>-->
+    <!--<div style="text-align: center"><button class="btn btn-light" onclick="nuevoCiclo()"><i class="bi bi-plus-circle"></i> Nuevo Ciclo</button></div>-->
 </div>
 
 <?php

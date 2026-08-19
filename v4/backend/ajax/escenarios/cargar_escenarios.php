@@ -21,12 +21,12 @@ if(isset($_SESSION['departamentoUsuario']))
         $textoActual = $actual?"Escenario actualmente en vigor":"Escenario antiguo o no en vigor";
         $textoDesideratas = $activoDesideratas?"Escenario activo para desideratas":"Escenario no elegible en desideratas";
         $textoRueda = $modoRueda?"Escenario en modo rueda":"Modo rueda desactivado";
-        $iconoActivo = $activoDesideratas?"unlock":"lock";
+        $iconoActivo = $activoDesideratas?"bi-unlock":"bi-lock";
         
         echo '<div class="listado claro izquierda">';
         echo '<div class="izquierda">'. $nombre . '</div>';
         // Botones para hacer acciones sobre el escenario
-        echo '<div class="derecha"><button class="btn btn-light" onclick="borrarEscenario(' . $id . ",'" . $nombre . "'" . ')"><img src="img/delete.png"></button><button class="btn btn-light" onclick="cargarEscenarioModal(' . $id . ')" title="Editar nombre del escenario"><img src="img/edit.png"></button><button class="btn ' . ($actual?'btn-success':'btn-light') . '" onclick="marcarEscenarioActual(' . $id . ", '" . ($actual?"si":"no") . "'" . ')"><img src="img/select2.png" title="' . $textoActual . '"></button><button class="btn ' . ($activoDesideratas?'btn-light':'btn-danger') . '" onclick="marcarEscenarioActivoDesideratas(' . $id . ", '" . ($activoDesideratas?"si":"no") . "'" . ')"><img src="img/' . $iconoActivo . '.png" title="' . $textoDesideratas . '"></button><button class="btn btn-light" onclick="duplicarEscenario(' . $id . ')"><img src="img/copy.png" title="Duplicar este escenario"></button><button class="btn ' . ($modoRueda?'btn-success':'btn-light') . '" onclick="modoRueda(' . $id . ", '" . ($modoRueda?"si":"no") . "'" . ')"><img src="img/wheel.png" title="' . $textoRueda . '"></button></div>';
+        echo '<div class="derecha"><button class="btn btn-light" onclick="borrarEscenario(' . $id . ",'" . $nombre . "'" . ')"><i class="bi bi-trash"></i></button><button class="btn btn-light" onclick="cargarEscenarioModal(' . $id . ')" title="Editar nombre del escenario"><i class="bi bi-pencil-square"></i></button><button class="btn ' . ($actual?'btn-success':'btn-light') . '" onclick="marcarEscenarioActual(' . $id . ", '" . ($actual?"si":"no") . "'" . ')"><i class="bi bi-list-check"></i></button><button class="btn ' . ($activoDesideratas?'btn-light':'btn-danger') . '" onclick="marcarEscenarioActivoDesideratas(' . $id . ", '" . ($activoDesideratas?"si":"no") . "'" . ')"><i class="bi ' . $iconoActivo . '"></i></button><button class="btn btn-light" onclick="duplicarEscenario(' . $id . ')"><i class="bi bi-copy"></i></button><button class="btn ' . ($modoRueda?'btn-success':'btn-light') . '" onclick="modoRueda(' . $id . ", '" . ($modoRueda?"si":"no") . "'" . ')"><i class="bi bi-sliders"></i></button></div>';
         echo '</div>';
     }
 

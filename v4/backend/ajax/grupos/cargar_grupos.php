@@ -18,7 +18,7 @@ if (!empty($_REQUEST['idCurso']))
         echo '<div class="listado claro izquierda grupo" id="gr' . $id . '">';
         echo '<div class="izquierda">'. $nombre . '</div>';
         // Botones para borrar o editar el grupo
-        echo '<div class="derecha"><button class="btn btn-light" onclick="borrarGrupo(' . $id . ",'" . $nombre . "'" . ')"><img src="img/delete.png"></button><button class="btn btn-light" onclick="cargarGrupoModal(' . $id . ')"><img src="img/edit.png"></button></div>';
+        echo '<div class="derecha"><button class="btn btn-light" onclick="borrarGrupo(' . $id . ",'" . $nombre . "'" . ')"><i class="bi bi-trash"></i></button><button class="btn btn-light" onclick="cargarGrupoModal(' . $id . ')"><i class="bi bi-pencil-square"></i></button></div>';
         echo '</div>';
     }
 
