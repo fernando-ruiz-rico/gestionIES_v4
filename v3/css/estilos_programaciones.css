@@ -1,0 +1,56 @@
+body
+{
+    font-family: Arial, Verdana;
+    margin: 5% 10%;
+}
+
+p, li, div
+{
+    text-align: justify;
+}
+
+.titulo, .subtitulo
+{
+    text-align: center;
+}
+
+.titulo
+{
+    font-size: 3em;
+    font-weight: bold;
+    margin-bottom: 10px
+}
+
+.subtitulo
+{
+    font-size: 2em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+p.indice, blockquote.indice
+{
+    color: gray
+}
+
+a, a#hover, a#link, a#visited
+{
+    color: inherit;
+    text-decoration: none;
+}
+
+h1 a, h1 a#hover, h1 a#link, h1 a#visited, h2 a, h2 a#hover, h2 a#link, h2 a#visited
+{
+    color: inherit;
+    text-decoration: none;
+}
+
+.indice.errorprog
+{
+    color: red;
+}
+
+.indice.warningprog
+{
+    color: blue;
+}

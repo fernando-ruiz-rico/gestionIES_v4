@@ -1,0 +1,176 @@
+body
+{
+    font-family: arial;
+    background-color: #ede0d4;
+}
+
+/* Estilo para panel de página de inicio y panel central de varias vistas */
+.inicio
+{
+    text-align: center;
+    margin-top: 20px;
+}
+
+.panelcentral
+{
+    margin: 5% 13%;
+}
+
+/* Estilo para paneles alineados a la derecha o izquierda */
+.derecha
+{
+    float: right;
+}
+.izquierda
+{
+    float: left;
+}
+
+/* Estilos para elementos con color de fondo */
+.claro
+{
+    background-color: #ddb892;
+    color: #7f5539;
+}
+.oscuro
+{
+    background-color: #9c6644;
+    color: #e6ccb2;
+}
+.muyoscuro
+{
+    background-color: #7f5539;
+    color: #ede0d4;    
+}
+
+/* Estilos para elementos de listados */
+.listado
+{
+    margin: 5px;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 1.3em;
+    width: 100%;
+}
+
+.resultado
+{
+    width:80%;
+}
+
+/* Estilos para el formulario de login */
+#formlogin
+{
+    margin: 100px 30%;
+    padding: 2%;
+    border-radius: 10px;
+}
+
+.cabeceraformlogin
+{
+    display: block;
+    padding: 10px;
+    text-align: center;
+}
+.campoformlogin
+{
+    padding: 10px;
+}
+
+/* Estilos para las preferencias de horario */
+
+#formprof td, #formprof th
+{
+    border: 1px solid #555555;
+    min-width: 60px;
+    min-height: 30px;
+    text-align: center;
+}
+.rojo
+{
+    background-color: red;
+}
+.amarillo
+{
+    background-color: yellow;
+}
+
+/* Estilos para desideratas */
+
+.panelseleccion
+{
+    margin-top: 10px;
+}
+
+#profesoresDesideratas, #cursosDesideratas
+{
+    width: 30%;
+    margin-right: 10px;
+}
+
+#seleccionDesideratas
+{
+    width: 35%;
+}
+
+#cursosProfesorDesideratas
+{
+    width: 50%;
+    margin-right: 10px;
+}
+
+.profesor, .curso, .materia, .seleccion
+{
+    width: 95%;
+    padding: 10px 5px;
+    margin: 5px 0;
+    border-radius: 5px;
+    float: left;
+}
+
+#listaprof, #listacur
+{
+    height: 300px;
+    overflow-y: scroll;            
+}
+
+.materias
+{
+    width: 100%;
+    background-color: #CCCCCC;
+    padding: 0px;
+    margin: 0px;
+}
+
+.ui-accordion, .ui-accordion-content
+{
+    padding: 0 !important;
+}
+
+.text-darkgreen {
+    color: darkgreen !important;
+}
+
+/* Estilos para estadísticas */
+
+.panelst
+{
+    background-color: white;
+    border: 1px solid black;
+    border-radius: 10px;
+}
+
+/* Media query para tamaños pequeños */
+
+@media (max-width: 720px) 
+{ 
+    #formlogin
+    {
+        margin: 100px 5%;
+    }
+
+    .panelcentral
+    {
+        margin: 0 3%;
+    }    
+}

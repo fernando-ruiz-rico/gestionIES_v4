@@ -1,0 +1,71 @@
+/* Estilos generales para la caja de menú */
+
+#wrapper {
+    overflow-x: hidden;
+ }
+
+#sidebar-wrapper {
+  min-height: 100vh;
+  margin-left: -15rem;
+  -webkit-transition: margin .25s ease-out;
+  -moz-transition: margin .25s ease-out;
+  -o-transition: margin .25s ease-out;
+  transition: margin .25s ease-out;
+}
+
+#sidebar-wrapper .sidebar-heading {
+  padding: 0.5rem 1.25rem;
+  font-size: 1.2rem;
+}
+
+#sidebar-wrapper .sidebar-heading em {
+  font-size: 0.8rem;
+}
+
+#sidebar-wrapper .list-group {
+  width: 15rem;
+}
+
+.list-group-item {
+  font-size: 0.8em;
+}
+
+#page-content-wrapper {
+  min-width: 100vw;
+  margin-top: 10px;
+}
+
+#wrapper.toggled #sidebar-wrapper {
+  margin-left: 0;
+}
+
+/* Estilos para colores de los textos según si pasamos el ratón o no por encima */
+
+.submenu, .submenu:visited, .submenu:active {
+  padding: 0.5rem 2rem;
+  color: #999;
+}
+
+.submenu:hover {
+  padding: 0.5rem 2rem;
+  color: #DDD !important;
+}
+
+/* Colores de los iconos junto a los textos */
+
+.submenu img {
+  -webkit-filter: invert(80%);
+}
+
+/* Posicionamiento de botón de menú y caja de menú */
+
+#menu-toggle {
+  position: fixed;
+  top: 0px;
+}
+
+#sidebar-wrapper
+{
+  position: fixed;
+  top: 40px;
+}
