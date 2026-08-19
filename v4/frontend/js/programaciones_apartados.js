@@ -64,7 +64,7 @@ function limpiarFormularioApartados()
 dom('#apartadosprog').sortable({ items: '.apartado', update: function()
     {
         var elementos = (() => { const el = this; return Array.from(el.children).map(c => c.id).join(","); })();
-        $.get("ajax/programaciones_apartados/ordenar_apartados.php", {orden: elementos}, function()
+        http.get("ajax/programaciones_apartados/ordenar_apartados.php", {orden: elementos}, function()
         {
             cargarApartados();
         });

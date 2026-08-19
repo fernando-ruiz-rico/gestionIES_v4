@@ -242,7 +242,7 @@ function init()
     dom('#listasel').sortable({update: function()
     {
        var elementos = (() => { const el = this; return Array.from(el.children).map(c => c.id).join(","); })();
-        $.get("ajax/seleccion/ordenar_seleccion.php", {idEscenario: selEscenario, orden: elementos});
+        http.get("ajax/seleccion/ordenar_seleccion.php", {idEscenario: selEscenario, orden: elementos});
     }
     });
 }

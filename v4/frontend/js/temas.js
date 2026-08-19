@@ -75,10 +75,10 @@ function actualizarCheckboxes(id)
     document.querySelector(".check_com").checked = false;
 
     fetch("ajax/temas/cargar_checkboxes.php?" + new URLSearchParams({idTema: id}).toString()).then(r => r.json()).then(res => {
-        $.each(res.criterios, function(i, val) {
+        http.each(res.criterios, function(i, val) {
             (() => { const el = document.getElementById(val); if(el) el.checked = true; })();
         });        
-        $.each(res.competencias, function(i, val) {
+        http.each(res.competencias, function(i, val) {
             (() => { const el = document.getElementById(val); if(el) el.checked = true; })();
         });        
     });
@@ -150,7 +150,7 @@ function cargarModalActualizarRaTemas(id)
         document.getElementById('spanOrden').textContent = res.orden;
         document.getElementById('spanTexto').textContent = res.texto;
         document.getElementById('porcentajeEvaluacion').value = res.porcentaje_evaluacion;
-        document.getElementById('esClave').prop('checked', res.es_clave == 1).trigger('change'); 
+        dom('#esClave').prop('checked', res.es_clave == 1); 
         (() => { const el = document.getElementById("formresultado_ra"); const modal = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el); modal.show(); })();
     });    
 }

@@ -4,12 +4,12 @@
 
 // Hacemos que el campo "fecha" tenga un "datepicker" para elegir la fecha
 if(document.getElementById('fecha'))
-    document.getElementById('fecha').datepicker({dateFormat: "dd/mm/yy"});
+    dom('#fecha').datepicker();
 
 // Función para rellenar el desplegable de fechas de actas disponibles para el departamento actual
 function cargarActas()
 {
-    $.post('ajax/actas/cargar_actas_departamento.php', function(res)
+    http.post('ajax/actas/cargar_actas_departamento.php', function(res)
     {
         document.getElementById('fechasActas').innerHTML = res;
     });
@@ -23,11 +23,11 @@ function cambiarActa(edicion)
     if (selActa != "")
     {
         document.getElementById('edicionacta').style.display = 'block';
-        $.post('ajax/actas/cargar_fecha_acta.php', {idActa: selActa}, function(res)
+        http.post('ajax/actas/cargar_fecha_acta.php', {idActa: selActa}, function(res)
         {
             document.getElementById('fecha').value = res;
         });
-        $.post('ajax/actas/cargar_contenido_acta.php', {idActa: selActa}, function(res)
+        http.post('ajax/actas/cargar_contenido_acta.php', {idActa: selActa}, function(res)
         {
             if (tinymce.get('texto'))
                 tinymce.get('texto').setContent(res);
@@ -43,7 +43,7 @@ function cambiarActa(edicion)
 // Función para preparar el formulario con datos de una nueva acta
 function nuevaActa()
 {
-    $.post('ajax/actas/nueva_acta_departamento.php', function(res)
+    http.post('ajax/actas/nueva_acta_departamento.php', function(res)
     {
         document.getElementById('edicionacta').style.display = 'block';
         document.getElementById('idActa').value = "";
@@ -64,7 +64,7 @@ function generarPDFActa()
 }
 
 // Envío del formulario para el acta
-$("#formacta").addEventListener('submit', function(e) {
+dom('#formacta').on('submit', function(e) {
     tinymce.get('texto').save();
     e.preventDefault();
 
@@ -75,7 +75,7 @@ $("#formacta").addEventListener('submit', function(e) {
     else
     {
         var formData = new FormData(document.forms.formacta);
-        $.ajax({
+        http.ajax({
             url: "ajax/actas/insertar_acta_departamento.php",
             type: "post",
             dataType: "html",

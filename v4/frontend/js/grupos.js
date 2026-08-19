@@ -76,7 +76,7 @@ dom('#listagrupos').sortable({ items: '.grupo', update: function()
         // Se envían los datos en un string. Cada grupo con el prefijo "gr" y su código, separados por comas
         // En el servidor se procesa esa cadena, se parte y se le asigna un número de orden a cada grupo
         var elementos = (() => { const el = this; return Array.from(el.children).map(c => c.id).join(","); })();
-        $.get("ajax/grupos/ordenar_grupos.php", {orden: elementos}, function()
+        http.get("ajax/grupos/ordenar_grupos.php", {orden: elementos}, function()
         {
             cargarGrupos();
         });
