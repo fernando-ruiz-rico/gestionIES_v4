@@ -58,10 +58,10 @@ function getActivaciones() {
     
     // Consultar tabla de configuración si existe
     $query = "SELECT nombre, valor FROM configuracion WHERE nombre IN ('desideratas_activadas', 'programaciones_activadas')";
-    $result = mysql_query($query, $conn);
+    $result = mysqli_query($conn, $query);
     
     if ($result) {
-        while ($row = mysql_fetch_assoc($result)) {
+        while ($row = mysqli_fetch_assoc($result)) {
             if ($row['nombre'] == 'desideratas_activadas') {
                 $activaciones['desideratasActivadas'] = ($row['valor'] == '1' || $row['valor'] == 'true');
             }
