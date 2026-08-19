@@ -6,32 +6,33 @@ var selCurso = 0;
 // Se activa al cambiar el curso seleccionado
 function seleccionarCursoGrupo()
 {
-    selCurso  = $('#cursosgrupos').value;
-    $('#idCurso').value = selCurso;
+    selCurso  = $('#cursosgrupos').val();
+    $('#idCurso').val(selCurso);
     cargarGrupos();
 }
 
 // Carga los grupos del curso seleccionado actualmente
 function cargarGrupos()
 {
-    document.getElementById("listagrupos").load("ajax/grupos/cargar_grupos.php", {idCurso: selCurso});
+    $("#listagrupos").load("ajax/grupos/cargar_grupos.php", {idCurso: selCurso});
 }
 
 // Carga en el formulario modal los datos del grupo indicado
 function cargarGrupoModal(id)
 {
-    fetch('ajax/grupos/cargar_grupo.php?' + new URLSearchParams({idGrupo:id})).then(r => r.json()).then(res =>
-        $('#idGrupo').value = id;
-        $('#idCurso').value = res.idCurso;
-        $('#nombre').value = res.nombre;
-        $('#abreviatura').value = res.abreviatura;
+    $.get("ajax/grupos/cargar_grupo.php", {idGrupo:id}, function(res)
+    {
+        $('#idGrupo').val(id);
+        $('#idCurso').val(res.idCurso);
+        $('#nombre').val(res.nombre);
+        $('#abreviatura').val(res.abreviatura);
         if (res.mostrar == 1)
             $('#mostrar').prop('checked', true);
         else
             $('#mostrar').prop('checked', false);
-        $('#horasComplementariasDual').value = res.horas_complementarias_dual;
+        $('#horasComplementariasDual').val(res.horas_complementarias_dual);
 
-        document.getElementById("formgrupo").modal('show');
+        $("#formgrupo").modal('show');
     });    
 }
 
@@ -52,7 +53,8 @@ function borrarGrupo (id, nombre)
 {
     if (confirm("Confirmas el borrado del grupo '" + nombre + "'?"))
     {
-        fetch('ajax/grupos/borrar_grupo.php', {method: 'POST', body: new URLSearchParams({id:id})}).then(r => r.text()).then(res =>
+        $.post("ajax/grupos/borrar_grupo.php", {id:id}, function(res)
+        {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar el grupo", 0);
             cargarGrupos();
@@ -63,10 +65,10 @@ function borrarGrupo (id, nombre)
 // Borra los campos del formulario de grupos
 function limpiarFormularioGrupos()
 {
-    $('#idGrupo').value = "";
-    $('#nombre').value = "";
-    $('#abreviatura').value = "";
-    $('#horasComplementariasDual').value = "";
+    $('#idGrupo').val("");
+    $('#nombre').val("");
+    $('#abreviatura').val("");
+    $('#horasComplementariasDual').val("");
     $('#mostrar').removeAttr("checked");    
 }
 
@@ -84,7 +86,7 @@ $('#listagrupos').sortable({ items: '.grupo', update: function()
 });
 
 // Evento de envío del formulario modal para insertar/modificar grupos
-document.getElementById("formgrup").on("submit", function(e)
+$("#formgrup").on("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formgrup);
@@ -99,7 +101,7 @@ document.getElementById("formgrup").on("submit", function(e)
     })
     .done(function(res){
         limpiarFormularioGrupos();
-        document.getElementById("formgrupo").modal('hide');
+        $("#formgrupo").modal('hide');
         cargarGrupos();
     });
 });

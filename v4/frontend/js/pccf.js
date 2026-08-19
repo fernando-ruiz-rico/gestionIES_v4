@@ -7,12 +7,12 @@ var selApartado = 0;
 // Cambia el ciclo seleccionado
 function cambiarCiclo()
 {    
-    selCiclo = $('#ciclo').value;
-    $('#apartado').value = "";
+    selCiclo = $('#ciclo').val();
+    $('#apartado').val("");
     selApartado = 0;
-    $('#idCiclo').value = selCiclo;
-    $('#idApartado').value = selApartado;
-    $('#edicionapartado').style.display = "none";
+    $('#idCiclo').val(selCiclo);
+    $('#idApartado').val(selApartado);
+    $('#edicionapartado').hide();
    if (tinymce.get('texto'))
         tinymce.get('texto').setContent("");
 }
@@ -22,12 +22,12 @@ function cambiarApartado()
 {
     if (tinymce.get('texto'))
         tinymce.get('texto').setContent("");
-    selApartado = $('#apartado').value;
-    $('#idApartado').value = selApartado;
+    selApartado = $('#apartado').val();
+    $('#idApartado').val(selApartado);
     if (selCiclo > 0 && selApartado > 0)
         $.post('ajax/pccf/cargar_contenido_pccf.php', {idCiclo: selCiclo, idApartado: selApartado}, function(res)
         {
-            $('#edicionapartado').style.display = "block";
+            $('#edicionapartado').show();
             if (tinymce.get('texto'))
                 tinymce.get('texto').setContent(res);
         });
@@ -52,7 +52,7 @@ function generarPDFApartado()
 }
 
 // Guardar cambios al contenido editado
-document.getElementById("formpccf").on("submit", function(e)
+$("#formpccf").on("submit", function(e)
 {
     tinymce.get('texto').save();
     e.preventDefault();
@@ -86,5 +86,5 @@ if($('#edicionapartado').length > 0)
 
     // Si hay TinyMCE hay formulario. Inicialmente lo ocultamos
     // Sólo se mostrará si elegimos un apartado concreto del listado
-    $('#edicionapartado').style.display = "none";
+    $('#edicionapartado').hide();
 }

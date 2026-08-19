@@ -18,7 +18,7 @@
     <!-- En este div se carga por AJAX el listado de especialidades -->
     <div id="listaespecialidades"></div>
     <!-- Botón para abrir el diálogo modal para crear nuevas especialidades -->
-    <div style="text-align: center"><button class="btn btn-light" onclick="nuevaEspecialidad()"><i class="bi bi-plus"></i> Nueva Especialidad</button></div>
+    <div style="text-align: center"><button class="btn btn-light" onclick="nuevaEspecialidad()"><img src="img/add.png" /> Nueva Especialidad</button></div>
 </div>
   
 <?php

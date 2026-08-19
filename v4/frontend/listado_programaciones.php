@@ -136,6 +136,7 @@ if (!empty($_REQUEST['idDepartamento']))
 
 </div> <!-- /container -->
 
+<script src="https://iessanvicente.com/js2019/jquery.js"></script>
 <script src="https://iessanvicente.com/js2019/popper.min.js"></script>
 <script src="https://iessanvicente.com/js2019/bootstrap.min.js"></script>
 <script src="https://iessanvicente.com/js2019/holder.min.js"></script>

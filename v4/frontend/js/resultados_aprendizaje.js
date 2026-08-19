@@ -6,10 +6,10 @@ let selMateria = 0;
 // Función para cambiar la materia seleccionada
 function cambiarMateria()
 {
-    selMateria = $('#seleccionMateria').value;
+    selMateria = $('#seleccionMateria').val();
     if(selMateria > 0)
     {
-        $('#idMateria').value = selMateria;
+        $('#idMateria').val(selMateria);
         cargarResultados();
     }
 }
@@ -26,12 +26,13 @@ function cargarResultados()
 // Muestra los datos del resultado indicado en el formulario modal, para su edición
 function cargarResultadoModal(id)
 {
-    fetch('ajax/resultados_aprendizaje/cargar_resultado_aprendizaje.php?' + new URLSearchParams({idResultado:id})).then(r => r.json()).then(res =>
-        $('#idResultado').value = id;
-        $('#texto').value = res.texto;
-        $('#orden').value = res.orden;
-        $('#porcentajeEmpresa').value = res.porcentaje_empresa;
-        document.getElementById("formresultado").modal('show');
+    $.get("ajax/resultados_aprendizaje/cargar_resultado_aprendizaje.php", {idResultado:id}, function(res)
+    {
+        $('#idResultado').val(id);
+        $('#texto').val(res.texto);
+        $('#orden').val(res.orden);
+        $('#porcentajeEmpresa').val(res.porcentaje_empresa);
+        $("#formresultado").modal('show');
     });    
 }
 
@@ -52,7 +53,8 @@ function borrarResultado (id, texto)
 {
     if (confirm("Confirmas el borrado del resultado '" + texto + "'?"))
     {
-        fetch('ajax/resultados_aprendizaje/borrar_resultado_aprendizaje.php', {method: 'POST', body: new URLSearchParams({id:id})}).then(r => r.text()).then(res =>
+        $.post("ajax/resultados_aprendizaje/borrar_resultado_aprendizaje.php", {id:id}, function(res)
+        {
             cargarResultados();
         });            
     }
@@ -61,16 +63,16 @@ function borrarResultado (id, texto)
 // Borra el contenido de los campos del formulario modal de alta/edición de cursos
 function limpiarFormularioResultados()
 {
-    $('#idResultado').value = "";
-    $('#texto').value = "";
-    $('#orden').value = "";
-    $('#porcentajeEmpresa').value = "0";    
+    $('#idResultado').val("");
+    $('#texto').val("");
+    $('#orden').val("");
+    $('#porcentajeEmpresa').val("0");    
 }
 
 // Actualiza las horas asignadas de la materia indicada para impartir en la empresa
 function actualizarHorasEmpresa(idMateria)
 {
-    var horas = $('#horasEmpresa').value;
+    var horas = $('#horasEmpresa').val();
     $.post("ajax/materias/actualizar_horas_empresa.php", {idMateria:idMateria, horas: horas});
     mostrarMensaje("Datos actualizados", 1);
 }
@@ -78,8 +80,9 @@ function actualizarHorasEmpresa(idMateria)
 // Carga el modal para asociar criterios de evaluación al RA indicado
 function asociarCriterios(id)
 {
-    fetch('ajax/resultados_aprendizaje/cargar_criterios_evaluacion.php?' + new URLSearchParams({idResultado:id})).then(r => r.json()).then(res =>
-        $('#listadocriterios').innerHTML = res;
+    $.get("ajax/resultados_aprendizaje/cargar_criterios_evaluacion.php", {idResultado:id}, function(res)
+    {
+        $('#listadocriterios').html(res);
         $('#formcriterio').modal('show');
     });
 }
@@ -87,7 +90,8 @@ function asociarCriterios(id)
 // Borra el criterio de evaluación indicado por el id del RA y el código de criterio
 function borrarCriterio(idRA, codigo)
 {
-    fetch('ajax/resultados_aprendizaje/borrar_criterio_evaluacion.php', {method: 'POST', body: new URLSearchParams({idResultado:idRA, codigo: codigo})}).then(r => r.text()).then(res =>
+    $.post("ajax/resultados_aprendizaje/borrar_criterio_evaluacion.php", {idResultado:idRA, codigo: codigo}, function(res)
+    {
         asociarCriterios(idRA);
     });
 }
@@ -95,9 +99,10 @@ function borrarCriterio(idRA, codigo)
 // Actualiza los datos del criterio de evaluación indicado
 function actualizarCriterio(idRA, codigo)
 {
-    let nuevoCodigo = $('#cce' + codigo).value;
-    let nuevoTexto = $('#tce' + codigo).value;
-    fetch('ajax/resultados_aprendizaje/actualizar_criterio_evaluacion.php', {method: 'POST', body: new URLSearchParams({idResultado:idRA, codigo: codigo, nuevoCodigo: nuevoCodigo, nuevoTexto: nuevoTexto})}).then(r => r.text()).then(res =>
+    let nuevoCodigo = $('#cce' + codigo).val();
+    let nuevoTexto = $('#tce' + codigo).val();
+    $.post("ajax/resultados_aprendizaje/actualizar_criterio_evaluacion.php", {idResultado:idRA, codigo: codigo, nuevoCodigo: nuevoCodigo, nuevoTexto: nuevoTexto}, function(res)
+    {
         asociarCriterios(idRA);
     });
 }
@@ -105,16 +110,17 @@ function actualizarCriterio(idRA, codigo)
 // Inserta un nuevo criterio para el RA indicado
 function insertarCriterio(idRA)
 {
-    let nuevoCodigo = $('#codigoCE').value;
-    let nuevoTexto = $('#textoCE').value;
+    let nuevoCodigo = $('#codigoCE').val();
+    let nuevoTexto = $('#textoCE').val();
 
-    fetch('ajax/resultados_aprendizaje/insertar_criterio_evaluacion.php', {method: 'POST', body: new URLSearchParams({idResultado:idRA, nuevoCodigo: nuevoCodigo, nuevoTexto: nuevoTexto})}).then(r => r.text()).then(res =>
+    $.post("ajax/resultados_aprendizaje/insertar_criterio_evaluacion.php", {idResultado:idRA, nuevoCodigo: nuevoCodigo, nuevoTexto: nuevoTexto}, function(res)
+    {
         asociarCriterios(idRA);
     });
 }
 
 // Evento de envío del formulario modal para inserción/modificación
-document.getElementById("formres").on("submit", function(e)
+$("#formres").on("submit", function(e)
 {
     e.preventDefault();
     let formData = new FormData(document.forms.formres);
@@ -129,7 +135,7 @@ document.getElementById("formres").on("submit", function(e)
     })
     .done(function(res){
         limpiarFormularioResultados();
-        document.getElementById("formresultado").modal('hide');
+        $("#formresultado").modal('hide');
         cargarResultados();
     });
 });

@@ -7,7 +7,7 @@ let idTema = 0;
 // Carga el acordeón de RA y CE
 function cargarAccordionRAyCE()
 { 
-    document.getElementById("seccion_ra_ce").load("ajax/temas/cargar_accordion_ra_ce.php", {idMateria: selMateria, idCiclo: idCiclo}, function() {
+    $("#seccion_ra_ce").load("ajax/temas/cargar_accordion_ra_ce.php", {idMateria: selMateria, idCiclo: idCiclo}, function() {
         actualizarCheckboxes(idTema);
     });
 }
@@ -27,7 +27,8 @@ async function calcularPorcentajesRAyCE()
             processData: false
         })
         .done(function(res){
-            fetch('ajax/temas/recalcular_porcentajes_ra_ce.php?' + new URLSearchParams({idMateria: selMateria})).then(r => r.json()).then(res =>
+            $.get("ajax/temas/recalcular_porcentajes_ra_ce.php", {idMateria: selMateria}, function(res)
+            {
                 cargarAccordionRAyCE();
             });
         });
@@ -38,14 +39,14 @@ async function calcularPorcentajesRAyCE()
 function nuevoTema()
 {
     limpiarFormularioNuevo();
-    document.getElementById("formnuevotema").modal('show');
+    $("#formnuevotema").modal('show');
 }
 
 // Limpia los datos del formulario para nuevo tema
 function limpiarFormularioNuevo()
 {
-    $('#ordenNuevo').value = "";
-    $('#tituloNuevo').value = "";
+    $('#ordenNuevo').val("");
+    $('#tituloNuevo').val("");
 }
 
 // Borra el tema indicado, previa confirmación
@@ -53,7 +54,8 @@ async function borrarTema(id, titulo)
 {
     if (await confirmar(`¿Confirmas el borrado del tema '${titulo}'?`))
     {
-        fetch('ajax/temas/borrar_tema.php', {method: 'POST', body: new URLSearchParams({id:id})}).then(r => r.text()).then(res =>
+        $.post("ajax/temas/borrar_tema.php", {id:id}, function(res)
+        {
             location.reload();
         });            
     }
@@ -66,7 +68,8 @@ async function repetirEvaluacion()
     {
         tinymce.get('evaluacion').save();
         let evaluacion = tinymce.get('evaluacion').getContent();
-        fetch('ajax/temas/repetir_evaluacion_temas.php', {method: 'POST', body: new URLSearchParams({idMateria:selMateria, evaluacion: evaluacion})}).then(r => r.text()).then(res =>
+        $.post("ajax/temas/repetir_evaluacion_temas.php", {idMateria:selMateria, evaluacion: evaluacion}, function(res)
+        {
             if (res.trim() == 'si')
                 mostrarMensaje("No se han actualizado los temas de la materia", 0);
             else
@@ -82,12 +85,13 @@ function actualizarCheckboxes(id)
     $('.check_ce').prop('checked', false);
     $('.check_com').prop('checked', false);
 
-    fetch('ajax/temas/cargar_checkboxes.php?' + new URLSearchParams({idTema: id})).then(r => r.json()).then(res =>
+    $.get("ajax/temas/cargar_checkboxes.php", {idTema: id}, function(res)
+    {
         $.each(res.criterios, function(i, val) {
-            $('#' + val).checked = true;
+            $('#' + val).prop("checked", true);
         });        
         $.each(res.competencias, function(i, val) {
-            $('#' + val).checked = true;
+            $('#' + val).prop("checked", true);
         });        
     });
 }
@@ -96,11 +100,11 @@ function actualizarCheckboxes(id)
 function marcarDesmarcar(id)
 {
     let resultado = $('#ra' + id).prop("checked");
-    $('.ra' + id).checked = resultado;
+    $('.ra' + id).prop("checked", resultado);
 }
 
 // Evento de envío del formulario modal para inserción
-document.getElementById("formnuevo").on("submit", function(e)
+$("#formnuevo").on("submit", function(e)
 { 
     e.preventDefault();
     var formData = new FormData(document.forms.formnuevo);
@@ -135,7 +139,7 @@ function enviarDatosAccordionRAyCE() {
 }
 
 // Evento de envío del formulario modal para edición
-document.getElementById("formeditar").on("submit", function(e)
+$("#formeditar").on("submit", function(e)
 {
     tinymce.get('descripcion').save();
     tinymce.get('justificacion').save();
@@ -177,13 +181,14 @@ document.getElementById("formeditar").on("submit", function(e)
 // Muestra los datos del resultado indicado en el formulario modal, para su edición
 function cargarModalActualizarRaTemas(id)
 {
-    fetch('ajax/resultados_aprendizaje/cargar_resultado_aprendizaje.php?' + new URLSearchParams({idResultado:id})).then(r => r.json()).then(res =>
-        $('#idResultado').value = id;
-        $('#spanOrden').textContent = res.orden;
-        $('#spanTexto').textContent = res.texto;
-        $('#porcentajeEvaluacion').value = res.porcentaje_evaluacion;
+    $.get("ajax/resultados_aprendizaje/cargar_resultado_aprendizaje.php", {idResultado:id}, function(res)
+    {
+        $('#idResultado').val(id);
+        $('#spanOrden').text(res.orden);
+        $('#spanTexto').text(res.texto);
+        $('#porcentajeEvaluacion').val(res.porcentaje_evaluacion);
         $('#esClave').prop('checked', res.es_clave == 1).trigger('change'); 
-        document.getElementById("formresultado_ra").modal('show');
+        $("#formresultado_ra").modal('show');
     });    
 }
 

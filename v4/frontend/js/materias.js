@@ -6,33 +6,34 @@ var selCurso = 0;
 // Cambia la selección de curso actual
 function seleccionarCursoMateria()
 {
-    selCurso  = $('#cursosmaterias').value;
-    $('#idCurso').value = selCurso;
+    selCurso  = $('#cursosmaterias').val();
+    $('#idCurso').val(selCurso);
     cargarMaterias();
 }
 
 // Carga el listado de materias del curso indicado en el "div" habilitado para ello
 function cargarMaterias()
 {
-    document.getElementById("listamaterias").load("ajax/materias/cargar_materias.php", {idCurso: selCurso});
+    $("#listamaterias").load("ajax/materias/cargar_materias.php", {idCurso: selCurso});
 }
 
 // Carga los datos de la materia indicada en el formulario modal
 function cargarMateriaModal(id)
 {
-    fetch('ajax/materias/cargar_materia.php?' + new URLSearchParams({idMateria:id})).then(r => r.json()).then(res =>
-        $('#idMateria').value = id;
-        $('#idCurso').value = res.idCurso;
-        $('#nombre').value = res.nombre;
-        $('#codigoOficial').value = res.codigo_oficial;
-        $('#nombreOficial').value = res.nombre_oficial;
-        $('#creditosECTS').value = res.creditos_ects;
-        $('#horasAnuales').value = res.horas_anuales;
-        $('#cantidad').value = res.cantidad;
-        $('#horas').value = res.horas;
-        $('#horasComplementarias').value = res.horas_complementarias;
-        $('#tipo').value = res.tipo;
-        $('#departamento').value = res.idDepartamento;
+    $.get("ajax/materias/cargar_materia.php", {idMateria:id}, function(res)
+    {
+        $('#idMateria').val(id);
+        $('#idCurso').val(res.idCurso);
+        $('#nombre').val(res.nombre);
+        $('#codigoOficial').val(res.codigo_oficial);
+        $('#nombreOficial').val(res.nombre_oficial);
+        $('#creditosECTS').val(res.creditos_ects);
+        $('#horasAnuales').val(res.horas_anuales);
+        $('#cantidad').val(res.cantidad);
+        $('#horas').val(res.horas);
+        $('#horasComplementarias').val(res.horas_complementarias);
+        $('#tipo').val(res.tipo);
+        $('#departamento').val(res.idDepartamento);
         cargarEspecialidades(res.idEspecialidad);
         if (res.computables_horas_grupo == 1)
             $('#computablesHorasGrupo').prop('checked', true);
@@ -42,8 +43,8 @@ function cargarMateriaModal(id)
             $('#asignadaDirectiva').prop('checked', true);
         else
             $('#asignadaDirectiva').prop('checked', false);
-        $('#minNumProfesores').value = res.min_num_profesores;
-        $('#maxGruposProfesor').value = res.max_grupos_profesor;
+        $('#minNumProfesores').val(res.min_num_profesores);
+        $('#maxGruposProfesor').val(res.max_grupos_profesor);
         if (res.tiene_programacion == 1)
             $('#tieneProgramacion').prop('checked', true);
         else
@@ -53,36 +54,37 @@ function cargarMateriaModal(id)
         else
             $('#divisible').prop('checked', false);
 
-        document.getElementById("formmateria").modal('show');
+        $("#formmateria").modal('show');
     });    
 }
 
 // Carga las especialidades del departamento seleccionado
 function cargarEspecialidades(idEspecialidad)
 {
-    var selDepartamento = $('#departamento').value;
+    var selDepartamento = $('#departamento').val();
     if(selDepartamento != "")
     {
         // Primero cargamos las especialidades del departamento asociado
-        fetch('ajax/especialidades/cargar_especialidades_json.php?' + new URLSearchParams({idDepartamento:selDepartamento})).then(r => r.json()).then(resEsp =>
+        $.get("ajax/especialidades/cargar_especialidades_json.php", {idDepartamento:selDepartamento}, function(resEsp)
+        {
             let resultado = JSON.parse(resEsp);
             // Accedemos al "select" de especialidad del formulario y rellenamos las opciones
-            $('#especialidad').innerHTML = "";
+            $('#especialidad').empty();
             // Añadimos una opción vacía inicial
             var $option = $('<option></option>')
                 .attr('value', '')
-                .textContent = '--Selecciona una especialidad--';
-            $('#especialidad').appendChild($option);
+                .text('--Selecciona una especialidad--');
+            $('#especialidad').append($option);
             for(var i = 0; i < resultado.length; i++) {
                 var $option = $('<option></option>')
                     .attr('value', resultado[i].id)
-                    .textContent = resultado[i].descripcion;
-                $('#especialidad').appendChild($option);
+                    .text(resultado[i].descripcion);
+                $('#especialidad').append($option);
             }
 
             if(idEspecialidad)
             {
-                $('#especialidad').value = idEspecialidad;
+                $('#especialidad').val(idEspecialidad);
             }
         });    
     }
@@ -105,7 +107,8 @@ function borrarMateria (id, nombre)
 {
     if (confirm("Confirmas el borrado de la materia '" + nombre + "'?"))
     {
-        fetch('ajax/materias/borrar_materia.php', {method: 'POST', body: new URLSearchParams({id:id})}).then(r => r.text()).then(res =>
+        $.post("ajax/materias/borrar_materia.php", {id:id}, function(res)
+        {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar la materia", 0);
             cargarMaterias();
@@ -116,24 +119,24 @@ function borrarMateria (id, nombre)
 // Limpia los datos del formulario modal de materias
 function limpiarFormularioMaterias()
 {
-    $('#idMateria').value = "";
-    $('#nombre').value = "";
-    $('#codigoOficial').value = "";
-    $('#nombreOficial').value = "";
-    $('#creditosECTS').value = "";
-    $('#horasAnuales').value = "";
-    $('#cantidad').value = "1";
-    $('#horas').value = "";
-    $('#horasComplementarias').value = "";
-    $('#tipo').value = "OTRAS";
-    $('#departamento').value = "";
-    $('#especialidad').value = "";
+    $('#idMateria').val("");
+    $('#nombre').val("");
+    $('#codigoOficial').val("");
+    $('#nombreOficial').val("");
+    $('#creditosECTS').val("");
+    $('#horasAnuales').val("");
+    $('#cantidad').val("1");
+    $('#horas').val("");
+    $('#horasComplementarias').val("");
+    $('#tipo').val("OTRAS");
+    $('#departamento').val("");
+    $('#especialidad').val("");
     $('#computablesHorasGrupo').prop('checked', true);
     $('#tieneProgramacion').prop('checked', true);
     $('#divisible').prop('checked', true);
     $('#asignadaDirectiva').prop('checked', false);
-    $('#minNumProfesores').value = "0";
-    $('#maxGruposProfesor').value = "0";    
+    $('#minNumProfesores').val("0");
+    $('#maxGruposProfesor').val("0");    
 }
 
 // Carga el formulario modal para editar los datos de la materia indicada para los distintos grupos
@@ -156,17 +159,19 @@ function importarDatos(idMateria, idCurso)
 // Carga el modal para asociar competencias (profesionales, etc) a la materia
 function asociarCompetencias(idMateria)
 {
-    fetch('ajax/materias/cargar_competencias_materia.php?' + new URLSearchParams({idMateria: idMateria})).then(r => r.json()).then(res =>
-        document.getElementById("competenciasMateria").innerHTML = res;
-        document.getElementById("formcommat").modal('show');
+    $.get("ajax/materias/cargar_competencias_materia.php", {idMateria: idMateria}, function(res)
+    {
+        $("#competenciasMateria").html(res);
+        $("#formcommat").modal('show');
     });    
 }
 
 // Añade una nueva competencia a la materia indicada
 function asociarCompetencia(idMateria)
 {
-    let idCompetencia = $('#idCompetencia').value;
-    fetch('ajax/materias/nueva_competencia_materia.php?' + new URLSearchParams({idMateria: idMateria, idCompetencia: idCompetencia})).then(r => r.json()).then(res =>
+    let idCompetencia = $('#idCompetencia').val();
+    $.get("ajax/materias/nueva_competencia_materia.php", {idMateria: idMateria, idCompetencia: idCompetencia}, function(res)
+    {
         asociarCompetencias(idMateria);
     });    
 }
@@ -174,14 +179,15 @@ function asociarCompetencia(idMateria)
 // Quita una competencia de la materia indicada
 function borrarCompetencia(idMateria, idCompetencia)
 {
-    fetch('ajax/materias/borrar_competencia_materia.php?' + new URLSearchParams({idMateria: idMateria, idCompetencia: idCompetencia})).then(r => r.json()).then(res =>
+    $.get("ajax/materias/borrar_competencia_materia.php", {idMateria: idMateria, idCompetencia: idCompetencia}, function(res)
+    {
         asociarCompetencias(idMateria);
     });    
 }
 
 // Evento de envío del formulario para inserción/modificación
 
-document.getElementById("formmat").on("submit", function(e)
+$("#formmat").on("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formmat);

@@ -4,7 +4,7 @@
 function seleccionarDepartamento()
 {
     // Se obtiene el departamento seleccionado actualmente
-    const selDepartamento = $('#seleccionDepartamento').value;
+    const selDepartamento = $('#seleccionDepartamento').val();
     // Se muestran los profesores de ese departamento
     cargarProfesores(selDepartamento);
     // Se carga el modal para dar de alta o editar un profesor en ese departamento
@@ -15,7 +15,7 @@ function seleccionarDepartamento()
 // el departamento al que pertenece
 async function nuevoProfesor()
 {
-    if($('#seleccionDepartamento').value > 0)
+    if($('#seleccionDepartamento').val() > 0)
     {
         limpiarFormularioProfesores();
         $('#formprofesor').modal('show');
@@ -29,7 +29,8 @@ function borrarProfesor (id, nombre)
 {    
     if (confirm("Confirmas el borrado del profesor '" + nombre + "'?"))
     {
-        fetch('ajax/profesores/borrar_profesor.php', {method: 'POST', body: new URLSearchParams({id:id})}).then(r => r.text()).then(res =>
+        $.post("ajax/profesores/borrar_profesor.php", {id:id}, function(res)
+        {
             if (res.trim() == 'si')
                  mostrarMensaje("Error al borrar el profesor", 0);
            cargarProfesores();
@@ -40,15 +41,15 @@ function borrarProfesor (id, nombre)
 // Borra los campos del formulario de profesores
 function limpiarFormularioProfesores()
 {
-    $('#idPerfil').value = "";
-    $('#nombrePerfil').value = "";
-    $('#abreviaturaPerfil').value = "";
-    $('#usuarioPerfil').value = "";
-    $('#clavePerfil').value = "";
-    $('#telefonoPerfil').value = "";
-    $('#emailPerfil').value = "";
-    $('#idEspecialidadPerfil').value = "";
-    $('#observacionesPerfil').value = "";
+    $('#idPerfil').val("");
+    $('#nombrePerfil').val("");
+    $('#abreviaturaPerfil').val("");
+    $('#usuarioPerfil').val("");
+    $('#clavePerfil').val("");
+    $('#telefonoPerfil').val("");
+    $('#emailPerfil').val("");
+    $('#idEspecialidadPerfil').val("");
+    $('#observacionesPerfil').val("");
     $('#prefhoras').load('ajax/profesores/cargar_preferencias_profesor.php');
 }
 

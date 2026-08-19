@@ -3,18 +3,19 @@
 // Carga el listado de ciclos en el "div" habilitado para ello
 function cargarCiclos()
 {
-    document.getElementById("listaciclos").load("ajax/ciclos/cargar_ciclos.php");
+    $("#listaciclos").load("ajax/ciclos/cargar_ciclos.php");
 }
 
 // Muestra los datos del ciclo indicado en el formulario modal, para su edición
 function cargarCicloModal(id)
 {
-    fetch('ajax/ciclos/cargar_ciclo.php?' + new URLSearchParams({idCiclo:id})).then(r => r.json()).then(res =>
-        $('#idCiclo').value = id;
-        $('#nombre').value = res.nombre;
-        $('#familia').value = res.familia;
-        $('#nivel').value = res.nivel;
-        document.getElementById("formciclo").modal('show');
+    $.get("ajax/ciclos/cargar_ciclo.php", {idCiclo:id}, function(res)
+    {
+        $('#idCiclo').val(id);
+        $('#nombre').val(res.nombre);
+        $('#familia').val(res.familia);
+        $('#nivel').val(res.nivel);
+        $("#formciclo").modal('show');
     });    
 }
 
@@ -31,7 +32,8 @@ function borrarCiclo (id, nombre)
 {
     if (confirm("Confirmas el borrado del ciclo '" + nombre + "'? Sólo se podrá eliminar si no tiene cursos asociados. En caso contrario, deberás borrar estos elementos antes."))
     {
-        fetch('ajax/ciclos/borrar_ciclo.php', {method: 'POST', body: new URLSearchParams({id:id})}).then(r => r.text()).then(res =>
+        $.post("ajax/ciclos/borrar_ciclo.php", {id:id}, function(res)
+        {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar el ciclo. Asegúrate de que no tenga cursos asociados", 0);
             else
@@ -43,28 +45,30 @@ function borrarCiclo (id, nombre)
 // Borra el contenido de los campos del formulario modal de alta/edición de ciclos
 function limpiarFormularioCiclos()
 {
-    $('#idCiclo').value = "";
-    $('#nombre').value = "";
-    $('#familia').value = "";
-    $('#nivel').value = "";    
+    $('#idCiclo').val("");
+    $('#nombre').val("");
+    $('#familia').val("");
+    $('#nivel').val("");    
 }
 
 // Asocia unidades de competencia a un ciclo
 function asociarUnidades(idCiclo)
 {
-    fetch('ajax/ciclos/cargar_asociaciones_unidades.php?' + new URLSearchParams({idCiclo: idCiclo})).then(r => r.json()).then(res =>
-        document.getElementById("asociaciones").innerHTML = res;
-        document.getElementById("formunicic").modal('show');
+    $.get("ajax/ciclos/cargar_asociaciones_unidades.php", {idCiclo: idCiclo}, function(res)
+    {
+        $("#asociaciones").html(res);
+        $("#formunicic").modal('show');
     });    
 }
 
 // Añade una nueva asociación de unidad de competencia a un ciclo
 function nuevaAsociacion(idCiclo)
 {
-    let codigoUnidad = $('#codigoAsociacion').value;
+    let codigoUnidad = $('#codigoAsociacion').val();
     if(codigoUnidad != "")
     {
-        fetch('ajax/ciclos/nueva_asociacion.php', {method: 'POST', body: new URLSearchParams({idCiclo:idCiclo, codigoUnidad: codigoUnidad})}).then(r => r.text()).then(res =>
+        $.post("ajax/ciclos/nueva_asociacion.php", {idCiclo:idCiclo, codigoUnidad: codigoUnidad}, function(res)
+        {
             asociarUnidades(idCiclo);
         });
     }
@@ -73,7 +77,8 @@ function nuevaAsociacion(idCiclo)
 // Elimina una asociación de unidad de competencia a ciclo
 function borrarAsociacion(idCiclo, codigoUnidad)
 {
-    fetch('ajax/ciclos/borrar_asociacion.php', {method: 'POST', body: new URLSearchParams({idCiclo: idCiclo, codigoUnidad: codigoUnidad})}).then(r => r.text()).then(res =>
+    $.post("ajax/ciclos/borrar_asociacion.php", {idCiclo: idCiclo, codigoUnidad: codigoUnidad}, function(res)
+    {
         asociarUnidades(idCiclo);
     });
 }
@@ -81,16 +86,18 @@ function borrarAsociacion(idCiclo, codigoUnidad)
 // Asocia cursos a un ciclo
 function asociarCursos(idCiclo)
 {
-    fetch('ajax/ciclos/cargar_asociaciones_cursos.php?' + new URLSearchParams({idCiclo: idCiclo})).then(r => r.json()).then(res =>
-        document.getElementById("asociacionesCursos").innerHTML = res;
-        document.getElementById("formcurcic").modal('show');
+    $.get("ajax/ciclos/cargar_asociaciones_cursos.php", {idCiclo: idCiclo}, function(res)
+    {
+        $("#asociacionesCursos").html(res);
+        $("#formcurcic").modal('show');
     });    
 }
 
 // Borra una asociación de curso con ciclo
 function borrarCurso(idCiclo, idCurso)
 {
-    fetch('ajax/ciclos/borrar_curso_ciclo.php', {method: 'POST', body: new URLSearchParams({idCiclo:idCiclo, idCurso: idCurso})}).then(r => r.text()).then(res =>
+    $.post("ajax/ciclos/borrar_curso_ciclo.php", {idCiclo:idCiclo, idCurso: idCurso}, function(res)
+    {
         asociarCursos(idCiclo);
     });
 }
@@ -98,9 +105,10 @@ function borrarCurso(idCiclo, idCurso)
 // Actualiza los datos de un curso en el ciclo
 function actualizarCurso(idCiclo, idCurso)
 {
-    let orden = $('#orden' + idCurso).value;
+    let orden = $('#orden' + idCurso).val();
 
-    fetch('ajax/ciclos/actualizar_curso_ciclo.php', {method: 'POST', body: new URLSearchParams({idCiclo:idCiclo, idCurso: idCurso, orden: orden})}).then(r => r.text()).then(res =>
+    $.post("ajax/ciclos/actualizar_curso_ciclo.php", {idCiclo:idCiclo, idCurso: idCurso, orden: orden}, function(res)
+    {
         asociarCursos(idCiclo);
     });
 }
@@ -108,16 +116,17 @@ function actualizarCurso(idCiclo, idCurso)
 // Añade un nuevo curso al ciclo
 function nuevoCurso(idCiclo)
 {
-    let idCurso = $('#codigoAsociacionCurso').value;
-    let orden = $('#orden').value;
+    let idCurso = $('#codigoAsociacionCurso').val();
+    let orden = $('#orden').val();
 
-    fetch('ajax/ciclos/insertar_curso_ciclo.php', {method: 'POST', body: new URLSearchParams({idCiclo:idCiclo, idCurso: idCurso, orden: orden})}).then(r => r.text()).then(res =>
+    $.post("ajax/ciclos/insertar_curso_ciclo.php", {idCiclo:idCiclo, idCurso: idCurso, orden: orden}, function(res)
+    {
         asociarCursos(idCiclo);
     });
 }
 
 // Evento de envío del formulario modal para inserción/modificación
-document.getElementById("formcic").on("submit", function(e)
+$("#formcic").on("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formcic);
@@ -132,7 +141,7 @@ document.getElementById("formcic").on("submit", function(e)
     })
     .done(function(res){
         limpiarFormularioCiclos();
-        document.getElementById("formciclo").modal('hide');
+        $("#formciclo").modal('hide');
         cargarCiclos();
     });
 });

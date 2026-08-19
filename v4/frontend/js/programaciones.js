@@ -8,34 +8,24 @@ let tipoApartado = 0;
 // Cambia la materia seleccionada
 function cambiarMateria()
 {    
-    selMateria = document.getElementById('materia').value;
-    document.querySelector('input[name="idMateria"]').value = selMateria;
+    selMateria = $('#materia').val();
+    $('input[name="idMateria"]').val(selMateria);
     selApartado = 0;
-    document.getElementById('apartado').value = selApartado;
-    document.getElementById('edicionapartado').style.display = "none";
+    $('#apartado').val(selApartado);
+    $('#edicionapartado').hide();
     if (tinymce.get('texto'))
         tinymce.get('texto').setContent("");
 
     // Actualizamos los apartados según el tipo de materia elegida
-    const apartadoSelect = document.getElementById('apartado');
-    apartadoSelect.disabled = true;
-    apartadoSelect.innerHTML = '<option value="0">Cargando…</option>';
-    
-    fetch('ajax/programaciones/cargar_apartados.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({ idMateria: selMateria })
-    })
-    .then(response => response.json())
-    .then(function (res) {
+    $('#apartado').prop('disabled', true).html('<option value="0">Cargando…</option>');
+    $.ajax({ url: 'ajax/programaciones/cargar_apartados.php', method: 'POST', dataType: 'json',
+        data: { idMateria: selMateria }})
+    .done(function (res) {
         let opciones = '<option value="0">--Selecciona un apartado--</option>';
         res.forEach(function (a) {
             opciones += `<option value="${a.id},${a.tipo}">${a.nombre}</option>`;
         });
-        apartadoSelect.innerHTML = opciones;
-        apartadoSelect.disabled = false;   
+        $('#apartado').html(opciones).prop('disabled', false);   
     });
 }
 
@@ -45,30 +35,23 @@ function cambiarApartado()
     if (tinymce.get('texto'))
         tinymce.get('texto').setContent("");
 
-    [selApartado, tipoApartado] = document.getElementById('apartado').value.split(',').map(x => +x);
+    [selApartado, tipoApartado] = $('#apartado').val().split(',').map(x => +x);
 
     if (tipoApartado == 0) {
-        document.getElementById('idApartado').value = selApartado;
+        $('#idApartado').val(selApartado);
         if (selMateria > 0 && selApartado > 0) {
-            fetch('ajax/programaciones/cargar_contenido_programacion.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({ idMateria: selMateria, idApartado: selApartado })
-            })
-            .then(response => response.text())
-            .then(function(res) {
-                document.getElementById('edicionapartado').style.display = "block";
-                document.getElementById('mensajeapartadoautomatico').style.display = "none";
+            $.post('ajax/programaciones/cargar_contenido_programacion.php', {idMateria: selMateria, idApartado: selApartado}, function(res)
+            {
+                $('#edicionapartado').show();
+                $('#mensajeapartadoautomatico').hide();
                 if (tinymce.get('texto'))
                     tinymce.get('texto').setContent(res);
             });
         }
     }
     else {
-        document.getElementById('edicionapartado').style.display = "none";
-        document.getElementById('mensajeapartadoautomatico').style.display = "block";
+        $('#edicionapartado').hide();
+        $('#mensajeapartadoautomatico').show();
     }
 }
 
@@ -127,9 +110,8 @@ async function importarProgramacion()
     {
         if (await confirmar("Al importar una programación se borrarán TODOS los contenidos de la programación para la materia actualmente seleccionada. ¿Deseas continuar?"))
         {
-            document.getElementById('idMateriaDestino').value = selMateria;
-            const modal = new bootstrap.Modal(document.getElementById('formimportarprog'));
-            modal.show();
+            $('#idMateriaDestino').val(selMateria);
+            $('#formimportarprog').modal('show');
         }        
     }
 }
@@ -141,7 +123,7 @@ function contenidoDefectoTemas()
 }
 
 // Mostrar temas
-document.getElementById("temas").addEventListener("submit", function(e)
+$("#temas").on("submit", function(e)
 {
     if(selMateria <= 0)
     {
@@ -150,13 +132,13 @@ document.getElementById("temas").addEventListener("submit", function(e)
     }
     else
     {
-        document.getElementById('idMateria').value = selMateria;
+        $('#idMateria').val(selMateria);
     }
 });
 
 
 // Guardar cambios al contenido editado
-document.getElementById("formprogramacion").addEventListener("submit", function(e)
+$("#formprogramacion").on("submit", function(e)
 {
     tinymce.get('texto').save();
     e.preventDefault();
@@ -166,12 +148,16 @@ document.getElementById("formprogramacion").addEventListener("submit", function(
     {
         var formData = new FormData(document.forms.formprogramacion);
 
-        fetch("ajax/programaciones/insertar_contenido_programacion.php", {
-            method: "post",
-            body: formData
+        $.ajax({
+            url: "ajax/programaciones/insertar_contenido_programacion.php",
+            type: "post",
+            dataType: "html",
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false
         })
-        .then(res => res.text())
-        .then(function(res){
+        .done(function(res){
             if (res.trim() == 'si')
                 mostrarMensaje("Error al realizar la operación indicada. Si no has hecho cambios respecto al contenido previamente guardado, ignora este mensaje", 0);
             else
@@ -181,32 +167,35 @@ document.getElementById("formprogramacion").addEventListener("submit", function(
 });
 
 // Guardar cambios al contenido editado
-document.getElementById("formimpprog").addEventListener("submit", function(e)
+$("#formimpprog").on("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formimpprog);
-    fetch("ajax/programaciones/importar_programacion.php", {
-        method: "post",
-        body: formData
+    $.ajax({
+        url: "ajax/programaciones/importar_programacion.php",
+        type: "post",
+        dataType: "html",
+        data: formData,
+        cache: false,
+        contentType: false,
+        processData: false
     })
-    .then(res => res.text())
-    .then(function(res){
-        document.getElementById('idMateriaOrigen').value = "";
-        document.getElementById('idMateriaDestino').value = "";
-        const modal = bootstrap.Modal.getInstance(document.getElementById("formimportarprog"));
-        modal.hide();
-        document.getElementById('edicionapartado').style.display = "none";
+    .done(function(res){
+        $('#idMateriaOrigen').val("");
+        $('#idMateriaDestino').val("");
+        $("#formimportarprog").modal('hide');
+        $('#edicionapartado').hide();
         mostrarMensaje("Operación completada", 1);
         cambiarApartado();
     });
 });
 
 // Configuración de TinyMCE si procede
-if(document.getElementById('edicionapartado'))
+if($('#edicionapartado').length > 0)
 {
     initTinyMCE('progeditar');
 
     // Si hay TinyMCE hay formulario. Inicialmente lo ocultamos
     // Sólo se mostrará si elegimos un apartado concreto del listado
-    document.getElementById('edicionapartado').style.display = "none";
+    $('#edicionapartado').hide();
 }

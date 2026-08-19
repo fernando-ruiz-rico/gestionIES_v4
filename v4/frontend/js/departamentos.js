@@ -3,17 +3,18 @@
 // Carga en el div con id "listadepartamentos" el listado de departamentos obtenido
 function cargarDepartamentos()
 {
-    document.getElementById("listadepartamentos").load("ajax/departamentos/cargar_departamentos.php");
+    $("#listadepartamentos").load("ajax/departamentos/cargar_departamentos.php");
 }
 
 // Carga en el formulario modal de departamentos modales/departamentos.php los datos
 // del departamento con el "id" proporcionado (se reciben en formato JSON)
 function cargarDepartamentoModal(id)
 {
-    fetch('ajax/departamentos/cargar_departamento.php?' + new URLSearchParams({idDepartamento:id})).then(r => r.json()).then(res =>
-        $('#idDepartamento').value = id;
-        $('#nombre').value = res.nombre;
-        document.getElementById("formdepartamento").modal('show');
+    $.get("ajax/departamentos/cargar_departamento.php", {idDepartamento:id}, function(res)
+    {
+        $('#idDepartamento').val(id);
+        $('#nombre').val(res.nombre);
+        $("#formdepartamento").modal('show');
     });    
 }
 
@@ -30,7 +31,8 @@ function borrarDepartamento (id, nombre)
 {
     if (confirm("Confirmas el borrado del departamento '" + nombre + "'? Sólo se podrá eliminar si no tiene profesores asociados. En caso contrario, deberás borrar estos elementos antes."))
     {
-        fetch('ajax/departamentos/borrar_departamento.php', {method: 'POST', body: new URLSearchParams({id:id})}).then(r => r.text()).then(res =>
+        $.post("ajax/departamentos/borrar_departamento.php", {id:id}, function(res)
+        {
             if (res.trim() == 'si')
                 mostrarMensaje("Error al borrar el departamento. Puede que tenga profesores u otros recursos asociados que se deban borrar antes", 0);
             else
@@ -42,12 +44,12 @@ function borrarDepartamento (id, nombre)
 // Borra los datos del formulario modal de departamentos
 function limpiarFormularioDepartamentos()
 {
-    $('#idDepartamento').value = "";
-    $('#nombre').value = "";
+    $('#idDepartamento').val("");
+    $('#nombre').val("");
 }
 
 // Evento de envío del formulario modal de departamentos
-document.getElementById("formdep").on("submit", function(e)
+$("#formdep").on("submit", function(e)
 {
     e.preventDefault();
     var formData = new FormData(document.forms.formdep);
@@ -64,7 +66,7 @@ document.getElementById("formdep").on("submit", function(e)
         // Al recibir la respuesta, vaciamos formulario y recargamos la página
         // En este caso no se controlan errores porque los datos son simples
         limpiarFormularioDepartamentos();
-        document.getElementById("formdepartamento").modal('hide');
+        $("#formdepartamento").modal('hide');
         window.location.href="departamentos.php";
     });
 });

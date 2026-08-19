@@ -7,18 +7,18 @@ var selEvaluacion = 0;
 
 // Si hay desplegable de curso, elegimos el curso actual
 // La variable "cursoActual" se ha establecido en la página "programaciones_seguimiento.php"
-$('#cursoSeguimiento').value = cursoActual;
+$('#cursoSeguimiento').val(cursoActual);
 
 // Actualiza los valores seleccionados de curso, evaluación y materia y comprueba que
 // no estén vacíos
 function actualizarDatos(comunes = false)
 {
-    selMateria = $('#materiaSeguimiento').value;
+    selMateria = $('#materiaSeguimiento').val();
     if (cursoActual == "")
-        selCurso = $('#cursoSeguimiento').value;
+        selCurso = $('#cursoSeguimiento').val();
     else
         selCurso = cursoActual;
-    selEvaluacion = $('#evaluacionSeguimiento').value;    
+    selEvaluacion = $('#evaluacionSeguimiento').val();    
     
     // Si vamos a editar datos comunes no hace falta seleccionar materia
     return (selMateria > 0 || comunes) && selCurso != "" && selEvaluacion > 0;
@@ -73,7 +73,7 @@ function ejecutarOperacionSeleccionada(operacion)
                         tinymce.get('temporalizacion').setContent("");
                     if (tinymce.get('resultados'))
                         tinymce.get('resultados').setContent("");       
-                    $('#resultadosPorcentaje').value = 0;                
+                    $('#resultadosPorcentaje').val(0);                
                 }
                 else
                 {
@@ -81,7 +81,7 @@ function ejecutarOperacionSeleccionada(operacion)
                         tinymce.get('temporalizacion').setContent(res.temporalizacion);
                     if (tinymce.get('resultados'))
                         tinymce.get('resultados').setContent(res.resultados);
-                    $('#resultadosPorcentaje').value = res.resultados_porcentaje;
+                    $('#resultadosPorcentaje').val(res.resultados_porcentaje);
                 }
             });
         } else {
@@ -89,7 +89,7 @@ function ejecutarOperacionSeleccionada(operacion)
                 tinymce.get('temporalizacion').setContent("");
             if (tinymce.get('resultados'))
                 tinymce.get('resultados').setContent("");
-            $('#resultadosPorcentaje').value = 0;
+            $('#resultadosPorcentaje').val(0);
         }
     // Importar datos de evaluación anterior
     } else if (operacion == 'importarEvaluacion') {
@@ -110,7 +110,7 @@ function ejecutarOperacionSeleccionada(operacion)
                                 tinymce.get('temporalizacion').setContent("");
                             if (tinymce.get('resultados'))
                                 tinymce.get('resultados').setContent("");       
-                            $('#resultadosPorcentaje').value = 0;                
+                            $('#resultadosPorcentaje').val(0);                
                         }
                         else
                         {
@@ -118,7 +118,7 @@ function ejecutarOperacionSeleccionada(operacion)
                                 tinymce.get('temporalizacion').setContent(res.temporalizacion);
                             if (tinymce.get('resultados'))
                                 tinymce.get('resultados').setContent(res.resultados);
-                            $('#resultadosPorcentaje').value = res.resultados_porcentaje;
+                            $('#resultadosPorcentaje').val(res.resultados_porcentaje);
                         }
                     });                
                 }
@@ -145,7 +145,7 @@ function ejecutarOperacionSeleccionada(operacion)
                                 tinymce.get('temporalizacion').setContent("");
                             if (tinymce.get('resultados'))
                                 tinymce.get('resultados').setContent("");       
-                            $('#resultadosPorcentaje').value = 0;                
+                            $('#resultadosPorcentaje').val(0);                
                         }
                         else
                         {
@@ -153,7 +153,7 @@ function ejecutarOperacionSeleccionada(operacion)
                                 tinymce.get('temporalizacion').setContent(res.temporalizacion);
                             if (tinymce.get('resultados'))
                                 tinymce.get('resultados').setContent(res.resultados);
-                            $('#resultadosPorcentaje').value = res.resultados_porcentaje;
+                            $('#resultadosPorcentaje').val(res.resultados_porcentaje);
                         }
                     });                
                 }
@@ -297,14 +297,14 @@ function generarPDFSeguimiento()
 }
 
 // Guardar datos de seguimiento de materia
-document.getElementById("formseguimiento").on("submit", function(e)
+$("#formseguimiento").on("submit", function(e)
 {
     if (actualizarDatos())
     {
         e.preventDefault();
-        $('#idMateria').value = selMateria;
-        $('#curso').value = selCurso;
-        $('#evaluacion').value = selEvaluacion;
+        $('#idMateria').val(selMateria);
+        $('#curso').val(selCurso);
+        $('#evaluacion').val(selEvaluacion);
         tinymce.get('temporalizacion').save();
         tinymce.get('resultados').save();
         var formData = new FormData(document.forms.formseguimiento);
@@ -329,13 +329,13 @@ document.getElementById("formseguimiento").on("submit", function(e)
 });
 
 // Guardar datos de seguimiento comunes
-document.getElementById("formseguimientocomun").on("submit", function(e)
+$("#formseguimientocomun").on("submit", function(e)
 {
     if (actualizarDatos(true))
     {
         e.preventDefault();
-        $('#cursoComun').value = selCurso;
-        $('#evaluacionComun').value = selEvaluacion;
+        $('#cursoComun').val(selCurso);
+        $('#evaluacionComun').val(selEvaluacion);
         tinymce.get('funcionamiento_departamento').save();
         tinymce.get('actividades').save();
         tinymce.get('temporalizacion_defecto').save();

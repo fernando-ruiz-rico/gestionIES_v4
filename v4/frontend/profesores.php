@@ -18,7 +18,7 @@
     <!-- En este div se carga por AJAX el listado de especialidades -->
     <div id="listaprofesores"></div>
     <!-- Botón para abrir el diálogo modal para crear nuevos profesores -->
-    <div style="text-align: center"><button class="btn btn-light" onclick="nuevoProfesor()"><i class="bi bi-plus"></i> Nuevo Profesor</button></div>
+    <div style="text-align: center"><button class="btn btn-light" onclick="nuevoProfesor()"><img src="img/add.png" /> Nuevo Profesor</button></div>
 </div>
 
 <!-- Aquí no se incluye ningún diálogo modal porque ya está incluido desde la cabecera, se llama

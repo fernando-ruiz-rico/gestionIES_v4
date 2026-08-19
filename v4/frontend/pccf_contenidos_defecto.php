@@ -59,7 +59,7 @@ include('includes/cabecera.php');
             <input type="hidden" name="idDepartamento" id="idDepartamento" value="" />
             <input type="hidden" name="idApartado" id="idApartado" value="" />
             <textarea name="texto" class="pccfeditar" id="texto"></textarea>
-            <div style="text-align:center"><button class="btn btn-light" type="submit"><i class="bi bi-save"></i> Guardar cambios</button></div>
+            <div style="text-align:center"><button class="btn btn-light" type="submit"><img src="img/save.png" /> Guardar cambios</button></div>
         </form>
     </div>
 

@@ -8,25 +8,23 @@ function mostrarMensaje(mensaje, tipo)
     // 1 = mensaje de OK (color verde)
     // 2 = mensaje de warning (color amarillo)
     // Otro valor = mensaje convencional (color claro)
-    
-    const textoMensajeModal = document.getElementById('textoMensajeModal');
+
     if (tipo == 0)
     { 
         // ERROR
-        textoMensajeModal.className = 'alert alert-danger';
+        $('#textoMensajeModal').attr('class', 'alert alert-danger');
     } else if (tipo == 1) {
         // OK
-        textoMensajeModal.className = 'alert alert-success';
+        $('#textoMensajeModal').attr('class', 'alert alert-success');
     } else if (tipo == 2) {
         // WARNING
-        textoMensajeModal.className = 'alert alert-warning';        
+        $('#textoMensajeModal').attr('class', 'alert alert-warning');        
     } else {
         // OTROS
-        textoMensajeModal.className = 'alert alert-light';       
+        $('#textoMensajeModal').attr('class', 'alert alert-light');       
     } 
-    textoMensajeModal.textContent = mensaje;
-    const mensajemodal = new bootstrap.Modal(document.getElementById('mensajemodal'));
-    mensajemodal.show();
+    $('#textoMensajeModal').html(mensaje);
+    $('#mensajemodal').modal('show');
 }
 
 // Función para confirmar una acción con un mensaje personalizado
@@ -50,11 +48,7 @@ async function confirmar(mensaje, titulo = '¿Estás seguro?')
 // Función que muestra en el div "listaprofesores" los profesores del departamento seleccionado
 function cargarProfesores(selDepartamento)
 {
-    fetch('ajax/profesores/cargar_profesores.php?' + new URLSearchParams({idDepartamento: selDepartamento}))
-        .then(r => r.text())
-        .then(html => {
-            document.getElementById("listaprofesores").innerHTML = html;
-        });
+    $("#listaprofesores").load("ajax/profesores/cargar_profesores.php", {idDepartamento: selDepartamento});
 }
 
 // Función para cargar en el DOM el modal del formulario para crear un profesor o editar su perfil
@@ -62,52 +56,52 @@ function cargarProfesores(selDepartamento)
 async function cargarModalProfesor(idDepartamento) 
 {
     // Si el modal para mostrar el perfil del profesor no existe en el DOM, lo cargamos
-    if (document.getElementById('formprofesor') === null) {
-        const modalResponse = await fetch('modales/profesores.php');
-        const modal = await modalResponse.text();
-        document.body.insertAdjacentHTML('beforeend', modal); // Insertamos el modal al final del body
+    if ($('#formprofesor').length === 0) {
+        const modal = await $.get('modales/profesores.php');
+        $('body').append(modal); // Insertamos el modal al final del body
         
         // Evento de envío del formulario de datos de profesor
         // Hay que tener en cuenta que este formulario se puede cargar y enviar tanto desde la vista "profesores.php" como desde el menú "Perfil"
-        document.getElementById("formprof").addEventListener("submit", function(e)
+        $("#formprof").on("submit", function(e)
         {
             e.preventDefault();
             var formData = new FormData(document.forms.formprof);
-            fetch("ajax/profesores/insertar_profesor.php", {
-                method: "post",
-                body: formData
+            $.ajax({
+                url: "ajax/profesores/insertar_profesor.php",
+                type: "post",
+                dataType: "html",
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false
             })
-            .then(res => res.text())
-            .then(function(res){
+            .done(function(res){
                 // Mostramos resultado y actualizamos profesores (sólo si estamos en la vista de profesores y existe la función "cargarProfesores")
-                const formprofesorModal = bootstrap.Modal.getInstance(document.getElementById("formprofesor"));
-                formprofesorModal.hide();
+                $("#formprofesor").modal('hide');
                 if (res.trim().startsWith('si'))
                     mostrarMensaje("Error al realizar la operación solicitada: " + res.trim().substring(2), 0);
                 else
                     mostrarMensaje("Operación realizada correctamente", 1);
-                if (typeof cargarProfesores !== 'undefined')
+                if (cargarProfesores !== undefined)
                     cargarProfesores(idDepartamento);
             });
         });
     }
 
-    if (document.getElementById('idDepartamentoPerfil').value != idDepartamento) {
+    if ($('#idDepartamentoPerfil').val() != idDepartamento) {
         // Cargamos las especialidades del departamento para poder rellenar el select del formulario
-        const resEspResponse = await fetch('ajax/especialidades/cargar_especialidades_json.php?' + new URLSearchParams({idDepartamento:idDepartamento}));
-        const resEsp = await resEspResponse.text();
+        const resEsp = await $.get("ajax/especialidades/cargar_especialidades_json.php", {idDepartamento:idDepartamento});
         const resultado = JSON.parse(resEsp);
         // Accedemos al "select" de especialidad del formulario y rellenamos las opciones
-        const selectEspecialidad = document.getElementById('idEspecialidadPerfil');
-        selectEspecialidad.innerHTML = "";
+        $('#idEspecialidadPerfil').empty();
         for(var i = 0; i < resultado.length; i++) {
-            var option = document.createElement('option');
-            option.value = resultado[i].id;
-            option.textContent = resultado[i].descripcion;
-            selectEspecialidad.appendChild(option);
+            var $option = $('<option></option>')
+                .attr('value', resultado[i].id)
+                .text(resultado[i].descripcion);
+            $('#idEspecialidadPerfil').append($option);
         }
 
-        document.getElementById('idDepartamentoPerfil').value = idDepartamento;
+        $('#idDepartamentoPerfil').val(idDepartamento);
     }
 }
 
@@ -121,29 +115,26 @@ async function cargarPerfil(idProf, idDep, editarAbreviatura = true)
     await cargarModalProfesor(idDep);
 
     // Ahora cargamos los datos del profesor y los ponemos en el formulario
-    const resResponse = await fetch('ajax/profesores/cargar_profesor.php?' + new URLSearchParams({idProfesor:idProf}));
-    const res = await resResponse.json();
-    
-    document.getElementById('idPerfil').value = idProf;
-    document.getElementById('nombrePerfil').value = res.nombre;
-    document.getElementById('abreviaturaPerfil').value = res.abreviatura;
-    document.getElementById('usuarioPerfil').value = res.usuario;
-    document.getElementById('clavePerfil').value = "";
-    document.getElementById('telefonoPerfil').value = res.telefono;
-    document.getElementById('emailPerfil').value = res.email;
-    document.getElementById('idEspecialidadPerfil').value = res.idEspecialidad;
-    document.getElementById('observacionesPerfil').value = res.observaciones_horario;
-    
-    // Cargamos las preferencias de horario
-    const prefhorasResponse = await fetch('ajax/profesores/cargar_preferencias_profesor.php?' + new URLSearchParams({idProfesor:idProf}));
-    const prefhorasHtml = await prefhorasResponse.text();
-    document.getElementById('prefhoras').innerHTML = prefhorasHtml;
-    
-    // Marcamos como solo lectura la abreviatura si no se puede editar
-    document.getElementById('abreviaturaPerfil').readOnly = !editarAbreviatura;
+    $.get("ajax/profesores/cargar_profesor.php", {idProfesor:idProf}, function(res)
+    {
+        $('#idPerfil').val(idProf);
+        $('#nombrePerfil').val(res.nombre);
+        $('#abreviaturaPerfil').val(res.abreviatura);
+        $('#usuarioPerfil').val(res.usuario);
+        $('#clavePerfil').val("");
+        $('#telefonoPerfil').val(res.telefono);
+        $('#emailPerfil').val(res.email);
+        $('#idEspecialidadPerfil').val(res.idEspecialidad);
+        $('#observacionesPerfil').val(res.observaciones_horario);
+        $('#prefhoras').load('ajax/profesores/cargar_preferencias_profesor.php', {idProfesor:idProf});
+        // Marcamos como solo lectura la abreviatura si no se puede editar
+        if(editarAbreviatura)
+            $('#abreviaturaPerfil').prop('readonly', false);
+        else
+            $('#abreviaturaPerfil').prop('readonly', true);
 
-    const formprofesorModal = new bootstrap.Modal(document.getElementById("formprofesor"));
-    formprofesorModal.show();
+        $("#formprofesor").modal('show');
+    });
 }
 
 // Esta función se activa cada vez que el usuario elige una preferencia de horario (casilla)
@@ -155,8 +146,8 @@ async function cargarPerfil(idProf, idDep, editarAbreviatura = true)
 function preferencia(id, tipo)
 {
     // Casillas rojas y amarillas actualmente seleccionadas
-    var rojas = document.getElementById('prefRojas').value;
-    var amarillas = document.getElementById('prefAmarillas').value;
+    var rojas = $('#prefRojas').val();
+    var amarillas = $('#prefAmarillas').val();
     
     // Quitamos de las casillas rojas o amarillas la casilla involucrada.
     // Esto es así porque pueden pasar varias cosas:
@@ -175,15 +166,15 @@ function preferencia(id, tipo)
         amarillas = amarillas + id;
     
     // Actualizamos los campos "hidden" con los nuevos valores de rojas y amarillas
-    document.getElementById('prefRojas').value = rojas;
-    document.getElementById('prefAmarillas').value = amarillas;    
+    $('#prefRojas').val(rojas);
+    $('#prefAmarillas').val(amarillas);    
 }
 
 // Función para recargar la página actual con el departamento seleccionado en el desplegable (si lo hay)
 // Se apoya en el "select" incluido desde includes/seleccion_departamento.php
 function seleccionarDepartamento()
 {
-    const selDepartamento = document.getElementById('seleccionDepartamento').value;
+    const selDepartamento = $('#seleccionDepartamento').val();
     if (selDepartamento != "")
     {
         const pagina = window.location.pathname;
