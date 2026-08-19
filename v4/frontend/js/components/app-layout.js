@@ -10,7 +10,7 @@ const AppLayout = {
             
             <!-- Contenido principal -->
             <div id="page-content-wrapper" class="container-fluid">
-                <home-view :usuario="usuario"></home-view>
+                <component :is="vistaActual" :usuario="usuario"></component>
             </div>
         </div>
     `,
@@ -26,8 +26,15 @@ const AppLayout = {
         }
     },
     
+    data() {
+        return {
+            vistaActual: 'home-view'
+        };
+    },
+    
     components: {
-        'home-view': HomeView
+        'home-view': HomeView,
+        'departamentos-view': DepartamentosView
     },
     
     methods: {
@@ -36,8 +43,13 @@ const AppLayout = {
         },
         
         handleNavigate(link) {
-            // Aquí se podría implementar navegación por rutas
-            console.log('Navegar a:', link);
+            // Mapear links a vistas
+            if (link === 'departamentos.php') {
+                this.vistaActual = 'departamentos-view';
+            } else {
+                this.vistaActual = 'home-view';
+            }
+            console.log('Navegar a:', link, 'Vista:', this.vistaActual);
         }
     },
     

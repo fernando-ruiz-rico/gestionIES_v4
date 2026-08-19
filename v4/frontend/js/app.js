@@ -87,6 +87,7 @@ app.component('app-layout', AppLayout);
 app.component('sidebar', Sidebar);
 app.component('header-bar', HeaderBar);
 app.component('home-view', HomeView);
+app.component('departamentos-view', DepartamentosView);
 
 // Montar la aplicación
 app.mount('#app');
