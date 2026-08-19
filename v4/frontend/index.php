@@ -1,6 +1,5 @@
 <?php
     // Página de bienvenida de la app
-    $roles = NULL; // Cualquier usuario logueado puede ver esta página
     include('includes/cabecera.php');
 ?>
     <section class="inicio">

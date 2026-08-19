@@ -1,16 +1,15 @@
-<!-- Modal para mostrar mensajes cortos -->
-<div id="mensajeModal" class="modal fade" role="dialog">
+<!-- Ventana modal para mostrar pequeños mensajes de error o OK -->
+<!-- El id "mensajemodal" se usa para abrir/cerrar la ventana por JavaScript -->
+<div id="mensajemodal" class="modal fade" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Mensaje</h3>
-            </div>
             <div class="modal-body">
-                <p id="textoMensaje"></p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-light" data-bs-dismiss="modal">Aceptar</button>
+                <!-- El id "textoMensajeModal" se usa para rellenar el mensaje desde JavaScript" -->
+                <div class="alert alert-default" id="textoMensajeModal"></div>
+                <div style="text-align: center">
+                    <button class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</div>   

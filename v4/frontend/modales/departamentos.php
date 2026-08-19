@@ -1,4 +1,5 @@
-<!-- Modal para crear/editar departamentos -->
+<!-- Formulario modal para el alta/edición de departamentos -->
+<!-- El id "formdepartamento" se usa para mostrar el modal -->
 <div id="formdepartamento" class="modal fade" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -6,13 +7,14 @@
                 <h3>Formulario de alta/edición de departamentos</h3>
             </div>
             <div class="modal-body">
+                <!-- El id "formdep" se usa para enviar el formulario por jQuery -->
                 <form id="formdep" name="formdep" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="id" id="idDepartamento" value="">
-                    <div class="mb-3">
-                        <label class="form-label" for="nombre">Nombre del departamento</label>
+                    <div class="form-group">
+                        <label class="control-label" for="nombre">Nombre del departamento</label>
                         <input class="form-control" type="text" name="nombre" id="nombre" required>
                     </div>
-                    <div class="mb-3">
+                    <div class="form-group">
                         <button class="btn btn-light" type="submit">Enviar</button>
                         <button class="btn btn-danger" type="button" data-bs-dismiss="modal">Cancelar</button>
                     </div>
@@ -20,4 +22,4 @@
             </div>
         </div>
     </div>
-</div>
+</div>   

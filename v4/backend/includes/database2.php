@@ -1,10 +1,8 @@
 <?php
-/**
- * Cierre de la conexión a la base de datos
- */
 
-if (isset($db)) {
+if (!empty($db)) {
     mysqli_close($db);
+    unset($db);
 }
 
 ?>
