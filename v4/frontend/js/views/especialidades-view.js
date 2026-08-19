@@ -4,69 +4,61 @@ const EspecialidadesView = {
     template: `
         <div class="container-fluid py-4">
             <div class="row mb-4">
-                <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2><i class="bi bi-bookmark"></i> Especialidades</h2>
-                        <button class="btn btn-primary" @click="abrirModalCrear()">
-                            <i class="bi bi-plus-lg"></i> Nueva Especialidad
-                        </button>
-                    </div>
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                    <h2><i class="bi bi-bookmark"></i> Especialidades</h2>
+                    <button class="btn btn-primary" @click="abrirModalCrear()">
+                        <i class="bi bi-plus-lg"></i> Nueva Especialidad
+                    </button>
                 </div>
             </div>
 
             <div class="row">
                 <div class="col-12">
                     <div class="card shadow-sm">
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Nombre</th>
-                                            <th>Descripción</th>
-                                            <th class="text-end">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="especialidad in especialidades" :key="especialidad.idEspecialidad">
-                                            <td>{{ especialidad.idEspecialidad }}</td>
-                                            <td>{{ especialidad.nombre }}</td>
-                                            <td>{{ especialidad.descripcion || '-' }}</td>
-                                            <td class="text-end">
-                                                <button class="btn btn-sm btn-outline-primary me-1" 
-                                                        @click="editarEspecialidad(especialidad)">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-danger" 
-                                                        @click="eliminarEspecialidad(especialidad)">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr v-if="especialidades.length === 0">
-                                            <td colspan="4" class="text-center text-muted py-4">
-                                                No hay especialidades registradas
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="card-body table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>Descripción</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="e in especialidades" :key="e.idEspecialidad">
+                                        <td>{{ e.idEspecialidad }}</td>
+                                        <td>{{ e.nombre }}</td>
+                                        <td>{{ e.descripcion || '-' }}</td>
+                                        <td class="text-end">
+                                            <button class="btn btn-sm btn-outline-primary me-1" @click="editar(e)">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" @click="eliminar(e)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="!especialidades.length">
+                                        <td colspan="4" class="text-center text-muted py-4">Sin especialidades</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Modal Crear/Editar -->
+            <!-- Modal -->
             <div class="modal fade" id="modalEspecialidad" tabindex="-1">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">{{ esEdicion ? 'Editar Especialidad' : 'Nueva Especialidad' }}</h5>
+                            <h5 class="modal-title">{{ esEdicion ? 'Editar' : 'Nueva' }} Especialidad</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <form @submit.prevent="guardarEspecialidad">
+                            <form @submit.prevent="guardar">
                                 <div class="mb-3">
                                     <label class="form-label">Nombre *</label>
                                     <input type="text" class="form-control" v-model="form.nombre" required>
@@ -79,7 +71,7 @@ const EspecialidadesView = {
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="button" class="btn btn-primary" @click="guardarEspecialidad">
+                            <button type="button" class="btn btn-primary" @click="guardar">
                                 {{ esEdicion ? 'Actualizar' : 'Guardar' }}
                             </button>
                         </div>
@@ -88,90 +80,90 @@ const EspecialidadesView = {
             </div>
         </div>
     `,
-    
+
     data() {
         return {
             especialidades: [],
-            form: {
-                idEspecialidad: 0,
-                nombre: '',
-                descripcion: ''
-            },
+            form: { idEspecialidad: 0, nombre: '', descripcion: '' },
             esEdicion: false,
-            modalInstance: null
+            modal: null
         };
     },
-    
+
     mounted() {
-        this.cargarEspecialidades();
-        this.modalInstance = new bootstrap.Modal(document.getElementById('modalEspecialidad'));
+        this.cargar();
+        this.modal = new bootstrap.Modal(document.getElementById('modalEspecialidad'));
     },
-    
+
     methods: {
-        async cargarEspecialidades() {
-            this.especialidades = await EspecialidadesAPI.listar();
+        async cargar() {
+            const result = await EspecialidadesAPI.listar();
+            if (result.success) {
+                this.especialidades = result.data;
+            } else {
+                this.especialidades = [];
+            }
         },
-        
+
         abrirModalCrear() {
             this.form = { idEspecialidad: 0, nombre: '', descripcion: '' };
             this.esEdicion = false;
-            this.modalInstance.show();
+            this.modal.show();
         },
-        
-        editarEspecialidad(especialidad) {
+
+        editar(especialidad) {
             this.form = { ...especialidad };
             this.esEdicion = true;
-            this.modalInstance.show();
+            this.modal.show();
         },
-        
-        async guardarEspecialidad() {
-            const resultado = await EspecialidadesAPI.guardar(this.form);
-            
-            if (resultado.success) {
+
+        async guardar() {
+            const result = await EspecialidadesAPI.guardar(this.form);
+
+            if (result.success) {
                 Swal.fire({
                     icon: 'success',
-                    title: '¡Éxito!',
-                    text: resultado.message,
-                    timer: 2000,
+                    title: 'Éxito',
+                    text: result.message,
+                    timer: 1500,
                     showConfirmButton: false
                 });
-                this.modalInstance.hide();
-                this.cargarEspecialidades();
+
+                this.modal.hide();
+                this.cargar();
             } else {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: resultado.error || 'Error al guardar'
+                    text: result.error
                 });
             }
         },
-        
-        eliminarEspecialidad(especialidad) {
+
+        eliminar(especialidad) {
             Swal.fire({
                 title: '¿Eliminar especialidad?',
-                text: `¿Estás seguro de eliminar "${especialidad.nombre}"?`,
+                text: especialidad.nombre,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, eliminar',
                 cancelButtonText: 'Cancelar'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    const resultado = await EspecialidadesAPI.eliminar(especialidad.idEspecialidad);
-                    
-                    if (resultado.success) {
+            }).then(async (res) => {
+                if (res.isConfirmed) {
+                    const result = await EspecialidadesAPI.eliminar(especialidad.idEspecialidad);
+
+                    if (result.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Eliminada',
-                            text: resultado.message,
-                            timer: 2000,
+                            timer: 1500,
                             showConfirmButton: false
                         });
-                        this.cargarEspecialidades();
+                        this.cargar();
                     } else {
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: resultado.error || 'Error al eliminar'
+                            text: result.error
                         });
                     }
                 }

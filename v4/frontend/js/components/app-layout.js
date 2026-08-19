@@ -35,7 +35,13 @@ const AppLayout = {
     components: {
         'home-view': HomeView,
         'departamentos-view': DepartamentosView,
-        'profesores-view': ProfesoresView
+        'profesores-view': ProfesoresView,
+        'especialidades-view': EspecialidadesView,
+        'ciclos-view': CiclosView,
+        'cursos-view': CursosView,
+        'grupos-view': GruposView,
+        'materias-view': MateriasView,
+        'escenarios-view': EscenariosView
     },
     
     methods: {
@@ -50,13 +56,18 @@ const AppLayout = {
         
         handleNavigate(link) {
             // Mapear links a vistas
-            if (link === 'departamentos.php') {
-                this.vistaActual = 'departamentos-view';
-            } else if (link === 'profesores.php') {
-                this.vistaActual = 'profesores-view';
-            } else {
-                this.vistaActual = 'home-view';
-            }
+            const vistaMap = {
+                'departamentos.php': 'departamentos-view',
+                'profesores.php': 'profesores-view',
+                'especialidades.php': 'especialidades-view',
+                'ciclos.php': 'ciclos-view',
+                'cursos.php': 'cursos-view',
+                'grupos.php': 'grupos-view',
+                'materias.php': 'materias-view',
+                'escenarios.php': 'escenarios-view'
+            };
+            
+            this.vistaActual = vistaMap[link] || 'home-view';
             console.log('Navegar a:', link, 'Vista:', this.vistaActual);
         }
     },

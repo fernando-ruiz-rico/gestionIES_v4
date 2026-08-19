@@ -1,19 +1,54 @@
+// API client para el módulo de Ciclos
+
 const CiclosAPI = {
     baseUrl: '../backend/api/ciclos/',
+
     async listar() {
-        try { const r = await fetch(this.baseUrl + 'listar.php', { credentials: 'include' }); return await r.json(); }
-        catch (e) { console.error(e); return []; }
+        try {
+            const response = await fetch(this.baseUrl + 'listar.php', { credentials: 'include' });
+            const data = await response.json();
+            return { success: true, data: Array.isArray(data) ? data : [] };
+        } catch (e) {
+            console.error(e);
+            return { success: false, error: 'Error de conexión', data: [] };
+        }
     },
+
     async obtener(id) {
-        try { const r = await fetch(this.baseUrl + `obtener.php?id=${id}`, { credentials: 'include' }); return await r.json(); }
-        catch (e) { return null; }
+        try {
+            const response = await fetch(this.baseUrl + `obtener.php?id=${id}`, { credentials: 'include' });
+            const data = await response.json();
+            return { success: true, data: data };
+        } catch (e) {
+            return { success: false, error: 'Error de conexión', data: null };
+        }
     },
+
     async guardar(ciclo) {
-        try { const r = await fetch(this.baseUrl + 'guardar.php', { method: 'POST', credentials: 'include', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(ciclo) }); return await r.json(); }
-        catch (e) { return { success: false, error: 'Error' }; }
+        try {
+            const response = await fetch(this.baseUrl + 'guardar.php', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(ciclo)
+            });
+            return await response.json();
+        } catch (e) {
+            return { success: false, error: 'Error de conexión' };
+        }
     },
+
     async eliminar(id) {
-        try { const r = await fetch(this.baseUrl + 'eliminar.php', { method: 'POST', credentials: 'include', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ idCiclo: id }) }); return await r.json(); }
-        catch (e) { return { success: false, error: 'Error' }; }
+        try {
+            const response = await fetch(this.baseUrl + 'eliminar.php', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idCiclo: id })
+            });
+            return await response.json();
+        } catch (e) {
+            return { success: false, error: 'Error de conexión' };
+        }
     }
 };
