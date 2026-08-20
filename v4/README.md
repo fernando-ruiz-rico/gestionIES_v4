@@ -190,11 +190,15 @@ Estos módulos son la base del sistema y deben implementarse primero:
 ### Fase 2: Programaciones Didácticas (PRIORIDAD MEDIA)
 
 #### 2.1 Programaciones
-- **Backend**: `backend/api/programaciones.php`
-  - CRUD de programaciones
-  - Importar programación
+- **Backend**: `backend/api/programaciones/index.php`
+  - ✅ CRUD de programaciones
+  - ✅ Importar programación desde otra materia
 - **Frontend**: `frontend/js/views/programaciones-view.js`
+  - ✅ Vista principal con listado y filtros
+  - ✅ Modal de creación/edición
+  - ✅ Modal de importación con confirmación
 - **Referencia v3**: `programaciones.php`, `ajax/programaciones/`, `modales/importar_programacion.php`
+- **Estado**: ✅ Completado
 
 #### 2.2 Apartados de Programación
 - **Backend**: `backend/api/programaciones_apartados.php`

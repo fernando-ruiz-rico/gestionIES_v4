@@ -67,5 +67,28 @@ const programacionesAPI = {
             console.error('Error en eliminar programación:', error);
             throw error;
         }
+    },
+
+    async importar(idMateriaOrigen, idMateriaDestino) {
+        try {
+            const response = await fetch(`${API_URL}?action=importar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    idMateriaOrigen: idMateriaOrigen,
+                    idMateriaDestino: idMateriaDestino
+                })
+            });
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Error al importar programación');
+            }
+            return data;
+        } catch (error) {
+            console.error('Error en importar programación:', error);
+            throw error;
+        }
     }
 };
