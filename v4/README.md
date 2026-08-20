@@ -220,10 +220,18 @@ Estos módulos son la base del sistema y deben implementarse primero:
 - **Estado**: ✅ Completado (v4.2.1 — FIEL a v3). Ver [Historial de cambios](#historial-de-cambios).
 
 #### 2.4 Programación de Aula
-- **Backend**: `backend/api/programaciones_aula.php`
-  - Desarrollo diario de clases
-- **Frontend**: `frontend/js/views/programaciones-aula-view.js`
-- **Referencia v3**: `programaciones_aula.php`, `ajax/programaciones_aula/`
+- **Backend**: `backend/api/programaciones_aula/{materias,grupos,temas,contenido,guardar}.php`
+  - ✅ Listar materias con programación activa para un profesor (admin elige profesor; uno usa el suyo)
+  - ✅ Cargar grupos asignados en la selección actual del curso
+  - ✅ Cargar temas (unidades) de una materia
+  - ✅ Cargar/guardar texto introductorio (TinyMCE) por tema+grupo+profesor en `programaciones_aula_temas`
+- **Frontend**: `frontend/js/views/programaciones-aula-view.js` (+ cliente `js/api/programaciones-aula.js`)
+  - ✅ Selector de profesor (solo admin) + materia + grupo
+  - ✅ Editor TinyMCE con los mismos plugins que v3 (`autolink lists advlist code fullscreen wordcount`) y CSS propio
+  - ✅ Guardar / borrar (texto vacío → fila eliminada, igual que v3)
+  - Botones PDF separata CE y programación de aula (pendiente Fase 8): muestran aviso informativo
+- **Referencia v3**: `programaciones_aula.php`, `ajax/programaciones_aula/{cargar_grupos,cargar_temas,cargar_contenido_programacion,insertar_contenido_programacion}.php`
+- **Estado**: ✅ Completado. Ver [Historial de cambios](#historial-de-cambios).
 
 #### 2.5 Seguimiento de Programaciones
 - **Backend**: `backend/api/programaciones_seguimiento.php`
@@ -432,6 +440,7 @@ v4/
 | Materias | ✅ | ✅ | Completado |
 | Escenarios | ✅ | ✅ | Completado |
 | Programaciones | ✅ | ✅ | Completado |
+| Programaciones de aula | ✅ | ✅ | Completado |
 | Temas | ❌ | ❌ | Pendiente |
 | PCCF | ❌ | ❌ | Pendiente |
 | Resultados Aprendizaje | ❌ | ❌ | Pendiente |
@@ -485,11 +494,10 @@ Cuentas locales creadas en `gestionies.profesores` para probar las fases 2.x sob
 
 ## Próximos pasos inmediatos
 
-1. **Implementar módulo de Departamentos** (primer módulo básico)
-2. **Implementar módulo de Profesores** (segundo módulo básico)
-3. **Crear patrón base** para CRUDs que pueda replicarse en otros módulos
-4. **Implementar sistema de modales** reutilizables
-5. **Continuar con el resto de módulos** siguiendo la planificación
+- **Fase 2.5 — Seguimiento de Programaciones** (`programaciones_seguimiento_aula`): registrar impartición diaria, temporalización y resultados. Incluye editor TinyMCE (misma infraestructura que 2.3/2.4).
+- **Fase 2.6 — Temas**: CRUD + checkboxes RA/CE + recálculo de porcentajes. Edición con varios editores TinyMCE (descripción, justificación, contexto, contenidos, secuenciación, recursos, evaluación, metodología).
+- **Fase 2.7 — Contenidos por Defecto de Temas**: editor TinyMCE para textos por defecto por departamento.
+- **Fase 3 — PCCF** completo: apartados + contenidos por defecto + vista previa.
 
 ## Notas importantes
 
@@ -514,15 +522,32 @@ Cuentas locales creadas en `gestionies.profesores` para probar las fases 2.x sob
 
 ## Historial de cambios
 
+### v4.2.2 - 2026 - Fase 2.4 «Programación de Aula» Completada
+- ✅ **Backend** `backend/api/programaciones_aula/{materias,grupos,temas,contenido,guardar}.php` (PHP 5 / `mysqli_*` con sentencias preparadas):
+  - `materias`: lista las materias con `tiene_programacion=1` para un profesor (admin elige; profesor usa el suyo).
+  - `grupos`: grupos asignados en la selección actual del curso (`seleccion` + `escenarios_desideratas.actual`).
+  - `temas`: unidades de una materia ordenadas por `orden`.
+  - `contenido`: texto introductorio por triplete tema+grupo+profesor desde `programaciones_aula_temas`.
+  - `guardar`: inserta/actualiza; **con texto vacío borra la fila**, idéntico al comportamiento de v3. Permisos: admin puede guardar para cualquier profesor; un profesor solo para sí mismo.
+- ✅ **Frontend** `frontend/js/views/programaciones-aula-view.js` + cliente `js/api/programaciones-aula.js`:
+  - Selector de profesor (solo visible para admin/jefe) + materia + grupo, en cascada fiel a v3.
+  - Editor TinyMCE WYSIWYG con los mismos plugins/toolbar de v3 y `css/estilos_tiny.css`, botones «Guardar cambios».
+  - Botones PDF (Separata CE / Programación de aula) como stubs informativos: se activan en la Fase 8.
+  - Integración: scripts cargados en `index.html`, componente registrado en `app.js` y mapeado a `/programaciones_aula.php` en `app-layout.js`; el acceso «Programaciones de aula» ya estaba presente en `config.php → getMenus` (visible para todos los roles, como en v3).
+- ✅ **Verificado contra la BD real** vía HTTP (Laragon): login admin OK; `materias` devuelve las materias reales del curso con programación; `grupos` resuelve por selección+escenario actual; `temas` lista unidades ordenadas; `guardar` inserta→actualiza→borra con texto vacío, restituido al terminar; 401/403 sin sesión o para roles restringidos.
+- ⚠️ **Nota de permisos**: v3 permite guardar a admin/jefe (con selector de profesor) y a cualquier profesor activo (solo el suyo). Se replica igual en v4: la API detecta rol desde la sesión y, si no es admin, fuerza `idProfesor` al propio usuario.
+
 ### v4.2.1 - 2026 - Fase 2.3 «Contenidos por Defecto» Completada
 - ✅ **Backend** `backend/api/programaciones_contenidos_defecto/{cargar,guardar}.php` (PHP 5 / `mysqli_*` con sentencias preparadas):
   - `cargar`: devuelve el `texto` de `contenidos_defecto_programaciones` para el par apartado+departamento (vacío si no existe).
   - `guardar` (solo rol `admin`, como en la 2.2): inserta o actualiza; **con texto vacío borra la fila**, idéntico al comportamiento de v3 (`ajax/programaciones_contenidos_defecto/insertar_contenido_defecto_programacion.php`).
 - ✅ **Frontend** `frontend/js/views/programaciones-contenidos-defecto-view.js` + cliente `js/api/programaciones-contenidos-defecto.js`:
   - Selector de departamento y de apartado. El desplegable solo muestra los apartados con `contenido_defecto = 1` y `tipo = 0`, aplicando la **numeración global fiel a v3** (1, 2… y 1.1, 1.2 en subapartados).
-  - Editor de texto con botones «Limpiar» y «Guardar cambios», feedback con SweetAlert2, diseño homogéneo al resto de la aplicación (Bootstrap 5.3.8 + Bootstrap Icons, CSS mínimo).
+  - **Comportamiento por rol (como en v3)**: un jefe de departamento queda fijo a su propio departamento (desplegable deshabilitado con su nombre) y ve los contenidos por defecto del dpto al que pertenece; un admin sin departamento asignado puede elegir cualquier departamento.
+  - **Editor TinyMCE WYSIWYG activo (igual que en v3)**: TinyMCE 7.9.1 se activa en el editor de contenidos — `frontend/lib/js/tinymce/` copiado íntegro desde `v3/lib/js/tinymce`, más `css/estilos_tiny.css`, cargado en `index.html` tras SweetAlert2 con el mismo orden que `v3/includes/cabecera.php`. La inicialización replica la `initTinyMCE('progeditar')` de v3: mismos plugins (`autolink lists advlist code fullscreen wordcount`), misma toolbar, altura 300px y `content_css: css/estilos_tiny.css`; botones «Limpiar» y «Guardar cambios» con lectura/vaciado vía `getContent()` / `setContent()`, feedback con SweetAlert2 y diseño homogéneo al resto de la aplicación.
   - Integración: scripts cargados en `index.html`, componente registrado en `app.js` y ruta mapeada en `app-layout.js`; el acceso «Contenidos generales» ya existe en `config.php → getMenus` (visible para jefe de departamento/admin) y el sidebar lo resuelve añadiendo `.php` al link.
 - ✅ **Verificado contra la BD real** vía HTTP (Laragon): `cargar` devuelve el contenido real de un apartado existente; `guardar` probado íntegro sobre un par sin datos reales (inserta → actualiza → borra con texto vacío, restituido al terminar); 403 para rol profesor y sin sesión; menú presente para admin y ausente para profesor; `index.html` sirve los scripts nuevos y el listado de apartados que alimenta la vista.
+- 🔧 **Corrección**: los clientes de las fases 2.x llamaban a `backend/api/…` relativo (resolvía en `/v4/frontend/backend/api/…` → 404 y desplegables vacíos). Se pasa a la convención de la app `'../backend/api/…'` (vista + `js/api/programaciones-contenidos-defecto.js` + `js/api/programaciones-apartados.js`) y se corrige la numeración cuando `subapartado` llega como texto (`"0"` no es falsy en JS).
 - ⚠️ **Nota de roles**: v3 permitía guardar a `jefeDepartamento` o `admin`; en v4 todo jefe de departamento se mapea a `admin` (`auth.php`), por lo que el chequeo único de rol es equivalente y consistente con la 2.2.
 - ⚠️ **Alcance**: los datos (tabla `contenidos_defecto_programaciones`) son compartidos por apartado+departamento tal y como en v3; si un profesor rellena su propio contenido en su programación, ese prevalece sobre el por defecto (comportamiento de la generación de programaciones, fuera de alcance de esta fase).
 

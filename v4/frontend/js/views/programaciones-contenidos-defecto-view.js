@@ -19,13 +19,19 @@ const ProgramacionesContenidosDefectoView = {
             </div>
 
             <div class="row mb-3" v-if="departamentos.length > 0">
-                <div class="col-md-6">
+                <div class="col-md-6" v-if="!esJefe">
                     <label class="form-label">Departamento</label>
                     <select class="form-select" v-model="idDepartamento" @change="cambiarDepartamento">
                         <option value="">--Selecciona un departamento--</option>
                         <option v-for="depto in departamentos" :key="depto.id" :value="depto.id">
                             {{ depto.nombre }}
                         </option>
+                    </select>
+                </div>
+                <div class="col-md-6" v-else>
+                    <label class="form-label">Departamento</label>
+                    <select class="form-select" disabled>
+                        <option>{{ departamentoActual ? departamentoActual.nombre : 'Desconocido' }}</option>
                     </select>
                 </div>
                 <div class="col-md-6">
@@ -52,8 +58,7 @@ const ProgramacionesContenidosDefectoView = {
                                 </div>
                             </div>
                             <div v-else>
-                                <textarea class="form-control" v-model="contenido" rows="15" 
-                                          style="font-family: monospace; white-space: pre-wrap;"></textarea>
+                                <textarea id="editorContenidoDefecto"></textarea>
                                 <div class="mt-3 text-end">
                                     <button class="btn btn-secondary me-2" @click="limpiar">
                                         <i class="bi bi-eraser me-1"></i>Limpiar
@@ -80,6 +85,13 @@ const ProgramacionesContenidosDefectoView = {
         </div>
     `,
 
+    props: {
+        usuario: {
+            type: Object,
+            required: true
+        }
+    },
+
     data() {
         return {
             departamentos: [],
@@ -96,18 +108,63 @@ const ProgramacionesContenidosDefectoView = {
     computed: {
         apartadosDisponibles() {
             return this.apartados.filter(a => a.contenido_defecto && a.tipo == 0);
+        },
+        // Un jefe de departamento (rol 'admin' con su propio idDepartamento)
+        // queda fijo al suyo; un admin sin departamento elige libremente.
+        esJefe() {
+            return this.usuario.rol === 'admin' && !!this.usuario.idDepartamento;
+        },
+        departamentoActual() {
+            return this.departamentos.find(d => String(d.id) === String(this.idDepartamento));
         }
     },
 
     async mounted() {
         await this.cargarDepartamentos();
+        if (this.esJefe) {
+            const dpto = this.departamentos.find(x => String(x.id) === String(this.usuario.idDepartamento));
+            this.idDepartamento = dpto ? dpto.id : this.usuario.idDepartamento;
+        }
         await this.cargarApartados();
     },
 
+    beforeUnmount() {
+        this.borrarEditor();
+    },
+
     methods: {
+        // TinyMCE (misma configuración que v3: initTinyMCE('progeditar'))
+        inicializarEditor(texto) {
+            if (!window.tinymce) return;
+            this.borrarEditor();
+            tinymce.init({
+                selector: 'textarea#editorContenidoDefecto',
+                height: 300,
+                resize: true,
+                plugins: 'autolink lists advlist code fullscreen wordcount',
+                toolbar: 'undo redo | styles | bold italic underline removeformat | alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | code fullscreen',
+                statusbar: true,
+                menubar: false,
+                branding: false,
+                content_css: 'css/estilos_tiny.css',
+                value: texto || '',
+                setup: (editor) => {
+                    editor.on('change', () => {
+                        this.contenido = editor.getContent();
+                    });
+                }
+            });
+        },
+
+        borrarEditor() {
+            if (window.tinymce && tinymce.get('editorContenidoDefecto')) {
+                tinymce.remove('editorContenidoDefecto');
+            }
+        },
+
         async cargarDepartamentos() {
             try {
-                const response = await fetch('backend/api/departamentos/listar.php');
+                const response = await fetch('../backend/api/departamentos/listar.php');
                 const data = await response.json();
                 if (data) {
                     this.departamentos = data;
@@ -118,6 +175,7 @@ const ProgramacionesContenidosDefectoView = {
         },
 
         cambiarDepartamento() {
+            this.borrarEditor();
             this.idApartado = '';
             this.contenido = '';
             this.cargarApartados();
@@ -130,11 +188,11 @@ const ProgramacionesContenidosDefectoView = {
                 const data = await programacionesApartadosAPI.listar();
                 if (data) {
                     this.apartados = data;
-                    // Calcular numeración
+                    // Calcular numeración (los valores llegan como texto desde la API)
                     let cont = 0;
                     let cont2 = 0;
                     this.apartados.forEach(apto => {
-                        if (!apto.subapartado) {
+                        if (!Number(apto.subapartado)) {
                             cont++;
                             cont2 = 0;
                             apto.tituloMostrar = `${cont}. ${apto.titulo}`;
@@ -159,6 +217,9 @@ const ProgramacionesContenidosDefectoView = {
                 
                 const data = await programacionesContenidosDefectoAPI.cargar(this.idApartado, this.idDepartamento);
                 this.contenido = data.texto || '';
+                this.$nextTick(() => {
+                    this.inicializarEditor(this.contenido);
+                });
             } catch (error) {
                 Swal.fire('Error', error.message, 'error');
             } finally {
@@ -167,6 +228,11 @@ const ProgramacionesContenidosDefectoView = {
         },
 
         async guardar() {
+            const editor = window.tinymce ? tinymce.get('editorContenidoDefecto') : null;
+            if (editor) {
+                editor.save();
+                this.contenido = editor.getContent();
+            }
             this.guardando = true;
             try {
                 await programacionesContenidosDefectoAPI.guardar(this.idApartado, this.idDepartamento, this.contenido);
@@ -180,6 +246,10 @@ const ProgramacionesContenidosDefectoView = {
 
         limpiar() {
             this.contenido = '';
+            const editor = window.tinymce ? tinymce.get('editorContenidoDefecto') : null;
+            if (editor) {
+                editor.setContent('');
+            }
         }
     }
 };
