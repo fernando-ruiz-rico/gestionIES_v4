@@ -141,6 +141,8 @@ const ProgramacionesContenidosDefectoView = {
             }
             const area = document.querySelector('textarea#editorContenidoDefecto');
             if (!area) return;
+            // TinyMCE 7 lee el contenido inicial desde el valor del textarea
+            area.value = texto || '';
             this.borrarEditor();
             tinymce.init({
                 selector: 'textarea#editorContenidoDefecto',
@@ -152,7 +154,6 @@ const ProgramacionesContenidosDefectoView = {
                 menubar: false,
                 branding: false,
                 content_css: 'css/estilos_tiny.css',
-                value: texto || '',
                 setup: (editor) => {
                     editor.on('change', () => {
                         this.contenido = editor.getContent();

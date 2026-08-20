@@ -148,6 +148,7 @@ const ProgramacionesAulaView = {
             }
             const area = document.querySelector('textarea#editorAula');
             if (!area) return;
+            area.value = texto || '';
             this.borrarEditor();
             tinymce.init({
                 selector: 'textarea#editorAula',
@@ -159,7 +160,6 @@ const ProgramacionesAulaView = {
                 menubar: false,
                 branding: false,
                 content_css: 'css/estilos_tiny.css',
-                value: texto || '',
                 setup: (editor) => {
                     editor.on('change', () => {
                         this.contenido = editor.getContent();
