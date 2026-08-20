@@ -47,75 +47,6 @@ try {
             break;
 
         case 'POST':
-            $data = json_decode(file_get_contents('php://input'), true);
-            
-            if (isset($data['id']) && $data['id'] > 0) {
-                // Actualizar
-                $sql = "UPDATE programaciones SET 
-                        idMateria = ?, 
-                        idGrupo = ?, 
-                        curso = ?, 
-                        anyo = ?, 
-                        profesor = ?, 
-                        objetivos = ?, 
-                        metodologia = ?, 
-                        evaluacion = ?, 
-                        atencion_diversidad = ?, 
-                        materiales = ?, 
-                        bibliografia = ? 
-                        WHERE id = ?";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    $data['idMateria'],
-                    $data['idGrupo'] ?: null,
-                    $data['curso'],
-                    $data['anyo'] ?: '',
-                    $data['profesor'] ?: '',
-                    $data['objetivos'] ?: '',
-                    $data['metodologia'] ?: '',
-                    $data['evaluacion'] ?: '',
-                    $data['atencion_diversidad'] ?: '',
-                    $data['materiales'] ?: '',
-                    $data['bibliografia'] ?: '',
-                    $data['id']
-                ]);
-                $id = $data['id'];
-            } else {
-                // Crear
-                $sql = "INSERT INTO programaciones (idMateria, idGrupo, curso, anyo, profesor, objetivos, metodologia, evaluacion, atencion_diversidad, materiales, bibliografia) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    $data['idMateria'],
-                    $data['idGrupo'] ?: null,
-                    $data['curso'],
-                    $data['anyo'] ?: '',
-                    $data['profesor'] ?: '',
-                    $data['objetivos'] ?: '',
-                    $data['metodologia'] ?: '',
-                    $data['evaluacion'] ?: '',
-                    $data['atencion_diversidad'] ?: '',
-                    $data['materiales'] ?: '',
-                    $data['bibliografia'] ?: ''
-                ]);
-                $id = $pdo->lastInsertId();
-            }
-            
-            echo json_encode(['success' => true, 'id' => $id]);
-            break;
-
-        case 'DELETE':
-            if (isset($_GET['id'])) {
-                $sql = "DELETE FROM programaciones WHERE id = ?";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([$_GET['id']]);
-                echo json_encode(['success' => true]);
-            } else {
-                throw new Exception('ID no proporcionado');
-            }
-            break;
-
-        case 'POST':
             // Acción especial: importar programación desde otra materia
             if ($action === 'importar') {
                 $data = json_decode(file_get_contents('php://input'), true);
@@ -189,65 +120,75 @@ try {
                     $pdo->rollBack();
                     throw $e;
                 }
-                break;
-            }
-            
-            // Si no es acción importar, procesar como creación/actualización normal
-            $data = json_decode(file_get_contents('php://input'), true);
-            
-            if (isset($data['id']) && $data['id'] > 0) {
-                // Actualizar
-                $sql = "UPDATE programaciones SET 
-                        idMateria = ?, 
-                        idGrupo = ?, 
-                        curso = ?, 
-                        anyo = ?, 
-                        profesor = ?, 
-                        objetivos = ?, 
-                        metodologia = ?, 
-                        evaluacion = ?, 
-                        atencion_diversidad = ?, 
-                        materiales = ?, 
-                        bibliografia = ? 
-                        WHERE id = ?";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    $data['idMateria'],
-                    $data['idGrupo'] ?: null,
-                    $data['curso'],
-                    $data['anyo'] ?: '',
-                    $data['profesor'] ?: '',
-                    $data['objetivos'] ?: '',
-                    $data['metodologia'] ?: '',
-                    $data['evaluacion'] ?: '',
-                    $data['atencion_diversidad'] ?: '',
-                    $data['materiales'] ?: '',
-                    $data['bibliografia'] ?: '',
-                    $data['id']
-                ]);
-                $id = $data['id'];
             } else {
-                // Crear
-                $sql = "INSERT INTO programaciones (idMateria, idGrupo, curso, anyo, profesor, objetivos, metodologia, evaluacion, atencion_diversidad, materiales, bibliografia) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    $data['idMateria'],
-                    $data['idGrupo'] ?: null,
-                    $data['curso'],
-                    $data['anyo'] ?: '',
-                    $data['profesor'] ?: '',
-                    $data['objetivos'] ?: '',
-                    $data['metodologia'] ?: '',
-                    $data['evaluacion'] ?: '',
-                    $data['atencion_diversidad'] ?: '',
-                    $data['materiales'] ?: '',
-                    $data['bibliografia'] ?: ''
-                ]);
-                $id = $pdo->lastInsertId();
+                // Crear/Actualizar programación normal
+                $data = json_decode(file_get_contents('php://input'), true);
+                
+                if (isset($data['id']) && $data['id'] > 0) {
+                    // Actualizar
+                    $sql = "UPDATE programaciones SET 
+                            idMateria = ?, 
+                            idGrupo = ?, 
+                            curso = ?, 
+                            anyo = ?, 
+                            profesor = ?, 
+                            objetivos = ?, 
+                            metodologia = ?, 
+                            evaluacion = ?, 
+                            atencion_diversidad = ?, 
+                            materiales = ?, 
+                            bibliografia = ? 
+                            WHERE id = ?";
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute([
+                        $data['idMateria'],
+                        $data['idGrupo'] ?: null,
+                        $data['curso'],
+                        $data['anyo'] ?: '',
+                        $data['profesor'] ?: '',
+                        $data['objetivos'] ?: '',
+                        $data['metodologia'] ?: '',
+                        $data['evaluacion'] ?: '',
+                        $data['atencion_diversidad'] ?: '',
+                        $data['materiales'] ?: '',
+                        $data['bibliografia'] ?: '',
+                        $data['id']
+                    ]);
+                    $id = $data['id'];
+                } else {
+                    // Crear
+                    $sql = "INSERT INTO programaciones (idMateria, idGrupo, curso, anyo, profesor, objetivos, metodologia, evaluacion, atencion_diversidad, materiales, bibliografia) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute([
+                        $data['idMateria'],
+                        $data['idGrupo'] ?: null,
+                        $data['curso'],
+                        $data['anyo'] ?: '',
+                        $data['profesor'] ?: '',
+                        $data['objetivos'] ?: '',
+                        $data['metodologia'] ?: '',
+                        $data['evaluacion'] ?: '',
+                        $data['atencion_diversidad'] ?: '',
+                        $data['materiales'] ?: '',
+                        $data['bibliografia'] ?: ''
+                    ]);
+                    $id = $pdo->lastInsertId();
+                }
+                
+                echo json_encode(['success' => true, 'id' => $id]);
             }
-            
-            echo json_encode(['success' => true, 'id' => $id]);
+            break;
+
+        case 'DELETE':
+            if (isset($_GET['id'])) {
+                $sql = "DELETE FROM programaciones WHERE id = ?";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([$_GET['id']]);
+                echo json_encode(['success' => true]);
+            } else {
+                throw new Exception('ID no proporcionado');
+            }
             break;
 
         default:
