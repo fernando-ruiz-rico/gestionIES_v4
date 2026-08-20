@@ -5,9 +5,14 @@ const ProgramacionesView = {
                 <div class="col-12">
                     <div class="d-flex justify-content-between align-items-center">
                         <h2><i class="bi bi-journal-bookmark me-2"></i>Programaciones Didácticas</h2>
-                        <button class="btn btn-primary" @click="nuevo">
-                            <i class="bi bi-plus-lg me-1"></i>Nueva Programación
-                        </button>
+                        <div>
+                            <button class="btn btn-outline-primary me-2" @click="mostrarImportar">
+                                <i class="bi bi-download me-1"></i>Importar
+                            </button>
+                            <button class="btn btn-primary" @click="nuevo">
+                                <i class="bi bi-plus-lg me-1"></i>Nueva Programación
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -171,6 +176,54 @@ const ProgramacionesView = {
                     </div>
                 </div>
             </div>
+
+            <!-- Modal Importar Programación -->
+            <div class="modal fade" id="modalImportar" tabindex="-1" aria-labelledby="modalImportarLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="modalImportarLabel">
+                                <i class="bi bi-download me-2"></i>Importar Programación
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form @submit.prevent="ejecutarImportar">
+                                <div class="mb-3">
+                                    <label class="form-label">Materia Origen *</label>
+                                    <select class="form-select" v-model="importarForm.idMateriaOrigen" required>
+                                        <option value="">--Selecciona una materia origen--</option>
+                                        <option v-for="materia in materias" :key="materia.id" :value="materia.id">
+                                            {{ materia.titulo }}
+                                        </option>
+                                    </select>
+                                    <div class="form-text">Los datos de esta programación se copiarán a la materia destino.</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Materia Destino *</label>
+                                    <select class="form-select" v-model="importarForm.idMateriaDestino" required>
+                                        <option value="">--Selecciona una materia destino--</option>
+                                        <option v-for="materia in materias" :key="materia.id" :value="materia.id">
+                                            {{ materia.titulo }}
+                                        </option>
+                                    </select>
+                                    <div class="form-text">Esta materia recibirá los datos de la programación origen. ¡Se borrarán sus datos actuales!</div>
+                                </div>
+                                <div class="alert alert-warning" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>Atención:</strong> Esta acción borrará todos los contenidos, temas y criterios de evaluación de la materia destino antes de importar los nuevos datos.
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-primary" @click="ejecutarImportar">
+                                <i class="bi bi-check-lg me-1"></i>Importar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     `,
 
@@ -195,8 +248,13 @@ const ProgramacionesView = {
                 materiales: '',
                 bibliografia: ''
             },
+            importarForm: {
+                idMateriaOrigen: '',
+                idMateriaDestino: ''
+            },
             esNuevo: true,
-            modal: null
+            modal: null,
+            modalImportar: null
         };
     },
 
@@ -204,6 +262,7 @@ const ProgramacionesView = {
         await this.cargar();
         await this.cargarCatalogos();
         this.modal = new bootstrap.Modal(document.getElementById('modalProgramacion'));
+        this.modalImportar = new bootstrap.Modal(document.getElementById('modalImportar'));
     },
 
     methods: {
@@ -281,6 +340,49 @@ const ProgramacionesView = {
                 try {
                     await programacionesAPI.eliminar(prog.id);
                     Swal.fire('Eliminada', 'Programación eliminada correctamente', 'success');
+                    await this.cargar();
+                } catch (error) {
+                    Swal.fire('Error', error.message, 'error');
+                }
+            }
+        },
+
+        mostrarImportar() {
+            this.importarForm = {
+                idMateriaOrigen: '',
+                idMateriaDestino: ''
+            };
+            this.modalImportar.show();
+        },
+
+        async ejecutarImportar() {
+            if (!this.importarForm.idMateriaOrigen || !this.importarForm.idMateriaDestino) {
+                Swal.fire('Error', 'Debe seleccionar ambas materias', 'error');
+                return;
+            }
+
+            if (this.importarForm.idMateriaOrigen === this.importarForm.idMateriaDestino) {
+                Swal.fire('Error', 'Las materias origen y destino deben ser diferentes', 'error');
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: '¿Confirmar importación?',
+                html: '<p>Se borrarán todos los datos de la materia destino y se copiarán los de la materia origen.</p><p class="text-danger"><strong>¡Esta acción no se puede deshacer!</strong></p>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, importar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await programacionesAPI.importar(
+                        this.importarForm.idMateriaOrigen,
+                        this.importarForm.idMateriaDestino
+                    );
+                    Swal.fire('Éxito', 'Programación importada correctamente', 'success');
+                    this.modalImportar.hide();
                     await this.cargar();
                 } catch (error) {
                     Swal.fire('Error', error.message, 'error');
