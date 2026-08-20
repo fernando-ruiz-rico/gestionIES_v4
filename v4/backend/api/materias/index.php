@@ -6,42 +6,21 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 try {
+    $pdo = getPDOConnection();
+    if (!$pdo) {
+        throw new Exception('Error de conexión a la base de datos');
+    }
+    
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
-                $db = getDBConnection();
-                if (!$db) {
-                    throw new Exception('Error de conexión');
-                }
-                
-                $result = mysqli_query($db, "SELECT * FROM materias ORDER BY nombre");
-                if (!$result) {
-                    throw new Exception(mysqli_error($db));
-                }
-                
-                $materias = [];
-                while ($fila = mysqli_fetch_assoc($result)) {
-                    $materias[] = $fila;
-                }
-                mysqli_free_result($result);
-                mysqli_close($db);
-                
+                $stmt = $pdo->query("SELECT * FROM materias ORDER BY nombre");
+                $materias = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 echo json_encode(['success' => true, 'data' => $materias]);
             } elseif ($action === 'obtener' && isset($_GET['id'])) {
-                $db = getDBConnection();
-                if (!$db) {
-                    throw new Exception('Error de conexión');
-                }
-                
-                $id = intval($_GET['id']);
-                $stmt = mysqli_prepare($db, "SELECT * FROM materias WHERE id = ?");
-                mysqli_stmt_bind_param($stmt, "i", $id);
-                mysqli_stmt_execute($stmt);
-                $result = mysqli_stmt_get_result($stmt);
-                $data = mysqli_fetch_assoc($result);
-                
-                mysqli_free_result($result);
-                mysqli_close($db);
+                $stmt = $pdo->prepare("SELECT * FROM materias WHERE id = ?");
+                $stmt->execute([intval($_GET['id'])]);
+                $data = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($data) {
                     echo json_encode(['success' => true, 'data' => $data]);
@@ -56,43 +35,26 @@ try {
 
         case 'POST':
             $data = json_decode(file_get_contents('php://input'), true);
-            $db = getDBConnection();
-            
-            if (!$db) {
-                throw new Exception('Error de conexión');
-            }
             
             if (isset($data['id']) && $data['id'] > 0) {
                 // Actualizar
-                $stmt = mysqli_prepare($db, "UPDATE materias SET nombre = ?, cicloFormativo = ?, cursoAcademico = ?, departamento = ?, especialidad = ? WHERE id = ?");
-                mysqli_stmt_bind_param($stmt, "ssissi", $data['nombre'], $data['cicloFormativo'], $data['cursoAcademico'], $data['departamento'], $data['especialidad'], $data['id']);
-                mysqli_stmt_execute($stmt);
+                $stmt = $pdo->prepare("UPDATE materias SET nombre = ?, cicloFormativo = ?, cursoAcademico = ?, departamento = ?, especialidad = ? WHERE id = ?");
+                $stmt->execute([$data['nombre'], $data['cicloFormativo'], $data['cursoAcademico'], $data['departamento'], $data['especialidad'], $data['id']]);
                 $id = $data['id'];
             } else {
                 // Crear
-                $stmt = mysqli_prepare($db, "INSERT INTO materias (nombre, cicloFormativo, cursoAcademico, departamento, especialidad) VALUES (?, ?, ?, ?, ?)");
-                mysqli_stmt_bind_param($stmt, "ssisi", $data['nombre'], $data['cicloFormativo'], $data['cursoAcademico'], $data['departamento'], $data['especialidad']);
-                mysqli_stmt_execute($stmt);
-                $id = mysqli_insert_id($db);
+                $stmt = $pdo->prepare("INSERT INTO materias (nombre, cicloFormativo, cursoAcademico, departamento, especialidad) VALUES (?, ?, ?, ?, ?)");
+                $stmt->execute([$data['nombre'], $data['cicloFormativo'], $data['cursoAcademico'], $data['departamento'], $data['especialidad']]);
+                $id = $pdo->lastInsertId();
             }
             
-            mysqli_close($db);
             echo json_encode(['success' => true, 'id' => $id]);
             break;
 
         case 'DELETE':
             if (isset($_GET['id'])) {
-                $db = getDBConnection();
-                if (!$db) {
-                    throw new Exception('Error de conexión');
-                }
-                
-                $id = intval($_GET['id']);
-                $stmt = mysqli_prepare($db, "DELETE FROM materias WHERE id = ?");
-                mysqli_stmt_bind_param($stmt, "i", $id);
-                mysqli_stmt_execute($stmt);
-                
-                mysqli_close($db);
+                $stmt = $pdo->prepare("DELETE FROM materias WHERE id = ?");
+                $stmt->execute([intval($_GET['id'])]);
                 echo json_encode(['success' => true]);
             } else {
                 throw new Exception('ID no proporcionado');

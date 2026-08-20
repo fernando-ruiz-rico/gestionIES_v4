@@ -1,11 +1,16 @@
 <?php
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 try {
+    $pdo = getPDOConnection();
+    if (!$pdo) {
+        throw new Exception('Error de conexión a la base de datos');
+    }
+    
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
