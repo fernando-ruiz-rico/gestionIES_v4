@@ -211,10 +211,13 @@ Estos módulos son la base del sistema y deben implementarse primero:
 - **Referencia v3**: `programaciones_apartados.php`, `ajax/programaciones_apartados/`
 
 #### 2.3 Contenidos por Defecto
-- **Backend**: `backend/api/programaciones_contenidos_defecto.php`
-  - Gestión de contenidos estándar
-- **Frontend**: `frontend/js/views/programaciones-contenidos-defecto-view.js`
+- **Backend**: `backend/api/programaciones_contenidos_defecto/{cargar,guardar}.php`
+  - ✅ Cargar el contenido por defecto de un apartado para un departamento (`cargar.php`)
+  - ✅ Guardar: inserta o actualiza; con texto vacío borra la fila, idéntico a v3 (`guardar.php`, solo rol `admin`)
+- **Frontend**: `frontend/js/views/programaciones-contenidos-defecto-view.js` (+ cliente `frontend/js/api/programaciones-contenidos-defecto.js`)
+  - ✅ Selector de departamento + apartado (solo los que admiten contenido por defecto, numeración fiel a v3) y editor con botones Limpiar/Guardar
 - **Referencia v3**: `programaciones_contenidos_defecto.php`, `ajax/programaciones_contenidos_defecto/`
+- **Estado**: ✅ Completado (v4.2.1 — FIEL a v3). Ver [Historial de cambios](#historial-de-cambios).
 
 #### 2.4 Programación de Aula
 - **Backend**: `backend/api/programaciones_aula.php`
@@ -438,6 +441,15 @@ v4/
 
 ✅ = Implementado | ❌ = Pendiente
 
+## Usuarios de prueba
+
+Cuentas locales creadas en `gestionies.profesores` para probar las fases 2.x sobre Laragon (usuario real, `activo=1`, depto 1). Borrarlas una vez comprobado:
+
+| Usuario | Contraseña | Rol (v4) | jefatura | Notas |
+|---------|-----------|----------|----------|-------|
+| `testadmin` | `admin1234` | admin | `jefe_departamento=1` | Permite acceder a las secciones con permisos (guardar 2.2/2.3, menús de administración) |
+| `testprofe` | `profesor1` | profesor | `jefe_departamento=0` | Simula un profesor: sin acceso al menú «Contenidos generales» y 403 en `guardar` |
+
 ## Notas importantes para la migración
 
 1. **Compatibilidad PHP 5**: Todo el código backend debe ser compatible con PHP 5.x
@@ -501,6 +513,18 @@ v4/
 | Funcionalidad completa | En desarrollo (login funcional) |
 
 ## Historial de cambios
+
+### v4.2.1 - 2026 - Fase 2.3 «Contenidos por Defecto» Completada
+- ✅ **Backend** `backend/api/programaciones_contenidos_defecto/{cargar,guardar}.php` (PHP 5 / `mysqli_*` con sentencias preparadas):
+  - `cargar`: devuelve el `texto` de `contenidos_defecto_programaciones` para el par apartado+departamento (vacío si no existe).
+  - `guardar` (solo rol `admin`, como en la 2.2): inserta o actualiza; **con texto vacío borra la fila**, idéntico al comportamiento de v3 (`ajax/programaciones_contenidos_defecto/insertar_contenido_defecto_programacion.php`).
+- ✅ **Frontend** `frontend/js/views/programaciones-contenidos-defecto-view.js` + cliente `js/api/programaciones-contenidos-defecto.js`:
+  - Selector de departamento y de apartado. El desplegable solo muestra los apartados con `contenido_defecto = 1` y `tipo = 0`, aplicando la **numeración global fiel a v3** (1, 2… y 1.1, 1.2 en subapartados).
+  - Editor de texto con botones «Limpiar» y «Guardar cambios», feedback con SweetAlert2, diseño homogéneo al resto de la aplicación (Bootstrap 5.3.8 + Bootstrap Icons, CSS mínimo).
+  - Integración: scripts cargados en `index.html`, componente registrado en `app.js` y ruta mapeada en `app-layout.js`; el acceso «Contenidos generales» ya existe en `config.php → getMenus` (visible para jefe de departamento/admin) y el sidebar lo resuelve añadiendo `.php` al link.
+- ✅ **Verificado contra la BD real** vía HTTP (Laragon): `cargar` devuelve el contenido real de un apartado existente; `guardar` probado íntegro sobre un par sin datos reales (inserta → actualiza → borra con texto vacío, restituido al terminar); 403 para rol profesor y sin sesión; menú presente para admin y ausente para profesor; `index.html` sirve los scripts nuevos y el listado de apartados que alimenta la vista.
+- ⚠️ **Nota de roles**: v3 permitía guardar a `jefeDepartamento` o `admin`; en v4 todo jefe de departamento se mapea a `admin` (`auth.php`), por lo que el chequeo único de rol es equivalente y consistente con la 2.2.
+- ⚠️ **Alcance**: los datos (tabla `contenidos_defecto_programaciones`) son compartidos por apartado+departamento tal y como en v3; si un profesor rellena su propio contenido en su programación, ese prevalece sobre el por defecto (comportamiento de la generación de programaciones, fuera de alcance de esta fase).
 
 ### v4.2.x - Decisión B — FASE 2.1 FIEL A V3 (Programaciones)
 - ✅ **Reencuadre de la Fase 2.1** tras detectar que el modelo inicial no era fiel a v3: en v3 **no existe tabla `programaciones`**. La programación vive en **apartados + contenidos** asociados a cada materia (flag `materias.tiene_programacion`). Se retiran las acciones crear/guardar/eliminar y la tabla ficticia.
