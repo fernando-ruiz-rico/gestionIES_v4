@@ -1,6 +1,15 @@
 const programacionesAulaAPI = {
     baseUrl: '../backend/api/programaciones_aula/',
 
+    async cargarProfesores() {
+        const response = await fetch(this.baseUrl + 'profesores.php');
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.error || 'Error al cargar los profesores');
+        }
+        return data.data;
+    },
+
     async cargarMaterias(idProfesor) {
         let url = this.baseUrl + 'materias.php';
         if (idProfesor > 0) {

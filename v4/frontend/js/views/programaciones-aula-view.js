@@ -177,13 +177,9 @@ const ProgramacionesAulaView = {
         // --- Carga de datos ---
         async cargarProfesores() {
             try {
-                const response = await fetch('../backend/api/profesores.php?action=listar');
-                const data = await response.json();
-                if (data.success) {
-                    this.profesores = data.data;
-                }
+                this.profesores = await programacionesAulaAPI.cargarProfesores() || [];
             } catch (error) {
-                console.error('Error al cargar profesores:', error);
+                Swal.fire('Error', error.message, 'error');
             }
         },
 
