@@ -93,15 +93,17 @@ const ProgramacionesApartadosView = {
                                     <label class="form-check-label">Tiene contenido por defecto</label>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Categoría</label>
-                                    <input type="text" class="form-control" v-model="formulario.categoria">
+                                    <label class="form-label">Categoría *</label>
+                                    <select class="form-select" v-model="formulario.categoria">
+                                        <option value="" disabled>--Selecciona una categoría--</option>
+                                        <option value="ESO/BACH">ESO / Bachillerato</option>
+                                        <option value="FP">FP</option>
+                                        <option value="TODOS">Todos</option>
+                                    </select>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Tipo</label>
-                                    <select class="form-select" v-model="formulario.tipo">
-                                        <option value="0">General</option>
-                                        <option value="1">Específico</option>
-                                    </select>
+                                    <input type="number" class="form-control" v-model.number="formulario.tipo" min="0">
                                 </div>
                             </form>
                         </div>
@@ -154,16 +156,22 @@ const ProgramacionesApartadosView = {
         },
 
         getIndex(apartado) {
-            const mainIndex = this.apartados.filter(a => !a.subapartado && this.apartados.indexOf(a) <= this.apartados.indexOf(apartado)).length;
-            if (!apartado.subapartado) {
-                return mainIndex;
+            // Numeración idéntica a v3: cont++ por apartado principal, cont2++ por subapartado dentro de su grupo
+            let cont = 0;
+            let cont2 = 0;
+            for (let i = 0; i < this.apartados.length; i++) {
+                const a = this.apartados[i];
+                if (!a.subapartado) {
+                    cont++;
+                    cont2 = 0;
+                } else {
+                    cont2++;
+                }
+                if (a.id === apartado.id) {
+                    return a.subapartado ? `${cont}.${cont2}` : `${cont}`;
+                }
             }
-            const prevSiblings = this.apartados.filter((a, i) => 
-                a.subapartado && 
-                i < this.apartados.indexOf(apartado) &&
-                !this.apartados.slice(i + 1).find(x => !x.subapartado)
-            ).length + 1;
-            return `${mainIndex}.${prevSiblings}`;
+            return '';
         },
 
         nuevoApartado() {
@@ -195,8 +203,22 @@ const ProgramacionesApartadosView = {
         },
 
         async guardar() {
+            if (!this.formulario.titulo.trim()) {
+                Swal.fire('Error', 'Debes indicar un título', 'warning');
+                return;
+            }
+            if (!this.formulario.categoria) {
+                Swal.fire('Error', 'Debes seleccionar una categoría', 'warning');
+                return;
+            }
+
+            const tipo = (this.formulario.tipo === null || this.formulario.tipo === undefined || this.formulario.tipo === '')
+                ? 0
+                : Math.max(0, parseInt(this.formulario.tipo));
+            const apartadoGuardado = { ...this.formulario, tipo };
+
             try {
-                await programacionesApartadosAPI.guardar(this.formulario);
+                await programacionesApartadosAPI.guardar(apartadoGuardado);
                 Swal.fire('Éxito', 'Apartado guardado correctamente', 'success');
                 this.modal.hide();
                 await this.cargar();
@@ -208,7 +230,7 @@ const ProgramacionesApartadosView = {
         async eliminarApartado(apartado) {
             const result = await Swal.fire({
                 title: '¿Eliminar apartado?',
-                text: `Se eliminará "${apartado.titulo}". Esta acción no se puede deshacer.`,
+                text: `Confirmas el borrado del apartado '${apartado.titulo}'? Se eliminarán todos los contenidos de las programaciones relativos a dicho apartado.`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Sí, eliminar',

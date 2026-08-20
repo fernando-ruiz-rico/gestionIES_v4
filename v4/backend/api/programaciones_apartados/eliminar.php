@@ -3,6 +3,14 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
+@session_start();
+$permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';
+if (!$permisos) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'No tiene permisos para realizar esta acción']);
+    exit;
+}
+
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if ($id <= 0) {
@@ -19,15 +27,22 @@ if (!$db) {
     exit;
 }
 
-// Eliminar contenidos relacionados primero
-mysqli_query($db, "DELETE FROM contenidos_defecto_programaciones WHERE idApartado = $id");
-mysqli_query($db, "DELETE FROM contenidos_programaciones WHERE idApartado = $id");
+// Eliminar contenidos relacionados primero (mismo orden que v3)
+$stmt = mysqli_prepare($db, "DELETE FROM contenidos_defecto_programaciones WHERE idApartado = ?");
+mysqli_stmt_bind_param($stmt, "i", $id);
+mysqli_stmt_execute($stmt);
+mysqli_stmt_close($stmt);
+
+$stmt = mysqli_prepare($db, "DELETE FROM contenidos_programaciones WHERE idApartado = ?");
+mysqli_stmt_bind_param($stmt, "i", $id);
+mysqli_stmt_execute($stmt);
+mysqli_stmt_close($stmt);
 
 // Eliminar el apartado
-$sql = "DELETE FROM apartados_programaciones WHERE id = $id";
-$result = mysqli_query($db, $sql);
+$stmt = mysqli_prepare($db, "DELETE FROM apartados_programaciones WHERE id = ?");
+mysqli_stmt_bind_param($stmt, "i", $id);
 
-if ($result) {
+if (mysqli_stmt_execute($stmt)) {
     echo json_encode(['success' => true]);
 } else {
     http_response_code(500);

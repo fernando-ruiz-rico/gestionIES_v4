@@ -3,6 +3,14 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
+@session_start();
+$permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';
+if (!$permisos) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'No tiene permisos para realizar esta acción']);
+    exit;
+}
+
 $data = json_decode(file_get_contents('php://input'), true);
 
 $idApartado = isset($data['idApartado']) ? intval($data['idApartado']) : 0;
@@ -23,10 +31,10 @@ if (!$db) {
     exit;
 }
 
-$textoEscapado = mysqli_real_escape_string($db, trim($texto));
+$texto = trim($texto);
 
 // Si no hay texto, eliminamos el contenido por defecto
-if (empty($textoEscapado)) {
+if ($texto === '') {
     $stmt = mysqli_prepare($db, "DELETE FROM contenidos_defecto_programaciones WHERE idApartado = ? AND idDepartamento = ?");
     mysqli_stmt_bind_param($stmt, "ii", $idApartado, $idDepartamento);
     mysqli_stmt_execute($stmt);
@@ -37,21 +45,24 @@ if (empty($textoEscapado)) {
     mysqli_stmt_bind_param($stmtCheck, "ii", $idApartado, $idDepartamento);
     mysqli_stmt_execute($stmtCheck);
     $resultCheck = mysqli_stmt_get_result($stmtCheck);
-    
+
     if (mysqli_num_rows($resultCheck) > 0) {
         // Actualizar
         $stmt = mysqli_prepare($db, "UPDATE contenidos_defecto_programaciones SET texto = ? WHERE idApartado = ? AND idDepartamento = ?");
-        mysqli_stmt_bind_param($stmt, "sii", $textoEscapado, $idApartado, $idDepartamento);
-        mysqli_stmt_execute($stmt);
-        echo json_encode(['success' => true]);
+        mysqli_stmt_bind_param($stmt, "sii", $texto, $idApartado, $idDepartamento);
     } else {
         // Insertar
         $stmt = mysqli_prepare($db, "INSERT INTO contenidos_defecto_programaciones (idApartado, idDepartamento, texto) VALUES (?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, "iis", $idApartado, $idDepartamento, $textoEscapado);
-        mysqli_stmt_execute($stmt);
-        echo json_encode(['success' => true]);
+        mysqli_stmt_bind_param($stmt, "iis", $idApartado, $idDepartamento, $texto);
     }
-    
+
+    if (mysqli_stmt_execute($stmt)) {
+        echo json_encode(['success' => true]);
+    } else {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Error al guardar: ' . mysqli_error($db)]);
+    }
+
     mysqli_free_result($resultCheck);
     mysqli_stmt_close($stmtCheck);
 }

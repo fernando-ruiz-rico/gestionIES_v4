@@ -42,19 +42,21 @@ const AppLayout = {
         'grupos-view': GruposView,
         'materias-view': MateriasView,
         'escenarios-view': EscenariosView,
-        'programaciones-view': ProgramacionesView
+        'programaciones-view': ProgramacionesView,
+        'programaciones-apartados-view': ProgramacionesApartadosView,
+        'programaciones-contenidos-defecto-view': ProgramacionesContenidosDefectoView
     },
-    
+
     methods: {
         handleLogout() {
             this.$emit('logout');
         },
-        
+
         handleCloseMenu() {
             // Cierra el menú lateral al navegar o por evento explícito
             document.getElementById('wrapper').classList.remove('toggled');
         },
-        
+
         handleNavigate(link) {
             // Mapear links a vistas
             const vistaMap = {
@@ -66,7 +68,9 @@ const AppLayout = {
                 'grupos.php': 'grupos-view',
                 'materias.php': 'materias-view',
                 'escenarios.php': 'escenarios-view',
-                'programaciones.php': 'programaciones-view'
+                'programaciones.php': 'programaciones-view',
+                'programaciones_apartados.php': 'programaciones-apartados-view',
+                'programaciones_contenidos_defecto.php': 'programaciones-contenidos-defecto-view'
             };
             
             this.vistaActual = vistaMap[link] || 'home-view';

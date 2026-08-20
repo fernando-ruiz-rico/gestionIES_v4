@@ -21,7 +21,7 @@ const ProgramacionesContenidosDefectoView = {
             <div class="row mb-3" v-if="departamentos.length > 0">
                 <div class="col-md-6">
                     <label class="form-label">Departamento</label>
-                    <select class="form-select" v-model="idDepartamento" @change="cargarApartados">
+                    <select class="form-select" v-model="idDepartamento" @change="cambiarDepartamento">
                         <option value="">--Selecciona un departamento--</option>
                         <option v-for="depto in departamentos" :key="depto.id" :value="depto.id">
                             {{ depto.nombre }}
@@ -117,14 +117,19 @@ const ProgramacionesContenidosDefectoView = {
             }
         },
 
+        cambiarDepartamento() {
+            this.idApartado = '';
+            this.contenido = '';
+            this.cargarApartados();
+        },
+
         async cargarApartados() {
             if (!this.idDepartamento) return;
-            
+
             try {
-                const response = await fetch('backend/api/programaciones_apartados/listar.php');
-                const data = await response.json();
-                if (data.success) {
-                    this.apartados = data.data;
+                const data = await programacionesApartadosAPI.listar();
+                if (data) {
+                    this.apartados = data;
                     // Calcular numeración
                     let cont = 0;
                     let cont2 = 0;
