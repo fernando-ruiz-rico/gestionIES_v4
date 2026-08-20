@@ -197,6 +197,12 @@ Estos módulos son la base del sistema y deben implementarse primero:
   - ✅ Vista principal con listado y filtros
   - ✅ Modal de creación/edición
   - ✅ Modal de importación con confirmación
+  - ✅ Edición de contenidos por apartados
+  - ✅ Detección de apartados automáticos (tipo TEMAS)
+- **API Contenidos**: `backend/api/programaciones_contenidos/index.php`
+  - ✅ Cargar apartados según categoría (ESO/BACH o FP)
+  - ✅ Cargar contenido de un apartado
+  - ✅ Guardar contenido de un apartado
 - **Referencia v3**: `programaciones.php`, `ajax/programaciones/`, `modales/importar_programacion.php`
 - **Estado**: ✅ Completado
 
@@ -425,7 +431,7 @@ v4/
 | Grupos | ✅ | ✅ | Completado |
 | Materias | ✅ | ✅ | Completado |
 | Escenarios | ✅ | ✅ | Completado |
-| Programaciones | ✅ | ✅ | Completado (CRUD básico) |
+| Programaciones | ✅ | ✅ | Completado (CRUD + Contenidos) |
 | Temas | ❌ | ❌ | Pendiente |
 | PCCF | ❌ | ❌ | Pendiente |
 | Resultados Aprendizaje | ❌ | ❌ | Pendiente |
