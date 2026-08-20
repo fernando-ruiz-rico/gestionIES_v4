@@ -16,22 +16,27 @@ try {
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
+                // FASE 2.1 — modelo fiel a v3: no existe una fila única de "programación".
+                // La programación vive en apartados + contenidos asociados a cada materia;
+                // se listan las materias que la tienen activa y su estado actual.
                 $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
 
+                $sql = "SELECT m.id AS id, m.nombre AS materia, c.nombre AS curso,
+                               m.horas AS horas,
+                               (SELECT COUNT(DISTINCT cp.idApartado)
+                                  FROM contenidos_programaciones cp
+                                  WHERE cp.idMateria = m.id) AS num_apartados
+                            FROM materias m
+                            LEFT JOIN cursos c ON c.id = m.idCurso";
+
                 if ($idMateria > 0) {
-                    $sql = "SELECT p.*, m.titulo as materia, g.nombre as grupo
-                            FROM programaciones p
-                            LEFT JOIN materias m ON p.idMateria = m.id
-                            LEFT JOIN grupos g ON p.idGrupo = g.id
-                            WHERE p.idMateria = $idMateria
-                            ORDER BY p.curso DESC";
+                    $sql .= " WHERE m.id = $idMateria AND m.tiene_programacion = 1";
                 } else {
-                    $sql = "SELECT p.*, m.titulo as materia, g.nombre as grupo
-                            FROM programaciones p
-                            LEFT JOIN materias m ON p.idMateria = m.id
-                            LEFT JOIN grupos g ON p.idGrupo = g.id
-                            ORDER BY p.curso DESC";
+                    $sql .= " WHERE m.tiene_programacion = 1";
                 }
+
+                $sql .= " ORDER BY c.orden, c.nombre, m.nombre";
+
                 $result = mysqli_query($db, $sql);
                 if (!$result) {
                     throw new Exception(mysqli_error($db));
@@ -42,20 +47,46 @@ try {
                 }
                 mysqli_free_result($result);
                 echo json_encode(['success' => true, 'data' => $programaciones]);
-            } elseif ($action === 'obtener' && isset($_GET['id'])) {
-                $id = intval($_GET['id']);
-                $sql = "SELECT * FROM programaciones WHERE id = $id";
+            } elseif ($action === 'obtener' && isset($_GET['idMateria'])) {
+                // FASE 2.1 — Ver programación (solo lectura): apartados + contenidos
+                // de la materia tal y como están guardados en v3.
+                $idMateria = intval($_GET['idMateria']);
+                if ($idMateria <= 0) {
+                    throw new Exception('ID de materia inválido');
+                }
+
+                $sql = "SELECT ap.id AS idApartado, ap.titulo, c.texto
+                            FROM apartados_programaciones ap
+                            JOIN contenidos_programaciones c ON c.idApartado = ap.id AND c.idMateria = $idMateria
+                            ORDER BY ap.orden, c.id";
                 $result = mysqli_query($db, $sql);
                 if (!$result) {
                     throw new Exception(mysqli_error($db));
                 }
-                $data = mysqli_fetch_assoc($result);
+
+                // Un apartado puede tener varios contenidos; se agrupan por orden de id.
+                $apartados = [];
+                $posicion = [];
+                while ($fila = mysqli_fetch_assoc($result)) {
+                    $idA = $fila['idApartado'];
+                    if (!isset($posicion[$idA])) {
+                        $posicion[$idA] = count($apartados);
+                        $apartados[] = [
+                            'idApartado' => $idA,
+                            'titulo'     => $fila['titulo'],
+                            'texto'      => $fila['texto']
+                        ];
+                    } else {
+                        $apartados[$posicion[$idA]]['texto'] .= "\n" . $fila['texto'];
+                    }
+                }
                 mysqli_free_result($result);
-                if ($data) {
-                    echo json_encode(['success' => true, 'data' => $data]);
-                } else {
+
+                if (empty($apartados)) {
                     http_response_code(404);
-                    echo json_encode(['success' => false, 'error' => 'Programación no encontrada']);
+                    echo json_encode(['success' => false, 'error' => 'La materia no tiene programación']);
+                } else {
+                    echo json_encode(['success' => true, 'data' => $apartados]);
                 }
             } else {
                 throw new Exception('Acción no válida');
@@ -141,82 +172,15 @@ try {
                     throw $e;
                 }
             } else {
-                // Crear/Actualizar programación normal
-                $input = file_get_contents('php://input');
-                $data = json_decode($input, true);
-
-                if (isset($data['id']) && $data['id'] > 0) {
-                    // Actualizar
-                    $idMateria = intval($data['idMateria']);
-                    $idGrupo = isset($data['idGrupo']) && $data['idGrupo'] ? intval($data['idGrupo']) : 'NULL';
-                    $curso = mysqli_real_escape_string($db, $data['curso']);
-                    $anyo = isset($data['anyo']) ? mysqli_real_escape_string($db, $data['anyo']) : '';
-                    $profesor = isset($data['profesor']) ? mysqli_real_escape_string($db, $data['profesor']) : '';
-                    $objetivos = isset($data['objetivos']) ? mysqli_real_escape_string($db, $data['objetivos']) : '';
-                    $metodologia = isset($data['metodologia']) ? mysqli_real_escape_string($db, $data['metodologia']) : '';
-                    $evaluacion = isset($data['evaluacion']) ? mysqli_real_escape_string($db, $data['evaluacion']) : '';
-                    $atencion_diversidad = isset($data['atencion_diversidad']) ? mysqli_real_escape_string($db, $data['atencion_diversidad']) : '';
-                    $materiales = isset($data['materiales']) ? mysqli_real_escape_string($db, $data['materiales']) : '';
-                    $bibliografia = isset($data['bibliografia']) ? mysqli_real_escape_string($db, $data['bibliografia']) : '';
-                    $id = intval($data['id']);
-                    
-                    $sql = "UPDATE programaciones SET
-                            idMateria = $idMateria,
-                            idGrupo = " . ($idGrupo === 'NULL' ? 'NULL' : $idGrupo) . ",
-                            curso = '$curso',
-                            anyo = '$anyo',
-                            profesor = '$profesor',
-                            objetivos = '$objetivos',
-                            metodologia = '$metodologia',
-                            evaluacion = '$evaluacion',
-                            atencion_diversidad = '$atencion_diversidad',
-                            materiales = '$materiales',
-                            bibliografia = '$bibliografia'
-                            WHERE id = $id";
-                    $result = mysqli_query($db, $sql);
-                    if (!$result) {
-                        throw new Exception(mysqli_error($db));
-                    }
-                    $idRetorno = $id;
-                } else {
-                    // Crear
-                    $idMateria = intval($data['idMateria']);
-                    $idGrupo = isset($data['idGrupo']) && $data['idGrupo'] ? intval($data['idGrupo']) : 'NULL';
-                    $curso = mysqli_real_escape_string($db, $data['curso']);
-                    $anyo = isset($data['anyo']) ? mysqli_real_escape_string($db, $data['anyo']) : '';
-                    $profesor = isset($data['profesor']) ? mysqli_real_escape_string($db, $data['profesor']) : '';
-                    $objetivos = isset($data['objetivos']) ? mysqli_real_escape_string($db, $data['objetivos']) : '';
-                    $metodologia = isset($data['metodologia']) ? mysqli_real_escape_string($db, $data['metodologia']) : '';
-                    $evaluacion = isset($data['evaluacion']) ? mysqli_real_escape_string($db, $data['evaluacion']) : '';
-                    $atencion_diversidad = isset($data['atencion_diversidad']) ? mysqli_real_escape_string($db, $data['atencion_diversidad']) : '';
-                    $materiales = isset($data['materiales']) ? mysqli_real_escape_string($db, $data['materiales']) : '';
-                    $bibliografia = isset($data['bibliografia']) ? mysqli_real_escape_string($db, $data['bibliografia']) : '';
-                    
-                    $sql = "INSERT INTO programaciones (idMateria, idGrupo, curso, anyo, profesor, objetivos, metodologia, evaluacion, atencion_diversidad, materiales, bibliografia)
-                            VALUES ($idMateria, " . ($idGrupo === 'NULL' ? 'NULL' : $idGrupo) . ", '$curso', '$anyo', '$profesor', '$objetivos', '$metodologia', '$evaluacion', '$atencion_diversidad', '$materiales', '$bibliografia')";
-                    $result = mysqli_query($db, $sql);
-                    if (!$result) {
-                        throw new Exception(mysqli_error($db));
-                    }
-                    $idRetorno = mysqli_insert_id($db);
-                }
-
-                echo json_encode(['success' => true, 'id' => $idRetorno]);
+                // FASE 2.1 — No hay fila única de programación que guardar/actualizar a este nivel.
+                // En v3 los datos se editan en apartados (2.2) y contenidos (2.4), no aquí.
+                throw new Exception('Las programaciones se gestionan por apartados y contenidos (fase 2.2+). En la fase 2.1 solo es posible listar, ver e importar.');
             }
             break;
 
         case 'DELETE':
-            if (isset($_GET['id'])) {
-                $id = intval($_GET['id']);
-                $sql = "DELETE FROM programaciones WHERE id = $id";
-                $result = mysqli_query($db, $sql);
-                if (!$result) {
-                    throw new Exception(mysqli_error($db));
-                }
-                echo json_encode(['success' => true]);
-            } else {
-                throw new Exception('ID no proporcionado');
-            }
+            // FASE 2.1 — No hay fila única que eliminar aquí (en v3 se borrarían sus apartados/contenidos, fase 2.5).
+            throw new Exception('Eliminar una programación se gestiona con el borrado de sus apartados y contenidos (fase 2.5).');
             break;
 
         default:

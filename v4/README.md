@@ -189,16 +189,19 @@ Estos módulos son la base del sistema y deben implementarse primero:
 
 ### Fase 2: Programaciones Didácticas (PRIORIDAD MEDIA)
 
-#### 2.1 Programaciones
+#### 2.1 Programaciones — Fiel a v3 (Decisión B)
 - **Backend**: `backend/api/programaciones/index.php`
-  - ✅ CRUD de programaciones
-  - ✅ Importar programación desde otra materia
-- **Frontend**: `frontend/js/views/programaciones-view.js`
-  - ✅ Vista principal con listado y filtros
-  - ✅ Modal de creación/edición
-  - ✅ Modal de importación con confirmación
+  - ✅ Listar materias con programación activa + estado real (nº de apartados)
+  - ✅ Ver programación por materia: sus apartados + contenidos (solo lectura)
+  - ✅ Importar programación desde otra materia (conservado; opera sobre las tablas reales v3)
+  - ⚠️ Sin crear/guardar/eliminar una fila única: en v3 no existe tabla `programaciones` — la programación vive en apartados + contenidos (edición en 2.2–2.5)
+- **Frontend**: `frontend/js/views/programaciones-view.js` (+ cliente `frontend/js/api/programaciones.js`)
+  - ✅ Listado por materia (Materia | Curso | Horas | Apartados) con filtro por materia
+  - ✅ Modal «Ver» solo lectura de apartados + contenidos
+  - ✅ Modal de importación con confirmación (conservado)
+- **Modelo de datos real (fiel a v3)**: no hay tabla `programaciones`. La programación = `apartados_programaciones` + `contenidos_programaciones` asociados a cada materia (flag `materias.tiene_programacion`). El curso se resuelve con `materias.idCurso → cursos`.
 - **Referencia v3**: `programaciones.php`, `ajax/programaciones/`, `modales/importar_programacion.php`
-- **Estado**: ✅ Completado
+- **Estado**: ✅ Completado (Decisión B — FIEL a v3). Ver [Registro de Decisiones Técnicas](#registro-de-decisiones-técnicas).
 
 #### 2.2 Apartados de Programación
 - **Backend**: `backend/api/programaciones_apartados.php`
@@ -425,7 +428,7 @@ v4/
 | Grupos | ✅ | ✅ | Completado |
 | Materias | ✅ | ✅ | Completado |
 | Escenarios | ✅ | ✅ | Completado |
-| Programaciones | ✅ | ✅ | Completado (CRUD básico) |
+| Programaciones | ✅ | ✅ | Completado |
 | Temas | ❌ | ❌ | Pendiente |
 | PCCF | ❌ | ❌ | Pendiente |
 | Resultados Aprendizaje | ❌ | ❌ | Pendiente |
@@ -499,25 +502,20 @@ v4/
 
 ## Historial de cambios
 
-### v4.2.0 - 2025 - Fase 2 Programaciones Didácticas Iniciada
-- ✅ **Programaciones**: Módulo CRUD básico implementado
-  - Backend: `backend/api/programaciones/index.php` (migrado de mysql_* a PDO)
-    - Listar programaciones con filtro por materia
-    - Obtener programación por ID
-    - Guardar (crear/actualizar) programación
-    - Eliminar programación
-    - Campos: curso, año, idMateria, idGrupo, profesor, objetivos, metodologia, evaluacion, atencion_diversidad, materiales, bibliografia
-  - Frontend API: `frontend/js/api/programaciones.js`
-  - Frontend View: `frontend/js/views/programaciones-view.js`
-    - Listado en tabla responsive con Bootstrap 5
-    - Filtro por materia
-    - Modal con formulario completo
-    - SweetAlert2 para confirmaciones
-  - Integración completa:
-    - Añadido script en `index.html`
-    - Registrado componente en `app.js`
-    - Mapeado en `app-layout.js`
-  - ⚠️ **Pendiente**: Submódulos de apartados, temas, contenidos por defecto, seguimiento
+### v4.2.x - Decisión B — FASE 2.1 FIEL A V3 (Programaciones)
+- ✅ **Reencuadre de la Fase 2.1** tras detectar que el modelo inicial no era fiel a v3: en v3 **no existe tabla `programaciones`**. La programación vive en **apartados + contenidos** asociados a cada materia (flag `materias.tiene_programacion`). Se retiran las acciones crear/guardar/eliminar y la tabla ficticia.
+- **Entregables redefinidos (FIEL a v3)**:
+  - Backend `backend/api/programaciones/index.php` (compatible PHP 5 con `mysqli_*`):
+    - `listar`: materias con programación activa + estado real (nº de apartados). Curso vía `materias.idCurso → cursos`.
+    - `obtener`: apartados + contenidos de la materia (solo lectura), agrupando varios contenidos por apartado.
+    - `importar` (conservado, opera sobre las tablas reales v3): borra y re-inserta de destino←origen `contenidos_programaciones`, `temas`, `competencias_temas`/`criterios_temas`, replicando `v3/ajax/programaciones/importar_programacion.php`.
+  - Frontend `frontend/js/views/programaciones-view.js` + cliente `frontend/js/api/programaciones.js`:
+    - Listado **Materia | Curso | Horas | Apartados** con filtro por materia.
+    - Modal «Ver» (solo lectura) de apartados + contenidos; sin create/edit/delete.
+    - Importar origen→destino con doble confirmación (SweetAlert2), conservado.
+  - Integración: cargado en `index.html`, registrado en `app.js` y mapeado a la ruta `/programaciones` en `app-layout.js`.
+- ✅ **Verificado contra la BD real** (`gestionies.sql`): `php -l` limpio; `listar` devuelve materias reales (p. ej. 4º ESO «Lenguaje y Literatura», L2, 15 apartados) y `obtener` devuelve el texto real de su programación.
+- ⚠️ **Alcance**: la edición de los datos se hace en las fases 2.2–2.5 (CRUD de apartados/contenidos + temas); aquí solo se listan, ven e importan. Ver [Registro de Decisiones Técnicas](#registro-de-decisiones-técnicas).
 
 ### v4.1.3 - 2025 - Fase 1 Completa (Módulos Básicos)
 - ✅ **Especialidades**: CRUD completo implementado
@@ -649,6 +647,16 @@ frontend/
 ### Registro de Decisiones Técnicas
 
 Las decisiones importantes de diseño e implementación se documentan en este README bajo la sección correspondiente de cada versión.
+
+#### D-2025: Fase 2.1 «Programaciones» — Decisión B, FIEL A V3 (no tabla propia)
+- **Decidido por**: Usuario («FIEL a v3»).
+- **Contexto**: la primera entrega de la 2.1 modelaba una `tabla programaciones` simplificada (una fila por materia/grupo con objetivos/metodología/etc.). Al contrastar con el modelo real de v3 se detectó que **no existe** esa tabla: en v3 la programación didáctica son **apartados + contenidos** asociados a cada materia (flag `materias.tiene_programacion`), y no hay una «fila» que crear.
+- **Decisión**: rehacer la 2.1 para ser fiel a v3. Se retiran crear/guardar/eliminar y la tabla ficticia. Entregables finales:
+  - `backend/api/programaciones/index.php`: `listar` (materias con programación + nº de apartados; curso vía `idCurso → cursos`), `obtener` (apartados + contenidos, solo lectura) e `importar` (conservado sobre las tablas reales v3).
+  - `frontend/js/views/programaciones-view.js` + cliente `api/programaciones.js`: listado **Materia | Curso | Horas | Apartados**, modal «Ver» y modal de importación; sin create/edit/delete.
+- **Consecuencia**: la edición real de los apartados/contenidos se hace en las fases 2.2–2.5 (CRUD de esos módulos). La 2.1 da visibilidad fiel al estado y conserva el Importar existente.
+- **Verificación**: `php -l` limpio; comprobado contra la BD real (`gestionies.sql`) vía HTTP: `listar` y `obtener` devuelven datos reales del curso en marcha.
+
 
 ## Historial de cambios
 

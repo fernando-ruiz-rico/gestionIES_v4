@@ -1,3 +1,7 @@
+// FASE 2.1 — Programaciones Didácticas (modelo fiel a v3)
+// No existe una "fila de programación": cada materia guarda su programación como
+// apartados + contenidos. Aquí solo se listan las materias con programación activa,
+// se ve su estado real y se permite importarla. La edición está en las fases 2.2-2.5.
 const ProgramacionesView = {
     template: `
         <div class="container-fluid py-4">
@@ -5,32 +9,25 @@ const ProgramacionesView = {
                 <div class="col-12">
                     <div class="d-flex justify-content-between align-items-center">
                         <h2><i class="bi bi-journal-bookmark me-2"></i>Programaciones Didácticas</h2>
-                        <div>
-                            <button class="btn btn-outline-primary me-2" @click="mostrarImportar">
-                                <i class="bi bi-download me-1"></i>Importar
-                            </button>
-                            <button class="btn btn-primary" @click="nuevo">
-                                <i class="bi bi-plus-lg me-1"></i>Nueva Programación
-                            </button>
-                        </div>
+                        <button class="btn btn-outline-primary" @click="mostrarImportar">
+                            <i class="bi bi-download me-1"></i>Importar Programación
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Filtros -->
+            <!-- Filtro por materia -->
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label class="form-label">Filtrar por Materia</label>
                     <select class="form-select" v-model="filtroMateria" @change="cargar">
                         <option value="">Todas</option>
-                        <option v-for="materia in materias" :key="materia.id" :value="materia.id">
-                            {{ materia.titulo }}
-                        </option>
+                        <option v-for="m in materias" :key="m.id" :value="m.id">{{ m.nombre }}</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Tabla de programaciones -->
+            <!-- Tabla de programaciones (estado real por materia) -->
             <div class="row">
                 <div class="col-12">
                     <div class="card shadow-sm">
@@ -39,43 +36,39 @@ const ProgramacionesView = {
                                 <table class="table table-hover mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Curso</th>
                                             <th>Materia</th>
-                                            <th>Grupo</th>
-                                            <th>Año</th>
-                                            <th>Profesor</th>
+                                            <th>Curso</th>
+                                            <th class="text-center">Horas</th>
+                                            <th class="text-center">Apartados</th>
                                             <th class="text-end">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr v-if="cargando">
-                                            <td colspan="6" class="text-center py-4">
+                                            <td colspan="5" class="text-center py-4">
                                                 <div class="spinner-border text-primary" role="status">
                                                     <span class="visually-hidden">Cargando...</span>
                                                 </div>
                                             </td>
                                         </tr>
                                         <tr v-else-if="programaciones.length === 0">
-                                            <td colspan="6" class="text-center py-4 text-muted">
-                                                No hay programaciones registradas
+                                            <td colspan="5" class="text-center py-4 text-muted">
+                                                No hay materias con programación activa
                                             </td>
                                         </tr>
                                         <tr v-else v-for="prog in programaciones" :key="prog.id">
-                                            <td>{{ prog.curso }}</td>
-                                            <td>{{ prog.materia || 'Sin materia' }}</td>
-                                            <td>{{ prog.grupo || 'Sin grupo' }}</td>
-                                            <td>{{ prog.anyo || '-' }}</td>
-                                            <td>{{ prog.profesor || '-' }}</td>
+                                            <td>{{ prog.materia }}</td>
+                                            <td>{{ prog.curso || '—' }}</td>
+                                            <td class="text-center">{{ horasFormateadas(prog) }}</td>
+                                            <td class="text-center">
+                                                <span v-if="prog.num_apartados > 0" class="badge text-bg-success">
+                                                    {{ prog.num_apartados }}
+                                                </span>
+                                                <span v-else class="text-muted">Sin apartados</span>
+                                            </td>
                                             <td class="text-end">
-                                                <button class="btn btn-sm btn-outline-primary me-1" 
-                                                        @click="editar(prog)" 
-                                                        title="Editar">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-danger" 
-                                                        @click="eliminar(prog)" 
-                                                        title="Eliminar">
-                                                    <i class="bi bi-trash"></i>
+                                                <button class="btn btn-sm btn-outline-primary" @click="ver(prog)" title="Ver programación">
+                                                    <i class="bi bi-eye me-1"></i>Ver
                                                 </button>
                                             </td>
                                         </tr>
@@ -87,104 +80,36 @@ const ProgramacionesView = {
                 </div>
             </div>
 
-            <!-- Modal Formulario -->
-            <div class="modal fade" id="modalProgramacion" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+            <!-- Modal Ver programación (solo lectura) -->
+            <div class="modal fade" id="modalVer" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-scrollable">
                     <div class="modal-content">
                         <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title" id="modalLabel">
-                                {{ esNuevo ? 'Nueva Programación' : 'Editar Programación' }}
-                            </h5>
+                            <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Programación — {{ verData.materia }}</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form @submit.prevent="guardar">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Curso *</label>
-                                        <input type="text" class="form-control" v-model="formulario.curso" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Año</label>
-                                        <input type="text" class="form-control" v-model="formulario.anyo">
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Materia</label>
-                                        <select class="form-select" v-model="formulario.idMateria">
-                                            <option value="">Seleccionar materia</option>
-                                            <option v-for="materia in materias" :key="materia.id" :value="materia.id">
-                                                {{ materia.titulo }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Grupo</label>
-                                        <select class="form-select" v-model="formulario.idGrupo">
-                                            <option value="">Seleccionar grupo</option>
-                                            <option v-for="grupo in grupos" :key="grupo.id" :value="grupo.id">
-                                                {{ grupo.nombre }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Profesor</label>
-                                    <input type="text" class="form-control" v-model="formulario.profesor">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Objetivos</label>
-                                    <textarea class="form-control" v-model="formulario.objetivos" rows="3"></textarea>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Metodología</label>
-                                    <textarea class="form-control" v-model="formulario.metodologia" rows="3"></textarea>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Evaluación</label>
-                                    <textarea class="form-control" v-model="formulario.evaluacion" rows="3"></textarea>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Atención a la Diversidad</label>
-                                    <textarea class="form-control" v-model="formulario.atencion_diversidad" rows="3"></textarea>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Materiales y Recursos</label>
-                                    <textarea class="form-control" v-model="formulario.materiales" rows="3"></textarea>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Bibliografía</label>
-                                    <textarea class="form-control" v-model="formulario.bibliografia" rows="3"></textarea>
-                                </div>
-                            </form>
+                            <p v-if="verData.apartados.length === 0" class="text-muted mb-0">
+                                Esta materia no tiene apartados ni contenidos cargados.
+                            </p>
+                            <div v-else v-for="(ap, i) in verData.apartados" :key="i" class="border rounded p-3 mb-2">
+                                <h6 class="mb-1"><i class="bi bi-list-ol me-1"></i>{{ ap.titulo }}</h6>
+                                <div v-html="ap.texto"></div>
+                            </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="button" class="btn btn-primary" @click="guardar">
-                                <i class="bi bi-save me-1"></i>Guardar
-                            </button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Modal Importar Programación -->
-            <div class="modal fade" id="modalImportar" tabindex="-1" aria-labelledby="modalImportarLabel" aria-hidden="true">
+            <div class="modal fade" id="modalImportar" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title" id="modalImportarLabel">
-                                <i class="bi bi-download me-2"></i>Importar Programación
-                            </h5>
+                            <h5 class="modal-title"><i class="bi bi-download me-2"></i>Importar Programación</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
@@ -193,9 +118,7 @@ const ProgramacionesView = {
                                     <label class="form-label">Materia Origen *</label>
                                     <select class="form-select" v-model="importarForm.idMateriaOrigen" required>
                                         <option value="">--Selecciona una materia origen--</option>
-                                        <option v-for="materia in materias" :key="materia.id" :value="materia.id">
-                                            {{ materia.titulo }}
-                                        </option>
+                                        <option v-for="m in materias" :key="m.id" :value="m.id">{{ m.nombre }}</option>
                                     </select>
                                     <div class="form-text">Los datos de esta programación se copiarán a la materia destino.</div>
                                 </div>
@@ -203,9 +126,7 @@ const ProgramacionesView = {
                                     <label class="form-label">Materia Destino *</label>
                                     <select class="form-select" v-model="importarForm.idMateriaDestino" required>
                                         <option value="">--Selecciona una materia destino--</option>
-                                        <option v-for="materia in materias" :key="materia.id" :value="materia.id">
-                                            {{ materia.titulo }}
-                                        </option>
+                                        <option v-for="m in materias" :key="m.id" :value="m.id">{{ m.nombre }}</option>
                                     </select>
                                     <div class="form-text">Esta materia recibirá los datos de la programación origen. ¡Se borrarán sus datos actuales!</div>
                                 </div>
@@ -231,29 +152,11 @@ const ProgramacionesView = {
         return {
             programaciones: [],
             materias: [],
-            grupos: [],
             cargando: false,
             filtroMateria: '',
-            formulario: {
-                id: null,
-                curso: '',
-                anyo: '',
-                idMateria: '',
-                idGrupo: '',
-                profesor: '',
-                objetivos: '',
-                metodologia: '',
-                evaluacion: '',
-                atencion_diversidad: '',
-                materiales: '',
-                bibliografia: ''
-            },
-            importarForm: {
-                idMateriaOrigen: '',
-                idMateriaDestino: ''
-            },
-            esNuevo: true,
-            modal: null,
+            importarForm: { idMateriaOrigen: '', idMateriaDestino: '' },
+            verData: { materia: '', apartados: [] },
+            modalVer: null,
             modalImportar: null
         };
     },
@@ -261,11 +164,15 @@ const ProgramacionesView = {
     async mounted() {
         await this.cargar();
         await this.cargarCatalogos();
-        this.modal = new bootstrap.Modal(document.getElementById('modalProgramacion'));
+        this.modalVer = new bootstrap.Modal(document.getElementById('modalVer'));
         this.modalImportar = new bootstrap.Modal(document.getElementById('modalImportar'));
     },
 
     methods: {
+        horasFormateadas(prog) {
+            return (prog.horas !== null && prog.horas !== undefined && prog.horas !== '') ? prog.horas : '—';
+        },
+
         async cargar() {
             this.cargando = true;
             try {
@@ -279,79 +186,29 @@ const ProgramacionesView = {
 
         async cargarCatalogos() {
             try {
-                const [materiasRes, gruposRes] = await Promise.all([
-                    fetch('backend/api/materias/index.php?action=listar').then(r => r.json()),
-                    fetch('backend/api/grupos/index.php?action=listar').then(r => r.json())
-                ]);
-                if (materiasRes.success) this.materias = materiasRes.data || [];
-                if (gruposRes.success) this.grupos = gruposRes.data || [];
+                const res = await fetch('../backend/api/materias/index.php?action=listar').then(r => r.json());
+                if (res.success) this.materias = res.data || [];
             } catch (error) {
                 console.error('Error al cargar catálogos:', error);
             }
         },
 
-        nuevo() {
-            this.esNuevo = true;
-            this.formulario = {
-                id: null,
-                curso: '',
-                anyo: '',
-                idMateria: '',
-                idGrupo: '',
-                profesor: '',
-                objetivos: '',
-                metodologia: '',
-                evaluacion: '',
-                atencion_diversidad: '',
-                materiales: '',
-                bibliografia: ''
-            };
-            this.modal.show();
-        },
-
-        editar(prog) {
-            this.esNuevo = false;
-            this.formulario = { ...prog };
-            this.modal.show();
-        },
-
-        async guardar() {
+        async ver(prog) {
             try {
-                await programacionesAPI.guardar(this.formulario);
-                Swal.fire('Éxito', 'Programación guardada correctamente', 'success');
-                this.modal.hide();
-                await this.cargar();
+                const data = await programacionesAPI.obtener(prog.id);
+                this.verData = { materia: prog.materia, apartados: data || [] };
+                this.modalVer.show();
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
-            }
-        },
-
-        async eliminar(prog) {
-            const result = await Swal.fire({
-                title: '¿Eliminar programación?',
-                text: 'Esta acción no se puede deshacer',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            });
-
-            if (result.isConfirmed) {
-                try {
-                    await programacionesAPI.eliminar(prog.id);
-                    Swal.fire('Eliminada', 'Programación eliminada correctamente', 'success');
-                    await this.cargar();
-                } catch (error) {
-                    Swal.fire('Error', error.message, 'error');
-                }
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Programación vacía',
+                    text: 'Esta materia aún no tiene apartados ni contenidos cargados. Se editan en las fases 2.2 y 2.4.'
+                });
             }
         },
 
         mostrarImportar() {
-            this.importarForm = {
-                idMateriaOrigen: '',
-                idMateriaDestino: ''
-            };
+            this.importarForm = { idMateriaOrigen: '', idMateriaDestino: '' };
             this.modalImportar.show();
         },
 

@@ -1,4 +1,4 @@
-const API_URL = 'backend/api/programaciones/index.php';
+const API_URL = '../backend/api/programaciones/index.php';
 
 const programacionesAPI = {
     async listar(idMateria = null) {
@@ -19,9 +19,9 @@ const programacionesAPI = {
         }
     },
 
-    async obtener(id) {
+    async obtener(idMateria) {
         try {
-            const response = await fetch(`${API_URL}?action=obtener&id=${id}`);
+            const response = await fetch(`${API_URL}?action=obtener&idMateria=${idMateria}`);
             const data = await response.json();
             if (!data.success) {
                 throw new Error(data.error || 'Error al obtener programación');
@@ -33,42 +33,8 @@ const programacionesAPI = {
         }
     },
 
-    async guardar(programacion) {
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(programacion)
-            });
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Error al guardar programación');
-            }
-            return data;
-        } catch (error) {
-            console.error('Error en guardar programación:', error);
-            throw error;
-        }
-    },
-
-    async eliminar(id) {
-        try {
-            const response = await fetch(`${API_URL}?action=eliminar&id=${id}`, {
-                method: 'DELETE'
-            });
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Error al eliminar programación');
-            }
-            return data;
-        } catch (error) {
-            console.error('Error en eliminar programación:', error);
-            throw error;
-        }
-    },
-
+    // FASE 2.1 — guardar/eliminar eliminados: en el modelo fiel a v3 no existe una
+    // fila única de programación (se editan sus apartados/contenidos en las fases 2.2-2.5).
     async importar(idMateriaOrigen, idMateriaDestino) {
         try {
             const response = await fetch(`${API_URL}?action=importar`, {
