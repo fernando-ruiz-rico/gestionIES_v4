@@ -135,7 +135,12 @@ const ProgramacionesContenidosDefectoView = {
     methods: {
         // TinyMCE (misma configuración que v3: initTinyMCE('progeditar'))
         inicializarEditor(texto) {
-            if (!window.tinymce) return;
+            if (!window.tinymce) {
+                console.warn('TinyMCE no disponible — se muestra el textarea plano');
+                return;
+            }
+            const area = document.querySelector('textarea#editorContenidoDefecto');
+            if (!area) return;
             this.borrarEditor();
             tinymce.init({
                 selector: 'textarea#editorContenidoDefecto',
@@ -209,22 +214,23 @@ const ProgramacionesContenidosDefectoView = {
 
         async cargarContenido() {
             if (!this.idApartado) return;
-            
+
             this.cargando = true;
             try {
                 const apto = this.apartados.find(a => a.id === this.idApartado);
                 this.apartadoActual = apto ? apto.tituloMostrar : '';
-                
+
                 const data = await programacionesContenidosDefectoAPI.cargar(this.idApartado, this.idDepartamento);
                 this.contenido = data.texto || '';
-                this.$nextTick(() => {
-                    this.inicializarEditor(this.contenido);
-                });
             } catch (error) {
                 Swal.fire('Error', error.message, 'error');
             } finally {
                 this.cargando = false;
             }
+            // El textarea ya está en el DOM (cargando=false → v-else visible)
+            this.$nextTick(() => {
+                this.inicializarEditor(this.contenido);
+            });
         },
 
         async guardar() {

@@ -142,7 +142,12 @@ const ProgramacionesAulaView = {
     methods: {
         // --- TinyMCE (misma configuración que v3) ---
         inicializarEditor(texto) {
-            if (!window.tinymce) return;
+            if (!window.tinymce) {
+                console.warn('TinyMCE no disponible — se muestra el textarea plano');
+                return;
+            }
+            const area = document.querySelector('textarea#editorAula');
+            if (!area) return;
             this.borrarEditor();
             tinymce.init({
                 selector: 'textarea#editorAula',
