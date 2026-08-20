@@ -1,43 +1,26 @@
-```php
-<?php
-// Grupo de materias
-$grupo = $_GET['grupo'] ?? null;
+```
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.log
+*.tmp
+*.swp
 
-if ($grupo) {
-    // Conexión a la base de datos
-    $host = 'localhost';
-    $db = 'u924040764_calculate';
-    $user = 'u924040764_root';
-    $pass = 'Root12345678';
-    
-    try {
-        $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+# Dependencies
+vendor/
 
-        // Consulta para obtener las materias del grupo
-        $stmt = $pdo->prepare("
-            SELECT DISTINCT m.nombre AS materia_nombre, m.id AS materia_id
-            FROM materias m
-            JOIN programaciones p ON m.id = p.materia_id
-            WHERE p.grupo = :grupo
-        ");
-        $stmt->bindParam(':grupo', $grupo);
-        $stmt->execute();
-        
-        $materias = $stmt->fetchAll(PDO::FETCH_ASSOC);
+# Environment
+.env
+.env.local
+.env.*
 
-        // Devolver resultados en formato JSON
-        header('Content-Type: application/json');
-        echo json_encode($materias);
-    } catch (PDOException $e) {
-        // Manejo de errores
-        http_response_code(500);
-        echo json_encode(['error' => 'Error en la base de datos: ' . $e->getMessage()]);
-    }
-} else {
-    // Si no se proporciona el parámetro 'grupo'
-    http_response_code(400);
-    echo json_encode(['error' => 'Parámetro "grupo" es requerido']);
-}
-?>
+# Editors
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
 ```
