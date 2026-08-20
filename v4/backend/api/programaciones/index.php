@@ -5,41 +5,52 @@ require_once '../../config.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
+$db = getDBConnection();
+if (!$db) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Error de conexión a la base de datos']);
+    exit;
+}
+
 try {
-    $pdo = getPDOConnection();
-    if (!$pdo) {
-        throw new Exception('Error de conexión a la base de datos');
-    }
-    
     switch ($method) {
         case 'GET':
             if ($action === 'listar') {
                 $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
-                
+
                 if ($idMateria > 0) {
-                    $sql = "SELECT p.*, m.titulo as materia, g.nombre as grupo 
-                            FROM programaciones p 
-                            LEFT JOIN materias m ON p.idMateria = m.id 
-                            LEFT JOIN grupos g ON p.idGrupo = g.id 
-                            WHERE p.idMateria = ? 
+                    $sql = "SELECT p.*, m.titulo as materia, g.nombre as grupo
+                            FROM programaciones p
+                            LEFT JOIN materias m ON p.idMateria = m.id
+                            LEFT JOIN grupos g ON p.idGrupo = g.id
+                            WHERE p.idMateria = $idMateria
                             ORDER BY p.curso DESC";
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->execute([$idMateria]);
                 } else {
-                    $sql = "SELECT p.*, m.titulo as materia, g.nombre as grupo 
-                            FROM programaciones p 
-                            LEFT JOIN materias m ON p.idMateria = m.id 
-                            LEFT JOIN grupos g ON p.idGrupo = g.id 
+                    $sql = "SELECT p.*, m.titulo as materia, g.nombre as grupo
+                            FROM programaciones p
+                            LEFT JOIN materias m ON p.idMateria = m.id
+                            LEFT JOIN grupos g ON p.idGrupo = g.id
                             ORDER BY p.curso DESC";
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->execute();
                 }
-                echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+                $result = mysqli_query($db, $sql);
+                if (!$result) {
+                    throw new Exception(mysqli_error($db));
+                }
+                $programaciones = [];
+                while ($fila = mysqli_fetch_assoc($result)) {
+                    $programaciones[] = $fila;
+                }
+                mysqli_free_result($result);
+                echo json_encode(['success' => true, 'data' => $programaciones]);
             } elseif ($action === 'obtener' && isset($_GET['id'])) {
-                $sql = "SELECT * FROM programaciones WHERE id = ?";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([$_GET['id']]);
-                $data = $stmt->fetch(PDO::FETCH_ASSOC);
+                $id = intval($_GET['id']);
+                $sql = "SELECT * FROM programaciones WHERE id = $id";
+                $result = mysqli_query($db, $sql);
+                if (!$result) {
+                    throw new Exception(mysqli_error($db));
+                }
+                $data = mysqli_fetch_assoc($result);
+                mysqli_free_result($result);
                 if ($data) {
                     echo json_encode(['success' => true, 'data' => $data]);
                 } else {
@@ -54,142 +65,154 @@ try {
         case 'POST':
             // Acción especial: importar programación desde otra materia
             if ($action === 'importar') {
-                $data = json_decode(file_get_contents('php://input'), true);
-                
+                $input = file_get_contents('php://input');
+                $data = json_decode($input, true);
+
                 if (!isset($data['idMateriaOrigen']) || !isset($data['idMateriaDestino'])) {
                     throw new Exception('Debe especificar materia origen y destino');
                 }
-                
+
                 $idMateriaOrigen = intval($data['idMateriaOrigen']);
                 $idMateriaDestino = intval($data['idMateriaDestino']);
-                
+
                 if ($idMateriaOrigen <= 0 || $idMateriaDestino <= 0) {
                     throw new Exception('IDs de materia inválidos');
                 }
-                
-                // Iniciar transacción
-                $pdo->beginTransaction();
-                
+
+                // Iniciar transacción (mysqli)
+                mysqli_begin_transaction($db);
+
                 try {
                     // Borrar contenidos previos de programación destino
-                    $stmt = $pdo->prepare("DELETE FROM contenidos_programaciones WHERE idMateria = ?");
-                    $stmt->execute([$idMateriaDestino]);
-                    
-                    $stmt = $pdo->prepare("DELETE FROM competencias_temas WHERE idTema IN (SELECT id FROM temas WHERE idMateria = ?)");
-                    $stmt->execute([$idMateriaDestino]);
-                    
-                    $stmt = $pdo->prepare("DELETE FROM criterios_temas WHERE idTema IN (SELECT id FROM temas WHERE idMateria = ?)");
-                    $stmt->execute([$idMateriaDestino]);
-                    
-                    $stmt = $pdo->prepare("DELETE FROM temas WHERE idMateria = ?");
-                    $stmt->execute([$idMateriaDestino]);
-                    
+                    $sql = "DELETE FROM contenidos_programaciones WHERE idMateria = $idMateriaDestino";
+                    mysqli_query($db, $sql);
+
+                    $sql = "DELETE FROM competencias_temas WHERE idTema IN (SELECT id FROM temas WHERE idMateria = $idMateriaDestino)";
+                    mysqli_query($db, $sql);
+
+                    $sql = "DELETE FROM criterios_temas WHERE idTema IN (SELECT id FROM temas WHERE idMateria = $idMateriaDestino)";
+                    mysqli_query($db, $sql);
+
+                    $sql = "DELETE FROM temas WHERE idMateria = $idMateriaDestino";
+                    mysqli_query($db, $sql);
+
                     // Insertar contenidos de la materia origen en la destino
-                    $stmt = $pdo->prepare("INSERT INTO contenidos_programaciones(idMateria, idApartado, texto) SELECT ? AS idMateria, idApartado, texto FROM contenidos_programaciones WHERE idMateria = ?");
-                    $stmt->execute([$idMateriaDestino, $idMateriaOrigen]);
-                    
+                    $sql = "INSERT INTO contenidos_programaciones(idMateria, idApartado, texto) SELECT $idMateriaDestino AS idMateria, idApartado, texto FROM contenidos_programaciones WHERE idMateria = $idMateriaOrigen";
+                    mysqli_query($db, $sql);
+
                     // Insertar temas
-                    $stmt = $pdo->prepare("INSERT INTO temas(idMateria, orden, titulo, horas, trimestre, peso_evaluacion, descripcion, justificacion, contexto, contenidos, secuenciacion, recursos, evaluacion, metodologia, adaptaciones, contexto_defecto, recursos_defecto, metodologia_defecto, adaptaciones_defecto) SELECT ? AS idMateria, orden, titulo, horas, trimestre, peso_evaluacion, descripcion, justificacion, contexto, contenidos, secuenciacion, recursos, evaluacion, metodologia, adaptaciones, contexto_defecto, recursos_defecto, metodologia_defecto, adaptaciones_defecto FROM temas WHERE idMateria = ?");
-                    $stmt->execute([$idMateriaDestino, $idMateriaOrigen]);
-                    
+                    $sql = "INSERT INTO temas(idMateria, orden, titulo, horas, trimestre, peso_evaluacion, descripcion, justificacion, contexto, contenidos, secuenciacion, recursos, evaluacion, metodologia, adaptaciones, contexto_defecto, recursos_defecto, metodologia_defecto, adaptaciones_defecto) SELECT $idMateriaDestino AS idMateria, orden, titulo, horas, trimestre, peso_evaluacion, descripcion, justificacion, contexto, contenidos, secuenciacion, recursos, evaluacion, metodologia, adaptaciones, contexto_defecto, recursos_defecto, metodologia_defecto, adaptaciones_defecto FROM temas WHERE idMateria = $idMateriaOrigen";
+                    mysqli_query($db, $sql);
+
                     // Insertar RA y CE asociados
-                    $stmt = $pdo->prepare("SELECT criterios_temas.codigo as CE, temas.orden as tema, resultados_aprendizaje.orden as RA FROM criterios_temas, temas, resultados_aprendizaje WHERE criterios_temas.idRA = resultados_aprendizaje.id AND criterios_temas.idTema = temas.id AND temas.idMateria = ?");
-                    $stmt->execute([$idMateriaOrigen]);
-                    $criteriosOrigen = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    $sql = "SELECT criterios_temas.codigo as CE, temas.orden as tema, resultados_aprendizaje.orden as RA FROM criterios_temas, temas, resultados_aprendizaje WHERE criterios_temas.idRA = resultados_aprendizaje.id AND criterios_temas.idTema = temas.id AND temas.idMateria = $idMateriaOrigen";
+                    $result = mysqli_query($db, $sql);
                     
-                    foreach ($criteriosOrigen as $fila) {
-                        $codigoCE = $fila['CE'];
-                        $ordenRA = $fila['RA'];
-                        $numTema = $fila['tema'];
-                        
+                    while ($fila = mysqli_fetch_assoc($result)) {
+                        $codigoCE = mysqli_real_escape_string($db, $fila['CE']);
+                        $ordenRA = intval($fila['RA']);
+                        $numTema = intval($fila['tema']);
+
                         // Buscar el id del RA para la materia destino
-                        $stmt2 = $pdo->prepare("SELECT id FROM resultados_aprendizaje WHERE idMateria = ? AND orden = ?");
-                        $stmt2->execute([$idMateriaDestino, $ordenRA]);
-                        $idRA = $stmt2->fetchColumn();
-                        
+                        $sql2 = "SELECT id FROM resultados_aprendizaje WHERE idMateria = $idMateriaDestino AND orden = $ordenRA";
+                        $result2 = mysqli_query($db, $sql2);
+                        $row2 = mysqli_fetch_assoc($result2);
+                        $idRA = $row2 ? $row2['id'] : null;
+                        mysqli_free_result($result2);
+
                         // Buscar el id del tema para la materia destino
-                        $stmt2 = $pdo->prepare("SELECT id FROM temas WHERE idMateria = ? AND orden = ?");
-                        $stmt2->execute([$idMateriaDestino, $numTema]);
-                        $idTema = $stmt2->fetchColumn();
-                        
+                        $sql2 = "SELECT id FROM temas WHERE idMateria = $idMateriaDestino AND orden = $numTema";
+                        $result2 = mysqli_query($db, $sql2);
+                        $row2 = mysqli_fetch_assoc($result2);
+                        $idTema = $row2 ? $row2['id'] : null;
+                        mysqli_free_result($result2);
+
                         if ($idRA && $idTema) {
-                            $stmt2 = $pdo->prepare("INSERT INTO criterios_temas (idRA, codigo, idTema) VALUES (?, ?, ?)");
-                            $stmt2->execute([$idRA, $codigoCE, $idTema]);
+                            $sql2 = "INSERT INTO criterios_temas (idRA, codigo, idTema) VALUES ($idRA, '$codigoCE', $idTema)";
+                            mysqli_query($db, $sql2);
                         }
                     }
-                    
-                    $pdo->commit();
+
+                    mysqli_commit($db);
                     echo json_encode(['success' => true, 'message' => 'Programación importada correctamente']);
-                    
+
                 } catch (Exception $e) {
-                    $pdo->rollBack();
+                    mysqli_rollback($db);
                     throw $e;
                 }
             } else {
                 // Crear/Actualizar programación normal
-                $data = json_decode(file_get_contents('php://input'), true);
-                
+                $input = file_get_contents('php://input');
+                $data = json_decode($input, true);
+
                 if (isset($data['id']) && $data['id'] > 0) {
                     // Actualizar
-                    $sql = "UPDATE programaciones SET 
-                            idMateria = ?, 
-                            idGrupo = ?, 
-                            curso = ?, 
-                            anyo = ?, 
-                            profesor = ?, 
-                            objetivos = ?, 
-                            metodologia = ?, 
-                            evaluacion = ?, 
-                            atencion_diversidad = ?, 
-                            materiales = ?, 
-                            bibliografia = ? 
-                            WHERE id = ?";
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->execute([
-                        $data['idMateria'],
-                        $data['idGrupo'] ?: null,
-                        $data['curso'],
-                        $data['anyo'] ?: '',
-                        $data['profesor'] ?: '',
-                        $data['objetivos'] ?: '',
-                        $data['metodologia'] ?: '',
-                        $data['evaluacion'] ?: '',
-                        $data['atencion_diversidad'] ?: '',
-                        $data['materiales'] ?: '',
-                        $data['bibliografia'] ?: '',
-                        $data['id']
-                    ]);
-                    $id = $data['id'];
+                    $idMateria = intval($data['idMateria']);
+                    $idGrupo = isset($data['idGrupo']) && $data['idGrupo'] ? intval($data['idGrupo']) : 'NULL';
+                    $curso = mysqli_real_escape_string($db, $data['curso']);
+                    $anyo = isset($data['anyo']) ? mysqli_real_escape_string($db, $data['anyo']) : '';
+                    $profesor = isset($data['profesor']) ? mysqli_real_escape_string($db, $data['profesor']) : '';
+                    $objetivos = isset($data['objetivos']) ? mysqli_real_escape_string($db, $data['objetivos']) : '';
+                    $metodologia = isset($data['metodologia']) ? mysqli_real_escape_string($db, $data['metodologia']) : '';
+                    $evaluacion = isset($data['evaluacion']) ? mysqli_real_escape_string($db, $data['evaluacion']) : '';
+                    $atencion_diversidad = isset($data['atencion_diversidad']) ? mysqli_real_escape_string($db, $data['atencion_diversidad']) : '';
+                    $materiales = isset($data['materiales']) ? mysqli_real_escape_string($db, $data['materiales']) : '';
+                    $bibliografia = isset($data['bibliografia']) ? mysqli_real_escape_string($db, $data['bibliografia']) : '';
+                    $id = intval($data['id']);
+                    
+                    $sql = "UPDATE programaciones SET
+                            idMateria = $idMateria,
+                            idGrupo = " . ($idGrupo === 'NULL' ? 'NULL' : $idGrupo) . ",
+                            curso = '$curso',
+                            anyo = '$anyo',
+                            profesor = '$profesor',
+                            objetivos = '$objetivos',
+                            metodologia = '$metodologia',
+                            evaluacion = '$evaluacion',
+                            atencion_diversidad = '$atencion_diversidad',
+                            materiales = '$materiales',
+                            bibliografia = '$bibliografia'
+                            WHERE id = $id";
+                    $result = mysqli_query($db, $sql);
+                    if (!$result) {
+                        throw new Exception(mysqli_error($db));
+                    }
+                    $idRetorno = $id;
                 } else {
                     // Crear
-                    $sql = "INSERT INTO programaciones (idMateria, idGrupo, curso, anyo, profesor, objetivos, metodologia, evaluacion, atencion_diversidad, materiales, bibliografia) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->execute([
-                        $data['idMateria'],
-                        $data['idGrupo'] ?: null,
-                        $data['curso'],
-                        $data['anyo'] ?: '',
-                        $data['profesor'] ?: '',
-                        $data['objetivos'] ?: '',
-                        $data['metodologia'] ?: '',
-                        $data['evaluacion'] ?: '',
-                        $data['atencion_diversidad'] ?: '',
-                        $data['materiales'] ?: '',
-                        $data['bibliografia'] ?: ''
-                    ]);
-                    $id = $pdo->lastInsertId();
+                    $idMateria = intval($data['idMateria']);
+                    $idGrupo = isset($data['idGrupo']) && $data['idGrupo'] ? intval($data['idGrupo']) : 'NULL';
+                    $curso = mysqli_real_escape_string($db, $data['curso']);
+                    $anyo = isset($data['anyo']) ? mysqli_real_escape_string($db, $data['anyo']) : '';
+                    $profesor = isset($data['profesor']) ? mysqli_real_escape_string($db, $data['profesor']) : '';
+                    $objetivos = isset($data['objetivos']) ? mysqli_real_escape_string($db, $data['objetivos']) : '';
+                    $metodologia = isset($data['metodologia']) ? mysqli_real_escape_string($db, $data['metodologia']) : '';
+                    $evaluacion = isset($data['evaluacion']) ? mysqli_real_escape_string($db, $data['evaluacion']) : '';
+                    $atencion_diversidad = isset($data['atencion_diversidad']) ? mysqli_real_escape_string($db, $data['atencion_diversidad']) : '';
+                    $materiales = isset($data['materiales']) ? mysqli_real_escape_string($db, $data['materiales']) : '';
+                    $bibliografia = isset($data['bibliografia']) ? mysqli_real_escape_string($db, $data['bibliografia']) : '';
+                    
+                    $sql = "INSERT INTO programaciones (idMateria, idGrupo, curso, anyo, profesor, objetivos, metodologia, evaluacion, atencion_diversidad, materiales, bibliografia)
+                            VALUES ($idMateria, " . ($idGrupo === 'NULL' ? 'NULL' : $idGrupo) . ", '$curso', '$anyo', '$profesor', '$objetivos', '$metodologia', '$evaluacion', '$atencion_diversidad', '$materiales', '$bibliografia')";
+                    $result = mysqli_query($db, $sql);
+                    if (!$result) {
+                        throw new Exception(mysqli_error($db));
+                    }
+                    $idRetorno = mysqli_insert_id($db);
                 }
-                
-                echo json_encode(['success' => true, 'id' => $id]);
+
+                echo json_encode(['success' => true, 'id' => $idRetorno]);
             }
             break;
 
         case 'DELETE':
             if (isset($_GET['id'])) {
-                $sql = "DELETE FROM programaciones WHERE id = ?";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([$_GET['id']]);
+                $id = intval($_GET['id']);
+                $sql = "DELETE FROM programaciones WHERE id = $id";
+                $result = mysqli_query($db, $sql);
+                if (!$result) {
+                    throw new Exception(mysqli_error($db));
+                }
                 echo json_encode(['success' => true]);
             } else {
                 throw new Exception('ID no proporcionado');
@@ -202,5 +225,7 @@ try {
 } catch (Exception $e) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+} finally {
+    closeDBConnection($db);
 }
 ?>
