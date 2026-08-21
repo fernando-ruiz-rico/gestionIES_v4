@@ -82,7 +82,8 @@ function handleLogin() {
     $_SESSION['rol'] = ($user['jefe_departamento'] == 1) ? 'admin' : 'profesor';
     $_SESSION['nombre'] = $user['nombre'];
     $_SESSION['idDepartamento'] = $user['idDepartamento'];
-    
+    $_SESSION['activo'] = $user['activo'];
+
     closeDBConnection($conn);
     
     sendJSONSuccess(array(

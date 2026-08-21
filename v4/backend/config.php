@@ -58,6 +58,22 @@ function escapeString($str, $conn) {
     return mysqli_real_escape_string($conn, $str);
 }
 
+// Determina el curso académico actual (ej. 2025/2026).
+// Copia exacta de cursoActual() de v3 (includes/utilidades.php):
+// de septiembre a diciembre de 2026 -> 2026/2027,
+// de enero a agosto de 2027 -> 2026/2027
+function cursoActual() {
+    $fecha = explode("/", date("n/Y"));
+    if (intval($fecha[0]) >= 9) {
+        $anyo1Curso = intval($fecha[1]);
+        $anyo2Curso = $anyo1Curso + 1;
+    } else {
+        $anyo2Curso = intval($fecha[1]);
+        $anyo1Curso = $anyo2Curso - 1;
+    }
+    return $anyo1Curso . "/" . $anyo2Curso;
+}
+
 // Función para enviar respuesta JSON
 function sendJSONResponse($data, $statusCode = 200) {
     http_response_code($statusCode);
