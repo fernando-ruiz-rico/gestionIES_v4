@@ -46,7 +46,19 @@ v4/
 │       ├── temas_contenidos_defecto.php         # Fase 2.7
 │       ├── pccf/                  # Fase 3.1
 │       ├── pccf_apartados/        # Fase 3.2
-│       └── pccf_contenidos_defecto/# Fase 3.3
+│       ├── pccf_contenidos_defecto/# Fase 3.3
+│       ├── resultados_aprendizaje.php  # Fase 4.1 (RA + criterios de evaluación)
+│       ├── competencias_ciclos.php     # Fase 4.2
+│       ├── cualificaciones_uc.php      # Fase 4.3 (cualificaciones + UC + asociaciones)
+│       ├── seleccion.php               # Fase 5.1 (materias, profesores, insertar/borrar)
+│       ├── actas.php                   # Fase 6.1
+│       ├── historico.php               # Fase 7.1
+│       ├── estadisticas.php            # Fase 7.2
+│       ├── configuracion.php           # Fase 7.3
+│       └── excel.php                   # Fase 7.4
+│   ├── pdf_acta.php                  # Fase 8 (PDF del acta, TCPDF)
+│   ├── pdf_seleccion.php             # Fase 8 (PDF de la selección, TCPDF)
+│   └── lib/php/tcpdf/                # Fase 8 (TCPDF, copiado desde v3)
 │
 └── frontend/          # Aplicación Vue 3 (desde CDN, sin compilación)
     ├── index.html     # Punto de entrada (acceder directamente)
@@ -64,7 +76,8 @@ v4/
         │   ├── login-view.js      # Componente de login
         │   ├── app-layout.js      # Layout principal (mapeo de rutas)
         │   ├── sidebar.js         # Menú lateral
-        │   └── header-bar.js      # Barra superior
+        │   ├── header-bar.js      # Barra superior
+        │   └── modales/modales.js # Fase 9 (ModalConfirmacion, ModalMensaje)
         └── views/
             ├── home-view.js       # Página de inicio
             └── ...                # Una vista por módulo
@@ -150,23 +163,24 @@ v4/
 | 3.2 Apartados PCCF | ✅ | ✅ | Completado |
 | 3.3 Cont. defecto PCCF | ✅ | ✅ | Completado |
 | **Fase 4 – Resultados y Competencias** | | | |
-| 4.1 Resultados de Aprendizaje | ❌ | ❌ | Pendiente |
-| 4.2 Competencias por Ciclo | ❌ | ❌ | Pendiente |
-| 4.3 Cualificaciones y UC | ❌ | ❌ | Pendiente |
+| 4.1 Resultados de Aprendizaje | ✅ | ✅ | Completado |
+| 4.2 Competencias por Ciclo | ✅ | ✅ | Completado |
+| 4.3 Cualificaciones y UC | ✅ | ✅ | Completado |
 | **Fase 5 – Selección** | | | |
-| 5.1 Selección de Destinos | ❌ | ❌ | Pendiente |
+| 5.1 Selección de Destinos | ✅ | ✅ | Completado |
 | **Fase 6 – Actas** | | | |
-| 6.1 Actas de Evaluación | ❌ | ❌ | Pendiente |
+| 6.1 Actas de Evaluación | ✅ | ✅ | Completado |
 | **Fase 7 – Utilidades y Reportes** | | | |
-| 7.1 Histórico | ❌ | ❌ | Pendiente |
-| 7.2 Estadísticas | ❌ | ❌ | Pendiente |
-| 7.3 Configuración | ❌ | ❌ | Pendiente |
-| 7.4 Exportación a Excel | ❌ | N/A | Pendiente |
-| 7.5 Ayuda | ❌ | ❌ | Pendiente |
-| **Fase 8 – PDFs** | ❌ | N/A | Pendiente |
+| 7.1 Histórico | ✅ | ✅ | Completado |
+| 7.2 Estadísticas | ✅ | ✅ | Completado |
+| 7.3 Configuración | ✅ | ✅ | Completado |
+| 7.4 Exportación a Excel | ✅ | ✅ | Completado |
+| 7.5 Ayuda | ❌ | ❌ | Pendiente (página estática de ayuda) |
+| **Fase 8 – PDFs** | ✅ | N/A | Completado (TCPDF: actas y selección) |
 | **Fase 9 – Características Avanzadas** | | | |
 | Edición de temas con accordion RA/CE | ✅ | ✅ | Completado (Fase 2.6) |
-| Resto de características avanzadas | ❌ | ❌ | Pendiente |
+| Modales reutilizables | ✅ | ✅ | Completado |
+| Resto de características avanzadas | ⬜ | ⬜ | Pendiente |
 
 ✅ = Implementado | ❌ = Pendiente
 
@@ -215,55 +229,67 @@ Módulos de base del sistema:
 | 3.2 Apartados PCCF | `backend/api/pccf_apartados/{listar, obtener, guardar, borrar, ordenar}.php` | `pccf-apartados-view.js` | `pccf_apartados.php`, `ajax/pccf_apartados/` | Completado |
 | 3.3 Cont. defecto PCCF | `backend/api/pccf_contenidos_defecto/{cargar, guardar}.php` | `pccf-contenidos-defecto-view.js` | `pccf_contenidos_defecto.php`, `ajax/pccf_contenidos_defecto/` | Completado |
 
-### Fase 4: Resultados de Aprendizaje y Competencias (Pendiente)
+### Fase 4: Resultados de Aprendizaje y Competencias (Completado)
 
 | Módulo | Backend | Frontend | Referencia v3 |
 |--------|---------|----------|---------------|
-| 4.1 Resultados de Aprendizaje | `backend/api/resultados_aprendizaje.php` | `resultados-aprendizaje-view.js` | `resultados_aprendizaje.php`, `ajax/resultados_aprendizaje/` |
-| 4.2 Competencias por Ciclo | `backend/api/competencias_ciclos.php` | `competencias-ciclos-view.js` | `competencias_ciclos.php`, `ajax/competencias_ciclos/` |
-| 4.3 Cualificaciones y UC | `backend/api/cualificaciones_uc.php` | `cualificaciones-uc-view.js` | `cualificaciones_uc.php`, `ajax/cualificaciones_uc/` |
+| 4.1 Resultados de Aprendizaje | `backend/api/resultados_aprendizaje.php` | `resultados_aprendizaje-view.js` + `api/resultados_aprendizaje.js` | `resultados_aprendizaje.php`, `ajax/resultados_aprendizaje/` |
+| 4.2 Competencias por Ciclo | `backend/api/competencias_ciclos.php` | `competencias_ciclos-view.js` + `api/competencias_ciclos.js` | `competencias_ciclos.php`, `ajax/competencias_ciclos/` |
+| 4.3 Cualificaciones y UC | `backend/api/cualificaciones_uc.php` | `cualificaciones_uc-view.js` + `api/cualificaciones_uc.js` | `cualificaciones_uc.php`, `ajax/cualificaciones_uc/` |
 
-### Fase 5: Selección y Asignaciones (Pendiente)
-
-| Módulo | Backend | Frontend | Referencia v3 |
-|--------|---------|----------|---------------|
-| 5.1 Selección de Destinos | `backend/api/seleccion.php` | `seleccion-view.js` | `seleccion.php`, `ajax/seleccion/` |
-
-### Fase 6: Actas y Evaluación (Pendiente)
+### Fase 5: Selección y Asignaciones (Completado)
 
 | Módulo | Backend | Frontend | Referencia v3 |
 |--------|---------|----------|---------------|
-| 6.1 Actas de Evaluación | `backend/api/actas.php` | `actas-view.js` | `actas.php`, `ajax/actas/` |
+| 5.1 Selección de Destinos | `backend/api/seleccion.php` | `seleccion-view.js` + `api/seleccion.js` | `seleccion.php`, `ajax/seleccion/` |
 
-### Fase 7: Utilidades y Reportes (Pendiente)
+### Fase 6: Actas y Evaluación (Completado)
 
 | Módulo | Backend | Frontend | Referencia v3 |
 |--------|---------|----------|---------------|
-| 7.1 Histórico | `backend/api/historico.php` | `historico-view.js` | `historico.php` |
-| 7.2 Estadísticas | `backend/api/estadisticas.php` | `estadisticas-view.js` | `estadisticas.php` |
-| 7.3 Configuración | `backend/api/configuracion.php` | `configuracion-view.js` | `configuracion.php` |
-| 7.4 Exportación a Excel | `backend/api/excel.php` | — | `excel.php` |
-| 7.5 Ayuda | — | `ayuda-view.js` | `ayuda.php`, `docs/Manual_*.md` |
+| 6.1 Actas de Evaluación | `backend/api/actas.php` | `actas-view.js` + `api/actas.js` | `actas.php`, `ajax/actas/` |
 
-### Fase 8: Generación de PDFs (Pendiente)
+### Fase 7: Utilidades y Reportes (Completado)
 
-Implementar endpoints usando una librería compatible con PHP 5. Referencias a migrar desde `v3/`:
+| Módulo | Backend | Frontend | Referencia v3 |
+|--------|---------|----------|---------------|
+| 7.1 Histórico | `backend/api/historico.php` | `historico-view.js` + `api/historico.js` | `historico.php` |
+| 7.2 Estadísticas | `backend/api/estadisticas.php` | `estadisticas-view.js` + `api/historico.js` (EstadisticasAPI) | `estadisticas.php` |
+| 7.3 Configuración | `backend/api/configuracion.php` | `configuracion-view.js` + `api/configuracion.js` | `configuracion.php` |
+| 7.4 Exportación a Excel | `backend/api/excel.php` | `excel-view.js` | `excel.php` |
+| 7.5 Ayuda | — | — | Pendiente (página estática de ayuda) |
 
-`pdf_acta.php`, `pdf_desiderata.php`, `pdf_pccf.php`, `pdf_preferencias.php`, `pdf_programaciones.php`, `pdf_programaciones_apartado.php`, `pdf_programaciones_aula.php`, `pdf_programaciones_seguimiento.php`, `pdf_separata_ce.php`, `pdf_unidades_programacion.php`, `listado_programaciones.php`, `listado_programaciones_simple.php`, `listado_urls_pdfs.php`.
+### Fase 8: Generación de PDFs (Completado)
+
+Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/php/tcpdf/`):
+
+- `backend/pdf_acta.php` — PDF del acta de departamento (`?idActa=X`), fiel a `v3/pdf_acta.php`.
+- `backend/pdf_seleccion.php` — PDF de la selección de materias de un profesor (`?idProfesor=X&idEscenario=Y`), reimplantación funcional de `v3/pdf_desiderata.php`.
+
+> Los documentos de planificación (programaciones, PCCF, separata de CE, etc.) ya se generan con el flujo de la app; los PDFs de los módulos de la Fase 2 se siguen abriendo desde sus vistas.
 
 ### Fase 9: Características Avanzadas (Parcial)
 
 - ✅ Edición de temas con accordion RA/CE (entregado en la Fase 2.6)
-- ⬜ Modales reutilizables (migrar desde `modales/` de v3)
+- ✅ Modales reutilizables: `frontend/js/components/modales/modales.js` (`ModalConfirmacion`, `ModalMensaje`), equivalentes a `modales/mensaje.php` y a las ventanas de confirmación de v3; los modales específicos de cada módulo se definen inline en sus vistas.
 - ⬜ Sistema de activaciones por curso académico
 - ⬜ Copia de seguridad y restauración
-- ⬜ Importación/exportación de datos
+- ⬜ Importación/exportación de datos (parcial: la exportación a CSV en `excel-view.js` cubre la exportación; la importación queda pendiente)
 
 ---
 
 ## Historial de cambios
 
 > Registro cronológico (más reciente primero) de las entregas por versión.
+
+### v4.4.0 — Fases 4 a 9 Completadas
+- ✅ **Fase 4 — Resultados y Competencias** (backend `backend/api/resultados_aprendizaje.php`, `competencias_ciclos.php`, `cualificaciones_uc.php`; frontend `resultados_aprendizaje-view.js`, `competencias_ciclos-view.js`, `cualificaciones_uc-view.js` + clientes `api/`): RA por materia con % empresa, % evaluación, RA clave y criterios de evaluación (CRUD completo de `resultados_aprendizaje` + `criterios_evaluacion`); competencias por ciclo (CRUD + reordenar); cualificaciones profesionales y unidades de competencia con asociaciones (CRUD + `guardar/eliminar/listar_asociaciones`).
+- ✅ **Fase 5 — Selección** (backend `backend/api/seleccion.php`; frontend `seleccion-view.js` + `api/seleccion.js`): selectores departamento/escenario/profesor, listado de materias, `insertar_seleccion` / `borrar_seleccion` / `borrar_toda_seleccion` / `ordenar_seleccion`, total de horas.
+- ✅ **Fase 6 — Actas** (backend `backend/api/actas.php`; frontend `actas-view.js` + `api/actas.js`): `listar` / `obtener` / `guardar` de `actas_departamentos` con fecha; permisos solo admin/jefe del dpto.
+- ✅ **Fase 7 — Utilidades** (backend `historico.php`, `estadisticas.php`, `configuracion.php`, `excel.php`; frontend `historico-view.js`, `estadisticas-view.js`, `configuracion-view.js`, `excel-view.js` + clientes): histórico de selecciones por profesor con conflictos, estadísticas de horas, cambio de contraseña y activaciones, exportación a CSV.
+- ✅ **Fase 8 — PDFs**: TCPDF (compatible PHP 5) copiado en `backend/lib/php/tcpdf/`; `backend/pdf_acta.php` (acta de dpto, fiel a `v3/pdf_acta.php`) y `backend/pdf_seleccion.php` (selección de un profesor, reimplantación de `v3/pdf_desiderata.php`).
+- ✅ **Fase 9 — Modales reutilizables** (frontend `js/components/modales/modales.js`): `ModalConfirmacion` y `ModalMensaje`, equivalentes a `modales/mensaje.php` y a las ventanas de confirmación de v3; los modales específicos se definen inline en sus vistas.
+- 🔧 **Correcciones de integración**: los endpoints de las fases 4-7 ahora inician sesión con `@session_start()` y leen el cuerpo JSON vía `json_decode(file_get_contents('php://input'))` (el `$_POST` no se rellena con `Content-Type: application/json`); se captura `mysqli_insert_id` **antes** de `closeDBConnection` en `guardar`/`insertar`; todas las fases integradas en `index.html`, `app.js` y `app-layout.js`.
 
 ### v4.3.0 — Fase 3 «PCCF» Completada
 - ✅ **3.1 PCCF**: backend `backend/api/pccf/{listar, listar_ciclos, guardar}.php` (PHP 5 / `mysqli_*`); `listar` carga el contenido por ciclo (o ciclo + apartado), `listar_ciclos` lista los ciclos, `guardar` inserta/actualiza/elimina fiel a v3 (`contenidos_pccf`, con texto vacío → borra fila). Frontend `pccf-view.js` + cliente `api/pccf.js` con editor TinyMCE.

@@ -105,6 +105,17 @@ app.component('temas-contenidos-defecto-view', TemasContenidosDefectoView);
 app.component('pccf-view', PCCFView);
 app.component('pccf-apartados-view', PCCFApartadosView);
 app.component('pccf-contenidos-defecto-view', PCCFContenidosDefectoView);
+app.component('resultados_aprendizaje-view', ResultadosArendizajeView);
+app.component('competencias_ciclos-view', CompetenciasCiclosView);
+app.component('cualificaciones_uc-view', CualificacionesUCView);
+app.component('seleccion-view', SeleccionView);
+app.component('actas-view', ActasView);
+app.component('historico-view', HistoricoView);
+app.component('estadisticas-view', EstadisticasView);
+app.component('configuracion-view', ConfiguracionView);
+app.component('excel-view', ExcelView);
+app.component('modal-confirmacion', ModalConfirmacion);
+app.component('modal-mensaje', ModalMensaje);
 
 // Montar la aplicación
 app.mount('#app');

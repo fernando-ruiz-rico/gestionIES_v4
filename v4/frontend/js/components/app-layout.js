@@ -84,7 +84,16 @@ const AppLayout = {
                 'temas.php': 'temas-view',
                 'pccf_apartados.php': 'pccf-apartados-view',
                 'pccf_contenidos_defecto.php': 'pccf-contenidos-defecto-view',
-                'pccf.php': 'pccf-view'
+                'pccf.php': 'pccf-view',
+                'resultados_aprendizaje.php': 'resultados_aprendizaje-view',
+                'competencias_ciclos.php': 'competencias_ciclos-view',
+                'cualificaciones_uc.php': 'cualificaciones_uc-view',
+                'seleccion.php': 'seleccion-view',
+                'actas.php': 'actas-view',
+                'historico.php': 'historico-view',
+                'estadisticas.php': 'estadisticas-view',
+                'configuracion.php': 'configuracion-view',
+                'excel.php': 'excel-view'
             };
             
             this.vistaActual = vistaMap[link] || 'home-view';
