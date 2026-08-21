@@ -7,7 +7,7 @@
 //   - guardar  : inserta o actualiza la fila del departamento (rol admin o
 //                jefe de departamento; este último solo para su propio depto)
 // Modelo fiel a v3: no hay borrado por campo. La fila es por departamento
-// (contenidos_defcto_temas.idDepartamento = PK). Se inserta si no existe la
+// (contenidos_defecto_temas.idDepartamento = PK). Se inserta si no existe la
 // fila, se actualiza si existe.
 // Compatible con PHP 5 (mysqli_*, sentencias preparadas).
 // ============================================================================
@@ -54,7 +54,7 @@ if ($action === 'cargar') {
     }
 
     $stmt = mysqli_prepare($db, "SELECT contexto, recursos, metodologia, adaptaciones
-                FROM contenidos_defcto_temas WHERE idDepartamento = ?");
+                FROM contenidos_defecto_temas WHERE idDepartamento = ?");
     if (!$stmt) {
         sendJSONError('Error al preparar la consulta: ' . mysqli_error($db), 500);
     }
@@ -92,7 +92,7 @@ if ($action === 'guardar') {
     }
 
     // Comprobar si ya existe la fila del departamento
-    $stmtCheck = mysqli_prepare($db, "SELECT idDepartamento FROM contenidos_defcto_temas WHERE idDepartamento = ?");
+    $stmtCheck = mysqli_prepare($db, "SELECT idDepartamento FROM contenidos_defecto_temas WHERE idDepartamento = ?");
     mysqli_stmt_bind_param($stmtCheck, "i", $idDepartamento);
     mysqli_stmt_execute($stmtCheck);
     $resultCheck = mysqli_stmt_get_result($stmtCheck);
@@ -101,10 +101,10 @@ if ($action === 'guardar') {
     mysqli_free_result($resultCheck);
 
     if ($existe) {
-        $stmt = mysqli_prepare($db, "UPDATE contenidos_defcto_temas SET contexto = ?, recursos = ?, metodologia = ?, adaptaciones = ? WHERE idDepartamento = ?");
+        $stmt = mysqli_prepare($db, "UPDATE contenidos_defecto_temas SET contexto = ?, recursos = ?, metodologia = ?, adaptaciones = ? WHERE idDepartamento = ?");
         mysqli_stmt_bind_param($stmt, "ssssi", $contexto, $recursos, $metodologia, $adaptaciones, $idDepartamento);
     } else {
-        $stmt = mysqli_prepare($db, "INSERT INTO contenidos_defcto_temas (idDepartamento, contexto, recursos, metodologia, adaptaciones) VALUES (?, ?, ?, ?, ?)");
+        $stmt = mysqli_prepare($db, "INSERT INTO contenidos_defecto_temas (idDepartamento, contexto, recursos, metodologia, adaptaciones) VALUES (?, ?, ?, ?, ?)");
         mysqli_stmt_bind_param($stmt, "isssi", $idDepartamento, $contexto, $recursos, $metodologia, $adaptaciones);
     }
 

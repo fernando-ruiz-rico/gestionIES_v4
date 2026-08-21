@@ -260,10 +260,17 @@ Estos módulos son la base del sistema y deben implementarse primero:
 - **Estado**: ✅ Completado. Ver [Historial de cambios](#historial-de-cambios).
 
 #### 2.7 Contenidos por Defecto de Temas
-- **Backend**: `backend/api/temas_contenidos_defecto.php`
-  - Gestión de contenidos estándar para temas
-- **Frontend**: `frontend/js/views/temas-contenidos-defecto-view.js`
+- **Backend**: `backend/api/temas_contenidos_defecto.php` (PHP 5 / `mysqli_*` con sentencias preparadas; acciones `cargar` / `guardar`)
+  - ✅ `cargar`: devuelve los contenidos por defecto de un departamento (`contexto`, `recursos`, `metodología`, `adaptaciones`) desde `contenidos_defcto_temas`
+  - ✅ `guardar`: inserta o actualiza la fila del departamento (PK `idDepartamento`); rol `admin` o `jefeDepartamento` (este último solo para su propio depto)
+  - ✅ Modelo fiel a v3: no hay borrado por campo. La fila es por departamento
+  - ⚠️ Corrección: la consulta hacía referencia a `contenidos_defcto_temas` (con typo «defcto»); corregido para coincidir con el esquema real de v3 (`contenidos_defcto_temas`)
+- **Frontend**: `frontend/js/views/temas-contenidos-defecto-view.js` (+ cliente `js/api/temas-contenidos-defecto.js`)
+  - ✅ Selector de departamento fiel a v3 (admin elige; jefe fijo a su propio dpto), igual que la 2.3
+  - ✅ Cuatro editores TinyMCE (Contexto / Recursos / Metodología / Adaptaciones) con la misma configuración que la 2.3
+  - ✅ Botones «Guardar cambios» (inserta/actualiza) y «Limpiar todo»
 - **Referencia v3**: `temas_contenidos_defecto.php`, `ajax/temas_contenidos_defecto/`
+- **Estado**: ✅ Completado. Ver [Historial de cambios](#historial-de-cambios).
 
 ### Fase 3: PCCF (Proyecto Curricular de Centro de Formación)
 
@@ -505,7 +512,7 @@ Cuentas locales creadas en `gestionies.profesores` para probar las fases 2.x sob
 
 ## Próximos pasos inmediatos
 
-- **Fase 2.7 — Contenidos por Defecto de Temas**: editor TinyMCE para textos por defecto por departamento.
+- **Fase 2.7 — Contenidos por Defecto de Temas**: ✅ Completada (editor TinyMCE para textos por defecto por departamento). Ver [Historial de cambios](#historial-de-cambios).
 - **Fase 3 — PCCF** completo: apartados + contenidos por defecto + vista previa.
 
 ## Notas importantes
@@ -530,6 +537,18 @@ Cuentas locales creadas en `gestionies.profesores` para probar las fases 2.x sob
 | Funcionalidad completa | En desarrollo (Fase 1 y 2.1–2.6 completas) |
 
 ## Historial de cambios
+
+### v4.2.5 - 2026 - Fase 2.7 «Contenidos por Defecto de Temas» Completada
+- ✅ **Backend** `backend/api/temas_contenidos_defecto.php` (PHP 5 / `mysqli_*` con sentencias preparadas; acciones `cargar` / `guardar`)
+  - `cargar`: devuelve los contenidos por defecto de un departamento (`contexto`, `recursos`, `metodología`, `adaptaciones`) desde `contenidos_defecto_temas` (PK `idDepartamento`).
+  - `guardar`: inserta o actualiza la fila del departamento; rol `admin` o `jefeDepartamento` (este último solo para su propio depto).
+  - ✅ **Verificado contra la BD real** (Laragon): `cargar` y `guardar` devuelven datos reales de los deptos 1 y 2; `guardar` actualiza y restituido al terminar; 401 sin sesión y 403 para rol `profesor`.
+  - ⚠️ **Corrección**: la consulta hacía referencia al nombre de tabla con un typo (`contenidos_defcto_temas`); corregido para coincidir con el esquema real de v3 (`contenidos_defecto_temas`).
+- ✅ **Frontend** `frontend/js/views/temas-contenidos-defecto-view.js` (+ cliente `js/api/temas-contenidos-defecto.js`)
+  - ✅ Selector de departamento fiel a v3 (admin elige; jefe fijo a su propio dpto), igual que la 2.3.
+  - ✅ Cuatro editores TinyMCE (Contexto / Recursos / Metodología / Adaptaciones) con la misma configuración que la 2.3.
+  - ✅ Botones «Guardar cambios» (inserta/actualiza) y «Limpiar todo».
+- ✅ **Integración** (verificada por inspección de código y git): scripts en `index.html`, componente registrado en `app.js` y mapeado a `/temas_contenidos_defecto.php` en `app-layout.js`; acceso «Cont. defecto unidades» en el menú.
 
 ### v4.2.4 - 2026 - Fase 2.6 «Temas / Unidades de programación» Completada
 - ✅ **Backend** `backend/api/temas.php` (PHP 5 / `mysqli_*` con sentencias preparadas; acciones por parámetro `action`):

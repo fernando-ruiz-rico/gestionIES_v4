@@ -21,6 +21,25 @@ const TemasContenidosDefectoView = {
                 </div>
             </div>
 
+            <!-- Selector de departamento (admin elige; jefe fijo a su propio dpto) -->
+            <div class="row mb-3" v-if="departamentos.length > 0">
+                <div class="col-md-6" v-if="!esJefe">
+                    <label class="form-label">Departamento</label>
+                    <select class="form-select" v-model="idDepartamento" @change="cambiarDepartamento">
+                        <option value="">--Selecciona un departamento--</option>
+                        <option v-for="depto in departamentos" :key="depto.id" :value="depto.id">
+                            {{ depto.nombre }}
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-6" v-else>
+                    <label class="form-label">Departamento</label>
+                    <select class="form-select" disabled>
+                        <option>{{ departamentoActual ? departamentoActual.nombre : 'Desconocido' }}</option>
+                    </select>
+                </div>
+            </div>
+
             <!-- Sección con el departamento ya elegido -->
             <div class="row" v-if="idDepartamento">
                 <div class="col-12 mb-3">
