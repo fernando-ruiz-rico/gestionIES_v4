@@ -1,60 +1,107 @@
 # GestionIES v4
 
-Aplicación fullstack para la gestión interna de centros educativos (IESSV).
+Aplicación fullstack para la gestión interna de centros educativos (IESSV). Reimplementación de `v3` con **backend PHP 5 + frontend Vue 3** (sin build step), comunicándose vía JSON.
+
+## Tabla de contenido
+
+- [Estructura del proyecto](#estructura-del-proyecto)
+- [Tecnologías](#tecnologías)
+- [Requisitos del servidor](#requisitos-del-servidor)
+- [Instalación](#instalación)
+- [Estado actual del proyecto](#estado-actual-del-proyecto)
+- [Hoja de ruta](#hoja-de-ruta)
+- [Historial de cambios](#historial-de-cambios)
+- [Registro de Decisiones Técnicas](#registro-de-decisiones-técnicas)
+- [Metodología de desarrollo](#metodología-de-desarrollo)
+- [Diferencias con v3](#diferencias-con-v3)
+- [Notas importantes](#notas-importantes)
+
+---
 
 ## Estructura del proyecto
 
 ```
 v4/
-├── backend/           # API PHP 5
+├── backend/           # API PHP 5 (mysqli_*, PHP 5)
 │   ├── config.php     # Configuración y funciones comunes
-│   └── api/           # Endpoints de la API
-│       ├── auth.php   # Autenticación (login, logout, check)
-│       └── app.php    # Datos de la aplicación (menús, activaciones)
+│   ├── create_table.sql
+│   ├── dbcheck.php    # Diagnóstico de conexión/esquema
+│   └── api/           # Endpoints de la API (namespace por módulo)
+│       ├── auth.php               # Autenticación (login, logout, check)
+│       ├── app.php                # Datos de la aplicación (menús, activaciones)
+│       ├── departamentos/          # Fase 1
+│       ├── profesores/           # Fase 1
+│       ├── especialidades/       # Fase 1
+│       ├── ciclos/               # Fase 1
+│       ├── cursos/               # Fase 1
+│       ├── grupos/               # Fase 1
+│       ├── materias/             # Fase 1
+│       ├── escenarios/           # Fase 1
+│       ├── programaciones/        # Fase 2.1 (fiel a v3)
+│       ├── programaciones_apartados/        # Fase 2.2
+│       ├── programaciones_contenidos_defecto/# Fase 2.3
+│       ├── programaciones_aula/               # Fase 2.4
+│       ├── programaciones_seguimiento/        # Fase 2.5
+│       ├── temas/                 # Fase 2.6
+│       ├── temas_contenidos_defecto.php         # Fase 2.7
+│       ├── pccf/                  # Fase 3.1
+│       ├── pccf_apartados/        # Fase 3.2
+│       └── pccf_contenidos_defecto/# Fase 3.3
 │
-└── frontend/          # Aplicación Vue 3
+└── frontend/          # Aplicación Vue 3 (desde CDN, sin compilación)
     ├── index.html     # Punto de entrada (acceder directamente)
     ├── css/
-    │   └── app.css    # Estilos personalizados mínimos
+    │   ├── app.css            # Estilos personalizados mínimos
+    │   └── estilos_tiny.css   # Estilos para editores TinyMCE
+    ├── lib/js/tinymce/      # TinyMCE 7.9.1 (copiado íntegro desde v3)
     └── js/
-        ├── app.js                 # Aplicación principal Vue 3
+        ├── app.js                 # Aplicación principal Vue 3 (registro de componentes)
         ├── api/
         │   ├── auth.js            # API de autenticación
-        │   └── app.js             # API de datos de la aplicación
+        │   ├── app.js             # API de datos de la aplicación
+        │   └── ...                # Un cliente por módulo
         ├── components/
         │   ├── login-view.js      # Componente de login
-        │   ├── app-layout.js      # Layout principal
+        │   ├── app-layout.js      # Layout principal (mapeo de rutas)
         │   ├── sidebar.js         # Menú lateral
         │   └── header-bar.js      # Barra superior
         └── views/
-            └── home-view.js       # Página de inicio
+            ├── home-view.js       # Página de inicio
+            └── ...                # Una vista por módulo
 ```
 
-## Tecnologías utilizadas
+---
+
+## Tecnologías
 
 ### Backend
 - **PHP 5** compatible con servidores antiguos (Apache ~2010)
-- **MySQL** con extensiones `mysql_*` (nativas de PHP 5)
-- **JSON** para comunicación con el frontend
+- **MySQL** con `mysqli_*` y sentencias preparadas (`mysqli_prepare` / `mysqli_stmt_*`)
+- **JSON** para la comunicación con el frontend (`json_encode(['success' => bool, 'data' => ..., 'message' => ...])`)
 - Sesiones PHP para autenticación
 
 ### Frontend
-- **Vue 3** (desde CDN, sin compilación)
-- **Bootstrap 5.3.8** para estilos responsive
-- **Bootstrap Icons 1.13.1** para iconos
+- **Vue 3** desde CDN (sin build step, sin Node.js)
+- **Bootstrap 5.3.8** para layouts responsive
+- **Bootstrap Icons 1.13.1** para iconos (sin imágenes PNG/SVG)
 - **SweetAlert2** para mensajes y confirmaciones
-- CSS personalizado mínimo basado en Bootstrap
+- **TinyMCE 7.9.1** para editores WYSIWYG (fiel a v3 en módulos 2.3–3.3)
+- CSS personalizado mínimo sobre Bootstrap
+
+---
 
 ## Requisitos del servidor
 
 - PHP 5.x (compatible con versiones antiguas)
-- MySQL/MariaDB
-- Apache con módulo mod_rewrite (opcional)
-- No requiere Node.js ni procesos de compilación
+- MySQL / MariaDB
+- Apache con módulo `mod_rewrite` (opcional)
+- **No** requiere Node.js ni procesos de compilación
+
+---
 
 ## Instalación
 
-1. Subir la carpeta `v4` al servidor web
+1. Subir la carpeta `v4` al servidor web.
 
 2. Configurar la base de datos en `backend/config.php`:
    ```php
@@ -64,474 +111,257 @@ v4/
    define('DB_PASS', '');
    ```
 
-3. Asegurarse de que la base de datos tiene la tabla `usuarios` con la estructura:
-   ```sql
-   CREATE TABLE usuarios (
-       idUsuario INT PRIMARY KEY AUTO_INCREMENT,
-       loginUsuario VARCHAR(50),
-       password VARCHAR(255),
-       rol VARCHAR(50),
-       nombre VARCHAR(100),
-       apellidos VARCHAR(100)
-   );
-   ```
+3. Asegurarse de que la base de datos tiene las tablas reales de v3 (p. ej. `profesores`, `cursos`, `ciclos`, `especialidades`, `departamentos`, `grupos`, `materias`, `escenarios_desideratas`, etc.).
 
 4. Acceder directamente a la carpeta frontend:
    ```
    http://tudominio.com/v4/frontend/
    ```
 
-## Características
-
-### Responsive Design
-- La aplicación se adapta a dispositivos móviles y tablets
-- Menú lateral colapsable en pantallas pequeñas
-- Uso de clases utilitarias de Bootstrap 5
-
-### Iconos
-- Todos los iconos son de Bootstrap Icons (sin imágenes)
-- Iconos semánticos para cada sección del menú
-
-### CSS Mínimo
-- Se utiliza al máximo el CSS de Bootstrap 5.3.8
-- CSS personalizado solo para:
-  - Layout del sidebar
-  - Colores corporativos
-  - Ajustes específicos de la aplicación
-
-### Fullstack Architecture
-- Backend PHP devuelve JSON
-- Frontend Vue 3 consume APIs
-- Separación clara de responsabilidades
-- Fácil mantenimiento y escalabilidad
-
-## Funcionalidades implementadas
-
-- ✅ Login de usuario
-- ✅ Logout
-- ✅ Comprobación de sesión activa
-- ✅ Menú lateral con submenús
-- ✅ Filtrado de menús por rol de usuario
-- ✅ Página de inicio con accesos rápidos
-- ✅ Interfaz responsive
-- ✅ Mensajes de feedback (SweetAlert2)
-
-## Planificación de trabajo pendiente
-
-Para completar la funcionalidad de v3 en v4, se debe migrar toda la aplicación siguiendo esta hoja de ruta:
-
-### Fase 1: Módulos básicos de mantenimiento (PRIORIDAD ALTA)
-
-Estos módulos son la base del sistema y deben implementarse primero:
-
-#### 1.1 Departamentos
-- **Backend**: `backend/api/departamentos.php`
-  - Listar departamentos
-  - Crear departamento
-  - Editar departamento
-  - Eliminar departamento
-- **Frontend**: `frontend/js/views/departamentos-view.js`
-- **Referencia v3**: `departamentos.php`, `ajax/departamentos/`
-
-#### 1.2 Profesores
-- **Backend**: `backend/api/profesores.php`
-  - Listar profesores (filtrados por departamento)
-  - Crear profesor
-  - Editar profesor
-  - Eliminar profesor
-  - Actualizar jefe de departamento
-  - Activar/desactivar profesor
-  - Ordenar profesores
-- **Frontend**: `frontend/js/views/profesores-view.js`
-- **Referencia v3**: `profesores.php`, `ajax/profesores/`
-
-#### 1.3 Especialidades
-- **Backend**: `backend/api/especialidades.php`
-  - CRUD completo de especialidades
-- **Frontend**: `frontend/js/views/especialidades-view.js`
-- **Referencia v3**: `especialidades.php`, `ajax/especialidades/`
-
-#### 1.4 Ciclos Formativos
-- **Backend**: `backend/api/ciclos.php`
-  - CRUD de ciclos
-  - Asociar cursos a ciclos
-  - Asociar unidades a ciclos
-- **Frontend**: `frontend/js/views/ciclos-view.js`
-- **Referencia v3**: `ciclos.php`, `ajax/ciclos/`
-
-#### 1.5 Cursos
-- **Backend**: `backend/api/cursos.php`
-  - CRUD de cursos
-  - Gestión de categorías (ESO/BACH/FP/OTROS)
-- **Frontend**: `frontend/js/views/cursos-view.js`
-- **Referencia v3**: `cursos.php`, `ajax/cursos/`
-
-#### 1.6 Grupos
-- **Backend**: `backend/api/grupos.php`
-  - CRUD de grupos
-  - Ordenar grupos
-- **Frontend**: `frontend/js/views/grupos-view.js`
-- **Referencia v3**: `grupos.php`, `ajax/grupos/`
-
-#### 1.7 Materias
-- **Backend**: `backend/api/materias.php`
-  - CRUD de materias
-  - Asociar materias a grupos
-  - Gestionar horas empresa
-- **Frontend**: `frontend/js/views/materias-view.js`
-- **Referencia v3**: `materias.php`, `ajax/materias/`
-
-#### 1.8 Escenarios
-- **Backend**: `backend/api/escenarios.php`
-  - CRUD de escenarios
-- **Frontend**: `frontend/js/views/escenarios-view.js`
-- **Referencia v3**: `escenarios.php`, `ajax/escenarios/`
-
-### Fase 2: Programaciones Didácticas (PRIORIDAD MEDIA)
-
-#### 2.1 Programaciones — Fiel a v3 (Decisión B)
-- **Backend**: `backend/api/programaciones/index.php`
-  - ✅ Listar materias con programación activa + estado real (nº de apartados)
-  - ✅ Ver programación por materia: sus apartados + contenidos (solo lectura)
-  - ✅ Importar programación desde otra materia (conservado; opera sobre las tablas reales v3)
-  - ⚠️ Sin crear/guardar/eliminar una fila única: en v3 no existe tabla `programaciones` — la programación vive en apartados + contenidos (edición en 2.2–2.5)
-- **Frontend**: `frontend/js/views/programaciones-view.js` (+ cliente `frontend/js/api/programaciones.js`)
-  - ✅ Listado por materia (Materia | Curso | Horas | Apartados) con filtro por materia
-  - ✅ Modal «Ver» solo lectura de apartados + contenidos
-  - ✅ Modal de importación con confirmación (conservado)
-- **Modelo de datos real (fiel a v3)**: no hay tabla `programaciones`. La programación = `apartados_programaciones` + `contenidos_programaciones` asociados a cada materia (flag `materias.tiene_programacion`). El curso se resuelve con `materias.idCurso → cursos`.
-- **Referencia v3**: `programaciones.php`, `ajax/programaciones/`, `modales/importar_programacion.php`
-- **Estado**: ✅ Completado (Decisión B — FIEL a v3). Ver [Registro de Decisiones Técnicas](#registro-de-decisiones-técnicas).
-
-#### 2.2 Apartados de Programación
-- **Backend**: `backend/api/programaciones_apartados.php`
-  - CRUD de apartados
-  - Generar apartados por defecto
-- **Frontend**: `frontend/js/views/programaciones-apartados-view.js`
-- **Referencia v3**: `programaciones_apartados.php`, `ajax/programaciones_apartados/`
-
-#### 2.3 Contenidos por Defecto
-- **Backend**: `backend/api/programaciones_contenidos_defecto/{cargar,guardar}.php`
-  - ✅ Cargar el contenido por defecto de un apartado para un departamento (`cargar.php`)
-  - ✅ Guardar: inserta o actualiza; con texto vacío borra la fila, idéntico a v3 (`guardar.php`, solo rol `admin`)
-- **Frontend**: `frontend/js/views/programaciones-contenidos-defecto-view.js` (+ cliente `frontend/js/api/programaciones-contenidos-defecto.js`)
-  - ✅ Selector de departamento + apartado (solo los que admiten contenido por defecto, numeración fiel a v3) y editor con botones Limpiar/Guardar
-- **Referencia v3**: `programaciones_contenidos_defecto.php`, `ajax/programaciones_contenidos_defecto/`
-- **Estado**: ✅ Completado (v4.2.1 — FIEL a v3). Ver [Historial de cambios](#historial-de-cambios).
-
-#### 2.4 Programación de Aula
-- **Backend**: `backend/api/programaciones_aula/{materias,grupos,temas,contenido,guardar}.php`
-  - ✅ Listar materias con programación activa para un profesor (admin elige profesor; uno usa el suyo)
-  - ✅ Cargar grupos asignados en la selección actual del curso
-  - ✅ Cargar temas (unidades) de una materia
-  - ✅ Cargar/guardar texto introductorio (TinyMCE) por tema+grupo+profesor en `programaciones_aula_temas`
-- **Frontend**: `frontend/js/views/programaciones-aula-view.js` (+ cliente `js/api/programaciones-aula.js`)
-  - ✅ Selector de profesor (solo admin) + materia + grupo
-  - ✅ Editor TinyMCE con los mismos plugins que v3 (`autolink lists advlist code fullscreen wordcount`) y CSS propio
-  - ✅ Guardar / borrar (texto vacío → fila eliminada, igual que v3)
-  - Botones PDF separata CE y programación de aula (pendiente Fase 8): muestran aviso informativo
-- **Referencia v3**: `programaciones_aula.php`, `ajax/programaciones_aula/{cargar_grupos,cargar_temas,cargar_contenido_programacion,insertar_contenido_programacion}.php`
-- **Estado**: ✅ Completado. Ver [Historial de cambios](#historial-de-cambios).
-
-#### 2.5 Seguimiento de Programaciones
-- **Backend**: `backend/api/programaciones_seguimiento/{profesores,materias,grupos,evaluaciones,cargar,guardar}.php`
-  - ✅ Selectores en cascada fieles a v3: profesor (solo admin; uno el suyo) → materia → grupo → evaluación (`profesores`, `materias`, `grupos`, `evaluaciones`)
-  - ✅ Cargar registro de impartición por profesor+materia+grupo+evaluación (`cargar`)
-  - ✅ Guardar registro: temporalización + resultados académicos + inclusión del alumnado (`guardar`), inserta/actualiza
-- **Frontend**: `frontend/js/views/programaciones-seguimiento-view.js` (+ cliente `frontend/js/api/programaciones-seguimiento.js`)
-  - ✅ Selector en cascada fiel a v3: profesor (solo admin) + materia + grupo + evaluación
-  - ✅ Tres editores TinyMCE WYSIWYG con la misma configuración que 2.3/2.4: temporalización, resultados académicos e inclusión del alumnado
-  - ✅ Botones «Guardar cambios» y «Vista previa» (modal con las tres secciones renderizadas)
-- **Referencia v3**: `programaciones_seguimiento.php`, `ajax/programaciones_seguimiento/`
-- **Estado**: ✅ Completado. Ver [Historial de cambios](#historial-de-cambios).
-
-#### 2.6 Temas (Unidades de programación)
-- **Backend**: `backend/api/temas.php` (PHP 5 / `mysqli_*` con sentencias preparadas)
-  - ✅ CRUD de temas/unidades: `listar_materias`, `listar`, `obtener`, `nuevo`, `guardar`, `borrar`
-  - ✅ Cargar RA/CE por materia (`accordion_ra_ce`) y editar un RA (`actualizar_ra`)
-  - ✅ Recalcular porcentajes de evaluación de los RA (`recalcular_porcentajes`)
-  - ✅ Repetir el campo «Evaluación» en el resto de unidades de la materia (`repetir_evaluacion`)
-- **Frontend**: `frontend/js/views/temas-view.js` (+ cliente `frontend/js/api/temas.js`)
-  - ✅ Listado de temas por materia (orden, título, % y horas) con control visual de sumas (%=100, horas anuales) en verde/rojo
-  - ✅ Editor por pestañas (Datos / RA-CE) con editor TinyMCE fiel a v3 (`initTinyMCE('datostema', 350)`), «Dejar valores por defecto» por campo
-  - ✅ Acordeón dinámico RA→CE con checkboxes, modal de edición de RA (% + clave) y suma controlada
-  - ✅ Botones «Repetir en resto de unidades» y «Calcular y actualizar porcentajes» (confirma antes de sobreescribir)
-- **Referencia v3**: `temas.php`, `editar_tema.php`, `ajax/temas/`
-- **Estado**: ✅ Completado. Ver [Historial de cambios](#historial-de-cambios).
-
-#### 2.7 Contenidos por Defecto de Temas
-- **Backend**: `backend/api/temas_contenidos_defecto.php` (PHP 5 / `mysqli_*` con sentencias preparadas; acciones `cargar` / `guardar`)
-  - ✅ `cargar`: devuelve los contenidos por defecto de un departamento (`contexto`, `recursos`, `metodología`, `adaptaciones`) desde `contenidos_defcto_temas`
-  - ✅ `guardar`: inserta o actualiza la fila del departamento (PK `idDepartamento`); rol `admin` o `jefeDepartamento` (este último solo para su propio depto)
-  - ✅ Modelo fiel a v3: no hay borrado por campo. La fila es por departamento
-  - ⚠️ Corrección: la consulta hacía referencia a `contenidos_defcto_temas` (con typo «defcto»); corregido para coincidir con el esquema real de v3 (`contenidos_defcto_temas`)
-- **Frontend**: `frontend/js/views/temas-contenidos-defecto-view.js` (+ cliente `js/api/temas-contenidos-defecto.js`)
-  - ✅ Selector de departamento fiel a v3 (admin elige; jefe fijo a su propio dpto), igual que la 2.3
-  - ✅ Cuatro editores TinyMCE (Contexto / Recursos / Metodología / Adaptaciones) con la misma configuración que la 2.3
-  - ✅ Botones «Guardar cambios» (inserta/actualiza) y «Limpiar todo»
-- **Referencia v3**: `temas_contenidos_defecto.php`, `ajax/temas_contenidos_defecto/`
-- **Estado**: ✅ Completado. Ver [Historial de cambios](#historial-de-cambios).
-
-### Fase 3: PCCF (Proyecto Curricular de Centro de Formación)
-
-#### 3.1 PCCF
-- **Backend**: `backend/api/pccf/`
-  - `listar_ciclos.php` — lista los ciclos formativos disponibles
-  - `listar.php` — carga el contenido del PCCF (por ciclo, o por ciclo + apartado)
-  - `guardar.php` — inserta/actualiza/elimina el contenido de un ciclo y apartado (fiel a v3)
-- **Frontend**: `frontend/js/views/pccf-view.js` + `frontend/js/api/pccf.js`
-  - Editor TinyMCE, selector de ciclo y apartado, guardar cambios
-- **Referencia v3**: `pccf.php`, `ajax/pccf/cargar_contenido_pccf.php`, `ajax/pccf/insertar_contenido_pccf.php`
-
-#### 3.2 Apartados PCCF
-- **Backend**: `backend/api/pccf_apartados/`
-  - `listar.php` — lista los apartados del PCCF
-  - `obtener.php` — datos de un apartado concreto
-  - `guardar.php` — inserta/actualiza un apartado
-  - `borrar.php` — elimina un apartado y sus conexiones
-  - `ordenar.php` — reordena los apartados según el nuevo orden
-- **Frontend**: `frontend/js/views/pccf-apartados-view.js` + `frontend/js/api/pccf_apartados.js`
-  - CRUD de apartados, numeración v3 (cont++/cont2++)
-- **Referencia v3**: `pccf_apartados.php`, `ajax/pccf_apartados/`
-
-#### 3.3 Contenidos por Defecto PCCF
-- **Backend**: `backend/api/pccf_contenidos_defecto/`
-  - `cargar.php` — carga el contenido por defecto de un apartado para un departamento
-  - `guardar.php` — inserta/actualiza/elimina el contenido por defecto (fiel a v3)
-- **Frontend**: `frontend/js/views/pccf-contenidos-defecto-view.js` + `frontend/js/api/pccf_contenidos_defecto.js`
-- **Referencia v3**: `pccf_contenidos_defecto.php`, `ajax/pccf_contenidos_defecto/`
-
-### Fase 4: Resultados de Aprendizaje y Competencias
-
-#### 4.1 Resultados de Aprendizaje
-- **Backend**: `backend/api/resultados_aprendizaje.php`
-  - CRUD de RA
-  - Vistas previas (texto plano, empresa)
-- **Frontend**: `frontend/js/views/resultados-aprendizaje-view.js`
-- **Referencia v3**: `resultados_aprendizaje.php`, `ajax/resultados_aprendizaje/`
-
-#### 4.2 Competencias por Ciclo
-- **Backend**: `backend/api/competencias_ciclos.php`
-  - Asociación competencias-ciclos
-- **Frontend**: `frontend/js/views/competencias-ciclos-view.js`
-- **Referencia v3**: `competencias_ciclos.php`, `ajax/competencias_ciclos/`
-
-#### 4.3 Cualificaciones y Unidades de Competencia
-- **Backend**: `backend/api/cualificaciones_uc.php`
-  - Gestión de cualificaciones profesionales
-- **Frontend**: `frontend/js/views/cualificaciones-uc-view.js`
-- **Referencia v3**: `cualificaciones_uc.php`, `ajax/cualificaciones_uc/`
-
-### Fase 5: Selección y Asignaciones
-
-#### 5.1 Selección de Destinos
-- **Backend**: `backend/api/seleccion.php`
-  - Listar selección
-  - Insertar/borrar selecciones
-  - Ordenar selección
-  - Sumar horas
-  - Botones de acción
-  - Listado de profesores por materia
-- **Frontend**: `frontend/js/views/seleccion-view.js`
-- **Referencia v3**: `seleccion.php`, `ajax/seleccion/`
-
-### Fase 6: Actas y Evaluación
-
-#### 6.1 Actas de Evaluación
-- **Backend**: `backend/api/actas.php`
-  - Gestión de actas
-- **Frontend**: `frontend/js/views/actas-view.js`
-- **Referencia v3**: `actas.php`, `ajax/actas/`
-
-### Fase 7: Utilidades y Reportes
-
-#### 7.1 Histórico
-- **Backend**: `backend/api/historico.php`
-  - Consultas históricas
-- **Frontend**: `frontend/js/views/historico-view.js`
-- **Referencia v3**: `historico.php`
-
-#### 7.2 Estadísticas
-- **Backend**: `backend/api/estadisticas.php`
-  - Generación de estadísticas
-- **Frontend**: `frontend/js/views/estadisticas-view.js`
-- **Referencia v3**: `estadisticas.php`
-
-#### 7.3 Configuración
-- **Backend**: `backend/api/configuracion.php`
-  - Parámetros del sistema
-- **Frontend**: `frontend/js/views/configuracion-view.js`
-- **Referencia v3**: `configuracion.php`
-
-#### 7.4 Exportación a Excel
-- **Backend**: `backend/api/excel.php`
-  - Generación de archivos Excel
-- **Referencia v3**: `excel.php`
-
-#### 7.5 Ayuda
-- **Frontend**: `frontend/js/views/ayuda-view.js`
-- **Referencia v3**: `ayuda.php`, `docs/Manual_*.md`
-
-### Fase 8: Generación de PDFs
-
-Implementar endpoints para generación de PDFs (usando librería compatible con PHP 5):
-
-- `pdf_acta.php` → `backend/api/pdf/acta.php`
-- `pdf_desiderata.php` → `backend/api/pdf/desiderata.php`
-- `pdf_pccf.php` → `backend/api/pdf/pccf.php`
-- `pdf_preferencias.php` → `backend/api/pdf/preferencias.php`
-- `pdf_programaciones.php` → `backend/api/pdf/programaciones.php`
-- `pdf_programaciones_apartado.php` → `backend/api/pdf/programaciones-apartado.php`
-- `pdf_programaciones_aula.php` → `backend/api/pdf/programaciones-aula.php`
-- `pdf_programaciones_seguimiento.php` → `backend/api/pdf/programaciones-seguimiento.php`
-- `pdf_separata_ce.php` → `backend/api/pdf/separata-ce.php`
-- `pdf_unidades_programacion.php` → `backend/api/pdf/unidades-programacion.php`
-- `listado_programaciones.php` → `backend/api/pdf/listado-programaciones.php`
-- `listado_programaciones_simple.php` → `backend/api/pdf/listado-programaciones-simple.php`
-- `listado_urls_pdfs.php` → `backend/api/pdf/listado-urls-pdfs.php`
-
-### Fase 9: Características Avanzadas
-
-- [ ] Vistas previas de criterios de evaluación
-- [x] Edición de temas con accordion RA/CE (entregado en la Fase 2.6 — ver [Historial de cambios](#historial-de-cambios))
-- [ ] Modales reutilizables (migrar desde `modales/` de v3)
-- [ ] Sistema de activaciones por curso académico
-- [ ] Copia de seguridad y restauración
-- [ ] Importación/exportación de datos
-
-## Estructura de archivos recomendada
-
-```
-v4/
-├── backend/
-│   ├── config.php
-│   └── api/
-│       ├── auth.php                    # ✅ Implementado
-│       ├── app.php                     # ✅ Implementado
-│       ├── departamentos.php           # Pendiente
-│       ├── profesores.php              # Pendiente
-│       ├── especialidades.php          # Pendiente
-│       ├── ciclos.php                  # Pendiente
-│       ├── cursos.php                  # Pendiente
-│       ├── grupos.php                  # Pendiente
-│       ├── materias.php                # Pendiente
-│       ├── escenarios.php              # Pendiente
-│       ├── programaciones.php          # Pendiente
-│       ├── programaciones_apartados.php # Pendiente
-│       ├── programaciones_aula.php     # ✅ Implementado
-│       ├── programaciones_seguimiento.php # ✅ Implementado
-│       ├── temas.php                   # ✅ Implementado
-│       ├── pccf.php                    # Pendiente
-│       ├── resultados_aprendizaje.php  # Pendiente
-│       ├── seleccion.php               # Pendiente
-│       ├── actas.php                   # Pendiente
-│       └── pdf/                        # Carpeta para generadores PDF
-│
-└── frontend/
-    ├── index.html
-    ├── css/
-    │   └── app.css
-    └── js/
-        ├── app.js
-        ├── api/
-        │   ├── auth.js                 # ✅ Implementado
-        │   ├── app.js                  # ✅ Implementado
-        │   ├── departamentos.js        # Pendiente
-        │   ├── profesores.js           # Pendiente
-        │   └── ...                     # Por módulo
-        ├── components/
-        │   ├── login-view.js           # ✅ Implementado
-        │   ├── app-layout.js           # ✅ Implementado
-        │   ├── sidebar.js              # ✅ Implementado
-        │   └── header-bar.js           # ✅ Implementado
-        └── views/
-            ├── home-view.js            # ✅ Implementado
-            ├── departamentos-view.js   # Pendiente
-            ├── profesores-view.js      # Pendiente
-            └── ...                     # Por módulo
-```
+---
 
 ## Estado actual del proyecto
 
-| Módulo | Backend API | Frontend View | Estado |
-|--------|-------------|---------------|--------|
-| Autenticación | ✅ | ✅ | Completado |
-| App Layout | ✅ | ✅ | Completado |
+> Tabla basada en los archivos realmente presentes en `backend/` y `frontend/`.
+
+| Módulo | Backend | Frontend | Estado |
+|--------|:-----:|:-----:|:------:|
+| Autenticación (login / logout / check) | ✅ | ✅ | Completado |
+| Layout / UI (sidebar, header, app-layout) | ✅ | ✅ | Completado |
+| **Fase 1 – Módulos básicos** | | | |
 | Departamentos | ✅ | ✅ | Completado |
 | Profesores | ✅ | ✅ | Completado |
 | Especialidades | ✅ | ✅ | Completado |
-| Ciclos | ✅ | ✅ | Completado |
+| Ciclos Formativos | ✅ | ✅ | Completado |
 | Cursos | ✅ | ✅ | Completado |
 | Grupos | ✅ | ✅ | Completado |
 | Materias | ✅ | ✅ | Completado |
 | Escenarios | ✅ | ✅ | Completado |
-| Programaciones | ✅ | ✅ | Completado |
-| Programaciones de aula | ✅ | ✅ | Completado |
-| Seguimiento de programaciones | ✅ | ✅ | Completado |
-| Temas | ✅ | ✅ | Completado |
-| PCCF | ❌ | ❌ | Pendiente |
-| Resultados Aprendizaje | ❌ | ❌ | Pendiente |
-| Selección | ❌ | ❌ | Pendiente |
-| Actas | ❌ | ❌ | Pendiente |
-| PDFs | ❌ | N/A | Pendiente |
+| **Fase 2 – Programaciones Didácticas** | | | |
+| 2.1 Programaciones (fiel a v3) | ✅ | ✅ | Completado |
+| 2.2 Apartados de programación | ✅ | ✅ | Completado |
+| 2.3 Contenidos por defecto | ✅ | ✅ | Completado |
+| 2.4 Programación de aula | ✅ | ✅ | Completado |
+| 2.5 Seguimiento de programaciones | ✅ | ✅ | Completado |
+| 2.6 Temas (unidades de programación) | ✅ | ✅ | Completado |
+| 2.7 Cont. defecto de temas | ✅ | ✅ | Completado |
+| **Fase 3 – PCCF** | | | |
+| 3.1 PCCF | ✅ | ✅ | Completado |
+| 3.2 Apartados PCCF | ✅ | ✅ | Completado |
+| 3.3 Cont. defecto PCCF | ✅ | ✅ | Completado |
+| **Fase 4 – Resultados y Competencias** | | | |
+| 4.1 Resultados de Aprendizaje | ❌ | ❌ | Pendiente |
+| 4.2 Competencias por Ciclo | ❌ | ❌ | Pendiente |
+| 4.3 Cualificaciones y UC | ❌ | ❌ | Pendiente |
+| **Fase 5 – Selección** | | | |
+| 5.1 Selección de Destinos | ❌ | ❌ | Pendiente |
+| **Fase 6 – Actas** | | | |
+| 6.1 Actas de Evaluación | ❌ | ❌ | Pendiente |
+| **Fase 7 – Utilidades y Reportes** | | | |
+| 7.1 Histórico | ❌ | ❌ | Pendiente |
+| 7.2 Estadísticas | ❌ | ❌ | Pendiente |
+| 7.3 Configuración | ❌ | ❌ | Pendiente |
+| 7.4 Exportación a Excel | ❌ | N/A | Pendiente |
+| 7.5 Ayuda | ❌ | ❌ | Pendiente |
+| **Fase 8 – PDFs** | ❌ | N/A | Pendiente |
+| **Fase 9 – Características Avanzadas** | | | |
+| Edición de temas con accordion RA/CE | ✅ | ✅ | Completado (Fase 2.6) |
+| Resto de características avanzadas | ❌ | ❌ | Pendiente |
 
 ✅ = Implementado | ❌ = Pendiente
 
-## Usuarios de prueba
+---
 
-Cuentas locales creadas en `gestionies.profesores` para probar las fases 2.x sobre Laragon (usuario real, `activo=1`, depto 1). Borrarlas una vez comprobado:
+## Hoja de ruta
 
-| Usuario | Contraseña | Rol (v4) | jefatura | Notas |
-|---------|-----------|----------|----------|-------|
-| `testadmin` | `admin1234` | admin | `jefe_departamento=1` | Permite acceder a las secciones con permisos (guardar 2.2/2.3, menús de administración) |
-| `testprofe` | `profesor1` | profesor | `jefe_departamento=0` | Simula un profesor: sin acceso al menú «Contenidos generales» y 403 en `guardar` |
+Hoja de ruta para completar en v4 la misma funcionalidad que v3. El **estado** de cada fase refleja lo realmente implementado (ver [Estado actual del proyecto](#estado-actual-del-proyecto)).
 
-## Notas importantes para la migración
+### Fase 1: Módulos básicos de mantenimiento (Completado)
 
-1. **Compatibilidad PHP 5**: Todo el código backend debe ser compatible con PHP 5.x
-   - Usar `mysqli_*` en lugar de `mysql_*` (obsoleto)
-   - Evitar características de PHP 7+
-   - No usar type hints estrictos
+Módulos de base del sistema:
 
-2. **Base de datos**: Usar el mismo esquema que v3
-   - Tabla principal: `profesores` (no `usuarios`)
-   - Campos clave: `id`, `nombre`, `usuario`, `clave`, `idDepartamento`, `jefe_departamento`, `activo`
-   - Contraseñas en MD5
+| Módulo | Backend | Frontend | Referencia v3 |
+|--------|---------|----------|---------------|
+| Departamentos | `backend/api/departamentos/` | `frontend/js/views/departamentos-view.js` | `departamentos.php`, `ajax/departamentos/` |
+| Profesores | `backend/api/profesores/` | `frontend/js/views/profesores-view.js` | `profesores.php`, `ajax/profesores/` |
+| Especialidades | `backend/api/especialidades/` | `frontend/js/views/especialidades-view.js` | `especialidades.php`, `ajax/especialidades/` |
+| Ciclos Formativos | `backend/api/ciclos/` | `frontend/js/views/ciclos-view.js` | `ciclos.php`, `ajax/ciclos/` |
+| Cursos | `backend/api/cursos/` | `frontend/js/views/cursos-view.js` | `cursos.php`, `ajax/cursos/` |
+| Grupos | `backend/api/grupos/` | `frontend/js/views/grupos-view.js` | `grupos.php`, `ajax/grupos/` |
+| Materias | `backend/api/materias/` | `frontend/js/views/materias-view.js` | `materias.php`, `ajax/materias/` |
+| Escenarios | `backend/api/escenarios/` | `frontend/js/views/escenarios-view.js` | `escenarios.php`, `ajax/escenarios/` |
 
-3. **Comunicación API**: 
-   - Backend devuelve JSON: `json_encode(['success' => true/false, 'data' => ..., 'message' => ...])`
-   - Frontend usa `fetch()` con `credentials: 'include'` para sesiones
-   - Manejo consistente de errores
+### Fase 2: Programaciones Didácticas (Completado)
 
-4. **Componentes Vue**:
-   - Usar Vue 3 desde CDN (sin build step)
-   - Componentes registrados globalmente
-   - Templates como strings en JS
+> **Modelo fiel a v3**: en v3 **no existe** la tabla `programaciones`. La programación vive en `apartados_programaciones` + `contenidos_programaciones` asociados a cada materia (flag `materias.tiene_programacion`); el curso se resuelve con `materias.idCurso → cursos`.
 
-5. **Estilos**:
-   - Bootstrap 5.3.8 como base
-   - CSS personalizado mínimo
-   - Bootstrap Icons para todos los iconos
+| Módulo | Backend | Frontend | Referencia v3 | Estado |
+|--------|---------|----------|---------------|:------:|
+| 2.1 Programaciones | `backend/api/programaciones/` | `programaciones-view.js` + `api/programaciones.js` | `programaciones.php`, `ajax/programaciones/`, `modales/importar_programacion.php` | Completado |
+| 2.2 Apartados | `backend/api/programaciones_apartados/` | `programaciones-apartados-view.js` | `programaciones_apartados.php`, `ajax/programaciones_apartados/` | Completado |
+| 2.3 Cont. defecto | `backend/api/programaciones_contenidos_defecto/` | `programaciones-contenidos-defecto-view.js` | `programaciones_contenidos_defecto.php`, `ajax/programaciones_contenidos_defecto/` | Completado |
+| 2.4 Programación de aula | `backend/api/programaciones_aula/` | `programaciones-aula-view.js` | `programaciones_aula.php`, `ajax/programaciones_aula/` | Completado |
+| 2.5 Seguimiento | `backend/api/programaciones_seguimiento/` | `programaciones-seguimiento-view.js` | `programaciones_seguimiento.php`, `ajax/programaciones_seguimiento/` | Completado |
+| 2.6 Temas | `backend/api/temas.php` | `temas-view.js` + `api/temas.js` | `temas.php`, `editar_tema.php`, `ajax/temas/` | Completado |
+| 2.7 Cont. defecto de temas | `backend/api/temas_contenidos_defecto.php` | `temas-contenidos-defecto-view.js` | `temas_contenidos_defecto.php`, `ajax/temas_contenidos_defecto/` | Completado |
 
-6. **Seguridad**:
-   - Validar siempre en backend
-   - Escapar salidas HTML
-   - Usar prepared statements para SQL
-   - Verificar permisos por rol
+### Fase 3: PCCF (Completado)
 
-## Próximos pasos inmediatos
+> **Modelo fiel a v3**: contenido almacenado en `contenidos_pccf` / `contenidos_pccf_apartados` (una fila por ciclo + apartado).
 
-- **Fase 2.7 — Contenidos por Defecto de Temas**: ✅ Completada (editor TinyMCE para textos por defecto por departamento). Ver [Historial de cambios](#historial-de-cambios).
-- **Fase 3 — PCCF** completo: apartados + contenidos por defecto + vista previa.
+| Módulo | Backend | Frontend | Referencia v3 | Estado |
+|--------|---------|----------|---------------|:------:|
+| 3.1 PCCF | `backend/api/pccf/{listar, listar_ciclos, guardar}.php` | `pccf-view.js` + `api/pccf.js` | `pccf.php`, `ajax/pccf/` | Completado |
+| 3.2 Apartados PCCF | `backend/api/pccf_apartados/{listar, obtener, guardar, borrar, ordenar}.php` | `pccf-apartados-view.js` | `pccf_apartados.php`, `ajax/pccf_apartados/` | Completado |
+| 3.3 Cont. defecto PCCF | `backend/api/pccf_contenidos_defecto/{cargar, guardar}.php` | `pccf-contenidos-defecto-view.js` | `pccf_contenidos_defecto.php`, `ajax/pccf_contenidos_defecto/` | Completado |
 
-## Notas importantes
+### Fase 4: Resultados de Aprendizaje y Competencias (Pendiente)
 
-- La aplicación está diseñada para funcionar en servidores antiguos con PHP 5
-- No requiere procesos de build/compilación
-- El frontend se sirve directamente desde el navegador
-- Las sesiones se manejan desde el backend PHP
-- La comunicación frontend-backend usa fetch API nativo
-- **IMPORTANTE**: Se debe usar la misma base de datos que v3 (tabla `profesores`, no `usuarios`)
+| Módulo | Backend | Frontend | Referencia v3 |
+|--------|---------|----------|---------------|
+| 4.1 Resultados de Aprendizaje | `backend/api/resultados_aprendizaje.php` | `resultados-aprendizaje-view.js` | `resultados_aprendizaje.php`, `ajax/resultados_aprendizaje/` |
+| 4.2 Competencias por Ciclo | `backend/api/competencias_ciclos.php` | `competencias-ciclos-view.js` | `competencias_ciclos.php`, `ajax/competencias_ciclos/` |
+| 4.3 Cualificaciones y UC | `backend/api/cualificaciones_uc.php` | `cualificaciones-uc-view.js` | `cualificaciones_uc.php`, `ajax/cualificaciones_uc/` |
+
+### Fase 5: Selección y Asignaciones (Pendiente)
+
+| Módulo | Backend | Frontend | Referencia v3 |
+|--------|---------|----------|---------------|
+| 5.1 Selección de Destinos | `backend/api/seleccion.php` | `seleccion-view.js` | `seleccion.php`, `ajax/seleccion/` |
+
+### Fase 6: Actas y Evaluación (Pendiente)
+
+| Módulo | Backend | Frontend | Referencia v3 |
+|--------|---------|----------|---------------|
+| 6.1 Actas de Evaluación | `backend/api/actas.php` | `actas-view.js` | `actas.php`, `ajax/actas/` |
+
+### Fase 7: Utilidades y Reportes (Pendiente)
+
+| Módulo | Backend | Frontend | Referencia v3 |
+|--------|---------|----------|---------------|
+| 7.1 Histórico | `backend/api/historico.php` | `historico-view.js` | `historico.php` |
+| 7.2 Estadísticas | `backend/api/estadisticas.php` | `estadisticas-view.js` | `estadisticas.php` |
+| 7.3 Configuración | `backend/api/configuracion.php` | `configuracion-view.js` | `configuracion.php` |
+| 7.4 Exportación a Excel | `backend/api/excel.php` | — | `excel.php` |
+| 7.5 Ayuda | — | `ayuda-view.js` | `ayuda.php`, `docs/Manual_*.md` |
+
+### Fase 8: Generación de PDFs (Pendiente)
+
+Implementar endpoints usando una librería compatible con PHP 5. Referencias a migrar desde `v3/`:
+
+`pdf_acta.php`, `pdf_desiderata.php`, `pdf_pccf.php`, `pdf_preferencias.php`, `pdf_programaciones.php`, `pdf_programaciones_apartado.php`, `pdf_programaciones_aula.php`, `pdf_programaciones_seguimiento.php`, `pdf_separata_ce.php`, `pdf_unidades_programacion.php`, `listado_programaciones.php`, `listado_programaciones_simple.php`, `listado_urls_pdfs.php`.
+
+### Fase 9: Características Avanzadas (Parcial)
+
+- ✅ Edición de temas con accordion RA/CE (entregado en la Fase 2.6)
+- ⬜ Modales reutilizables (migrar desde `modales/` de v3)
+- ⬜ Sistema de activaciones por curso académico
+- ⬜ Copia de seguridad y restauración
+- ⬜ Importación/exportación de datos
+
+---
+
+## Historial de cambios
+
+> Registro cronológico (más reciente primero) de las entregas por versión.
+
+### v4.3.0 — Fase 3 «PCCF» Completada
+- ✅ **3.1 PCCF**: backend `backend/api/pccf/{listar, listar_ciclos, guardar}.php` (PHP 5 / `mysqli_*`); `listar` carga el contenido por ciclo (o ciclo + apartado), `listar_ciclos` lista los ciclos, `guardar` inserta/actualiza/elimina fiel a v3 (`contenidos_pccf`, con texto vacío → borra fila). Frontend `pccf-view.js` + cliente `api/pccf.js` con editor TinyMCE.
+- ✅ **3.2 Apartados PCCF**: backend `backend/api/pccf_apartados/{listar, obtener, guardar, borrar, ordenar}.php`; CRUD de apartados con numeración v3 (cont++/cont2++). Frontend `pccf-apartados-view.js`.
+- ✅ **3.3 Cont. defecto PCCF**: backend `backend/api/pccf_contenidos_defecto/{cargar, guardar}.php`; contenido por defecto de un apartado para un departamento (fiel a v3). Frontend `pccf-contenidos-defecto-view.js`.
+- ✅ **Integración**: los tres módulos están cargados en `index.html`, registrados en `app.js` y mapeados en `app-layout.js`.
+
+### v4.2.5 — Fase 2.7 «Contenidos por Defecto de Temas» Completada
+- ✅ **Backend** `backend/api/temas_contenidos_defecto.php` (PHP 5 / `mysqli_*` con sentencias preparadas; acciones `cargar` / `guardar`):
+  - `cargar`: devuelve los contenidos por defecto de un departamento (`contexto`, `recursos`, `metodología`, `adaptaciones`) desde `contenidos_defcto_temas` (PK `idDepartamento`).
+  - `guardar`: inserta o actualiza la fila del departamento; rol `admin` o `jefeDepartamento` (este último solo para su propio depto).
+  - ⚠️ **Corrección**: la consulta hacía referencia al nombre de tabla con un typo (`contenidos_defcto_temas`); corregido para coincidir con el esquema real de v3 (`contenidos_defcto_temas`).
+- ✅ **Frontend** `frontend/js/views/temas-contenidos-defecto-view.js` (+ cliente `js/api/temas-contenidos-defecto.js`): selector de departamento fiel a v3 (admin elige; jefe fijo a su propio dpto) y cuatro editores TinyMCE (Contexto / Recursos / Metodología / Adaptaciones) con la misma configuración que la 2.3. Botones «Guardar cambios» (inserta/actualiza) y «Limpiar todo».
+
+### v4.2.4 — Fase 2.6 «Temas / Unidades de programación» Completada
+- ✅ **Backend** `backend/api/temas.php` (PHP 5 / `mysqli_*` con sentencias preparadas; acciones por parámetro `action`): `listar_materias` / `listar` / `obtener`, `nuevo` / `guardar` / `borrar` (en transacción), `accordion_ra_ce`, `actualizar_ra`, `recalcular_porcentajes`, `repetir_evaluacion`.
+- ✅ **Frontend** `frontend/js/views/temas-view.js` (+ cliente `js/api/temas.js`): listado por materia con control visual de sumas (%=100, horas) en verde/rojo; editor por pestañas **Datos / RA-CE** con TinyMCE fiel a v3 (`initTinyMCE('datostema', 350)`); acordeón dinámico RA→CE y botones «Repetir en resto de unidades» y «Calcular y actualizar porcentajes».
+
+### v4.2.3 — Fase 2.5 «Seguimiento de Programaciones» Completada
+- ✅ **Backend** `backend/api/programaciones_seguimiento/{profesores, materias, grupos, evaluaciones, cargar, guardar}.php`: selectores en cascada fieles a v3; `cargar`/`guardar` el registro de impartición (temporalización, resultados académicos, inclusión del alumnado). Admin guarda para cualquier profesor; un profesor solo para sí mismo.
+- ✅ **Frontend** `frontend/js/views/programaciones-seguimiento-view.js`: selector en cascada + tres editores TinyMCE con la misma configuración que 2.3/2.4; botones «Guardar cambios» y «Vista previa».
+
+### v4.2.2 — Fase 2.4 «Programación de Aula» Completada
+- ✅ **Backend** `backend/api/programaciones_aula/{materias, grupos, temas, contenido, guardar}.php`: materias con programación activa, grupos, temas y texto introductorio por triplete tema+grupo+profesor desde `programaciones_aula_temas`; `guardar` inserta/actualiza y **con texto vacío borra la fila** (igual que v3).
+- ✅ **Frontend** `frontend/js/views/programaciones-aula-view.js`: selector en cascada fiel a v3 + editor TinyMCE con los mismos plugins de v3; los botones PDF son stubs informativos (se activan en la Fase 8).
+
+### v4.2.1 — Fase 2.3 «Contenidos por Defecto» Completada
+- ✅ **Backend** `backend/api/programaciones_contenidos_defecto/{cargar, guardar}.php`: `cargar` devuelve el `texto` de `contenidos_defecto_programaciones` para apartado+departamento; `guardar` (solo rol `admin`) inserta/actualiza o borra con texto vacío, idéntico a v3.
+- ✅ **Frontend** `frontend/js/views/programaciones-contenidos-defecto-view.js`: selector de departamento + apartado con numeración global fiel a v3 y editor TinyMCE activo; comportamiento por rol fiel a v3.
+- 🔧 **Corrección**: los clientes de las fases 2.x llamaban a `backend/api/…` relativo (resolvía en `/v4/frontend/backend/api/…` → 404). Se pasa a `'../backend/api/…'` y se corrige la numeración cuando `subapartado` llega como texto (`"0"` no es falsy en JS).
+
+### v4.2.x — Decisión B — Fase 2.1 «Programaciones» Fiel a v3
+- ✅ **Reencuadre**: en v3 **no existe** la tabla `programaciones`. Se retiran crear/guardar/eliminar y la tabla ficticia. Entregables finales fieles a v3:
+  - Backend `backend/api/programaciones/index.php`: `listar` (materias con programación + nº de apartados; curso vía `idCurso → cursos`), `obtener` (apartados + contenidos, solo lectura) e `importar` (conservado sobre las tablas reales v3).
+  - Frontend `frontend/js/views/programaciones-view.js` + cliente `api/programaciones.js`: listado **Materia | Curso | Horas | Apartados**, modal «Ver» y modal de importación; sin create/edit/delete.
+
+### v4.1.3 — Fase 1 Completa (Módulos básicos de mantenimiento)
+- ✅ **Especialidades**, **Ciclos Formativos**, **Cursos**, **Grupos**, **Materias**, **Escenarios** implementados con CRUD completo.
+- ✅ **Correcciones generales**: todos los endpoints migrados a `mysqli_*` con sentencias preparadas; APIs frontend consistentes; vistas sin errores de sintaxis; orden de carga de scripts verificado; componentes registrados.
+
+### v4.1.2 — Fase 1.2 «Profesores» Completada
+- ✅ **Profesores**: módulo completo (CRUD, filtrado por departamento, actualizar jefe de departamento, activar/desactivar, ordenar). Backend `backend/api/profesores.php`, frontend `profesores-view.js` + cliente `api/profesores.js`.
+
+### v4.1.0 — Fase 1.1 «Departamentos» Completada
+- ✅ **Departamentos**: módulo completo (CRUD). Backend `backend/api/departamentos.php`, frontend `departamentos-view.js`.
+
+### v4.0.1 — 2025
+- ✅ Migrado `mysql_*` → `mysqli_*`; login funcional usando la tabla `profesores` de v3; roles basados en `jefe_departamento`; filtrado por usuarios activos; contraseñas MD5.
+
+### v4.0.0 — Versión inicial
+- Estructura base fullstack creada; frontend Vue 3 + Bootstrap 5; sistema de autenticación básico.
+
+---
+
+## Registro de Decisiones Técnicas
+
+Las decisiones importantes de diseño e implementación se documentan aquí.
+
+#### D-2025: Fase 2.1 «Programaciones» — Decisión B, FIEL A V3 (no tabla propia)
+- **Decidido por**: Usuario («FIEL a v3»).
+- **Contexto**: la primera entrega de la 2.1 modelaba una tabla `programaciones` simplificada (una fila por materia/grupo con objetivos/metodología/etc.). Al contrastar con el modelo real de v3 se detectó que **no existe** esa tabla: en v3 la programación didáctica son **apartados + contenidos** asociados a cada materia (flag `materias.tiene_programacion`).
+- **Decisión**: rehacer la 2.1 para ser fiel a v3. Se retiran crear/guardar/eliminar y la tabla ficticia.
+- **Consecuencia**: la edición real de los apartados/contenidos se hace en las fases 2.2–2.5 (CRUD de esos módulos); la 2.1 da visibilidad fiel al estado y conserva el Importar existente.
+- **Verificación**: `php -l` limpio; `listar` y `obtener` devuelven datos reales del curso en marcha.
+
+---
+
+## Metodología de desarrollo
+
+### Principios de diseño
+
+1. **Bootstrap First** — Uso máximo de las clases utilitarias de Bootstrap 5.3.8; CSS personalizado solo cuando es estrictamente necesario.
+2. **Iconografía** — Bootstrap Icons 1.13.1 exclusivamente; sin imágenes PNG/SVG personalizadas.
+3. **Componentes Vue** — Vue 3 desde CDN (sin build step); templates como strings en `.js`; registro global; comunicación padre-hijo vía props/events.
+4. **Responsive Design** — Mobile-first; sidebar colapsable en pantallas < 768px.
+5. **Arquitectura Fullstack** — Backend PHP 5 devuelve JSON; frontend Vue consume APIs con `fetch()`; validación siempre en servidor.
+
+### Patrón CRUD base
+
+```
+backend/
+└── api/
+    └── {modulo}/            # API REST (GET, POST, DELETE)
+frontend/
+├── js/
+│   ├── views/
+│   │   └── {modulo}-view.js    # Template Vue del módulo
+│   └── api/
+│       └── {modulo}.js         # Lógica de negocio (cargar, crear, editar, borrar)
+```
+
+### Convenciones de código
+
+- **Backend PHP**: respuestas `{success: bool, data: any, message: string}`; `mysqli_*` con prepared statements; validación de permisos por rol.
+- **Frontend JS**: componentes como objetos literales; eventos con `$emit()`; SweetAlert2 para feedback; iconos Bootstrap en templates.
+- **Comunicación**: `fetch()` con `credentials: 'include'` (sesiones) y `'../backend/api/…'` (ruta relativa a la vista).
+
+---
 
 ## Diferencias con v3
 
@@ -543,269 +373,22 @@ Cuentas locales creadas en `gestionies.profesores` para probar las fases 2.x sob
 | CSS personalizado extenso | Bootstrap 5.3.8 + CSS mínimo |
 | AJAX con jQuery | Fetch API + JSON |
 | Templates PHP | Componentes Vue |
-| Funcionalidad completa | En desarrollo (Fase 1 y 2.1–2.6 completas) |
-
-## Historial de cambios
-
-### v4.2.5 - 2026 - Fase 2.7 «Contenidos por Defecto de Temas» Completada
-- ✅ **Backend** `backend/api/temas_contenidos_defecto.php` (PHP 5 / `mysqli_*` con sentencias preparadas; acciones `cargar` / `guardar`)
-  - `cargar`: devuelve los contenidos por defecto de un departamento (`contexto`, `recursos`, `metodología`, `adaptaciones`) desde `contenidos_defecto_temas` (PK `idDepartamento`).
-  - `guardar`: inserta o actualiza la fila del departamento; rol `admin` o `jefeDepartamento` (este último solo para su propio depto).
-  - ✅ **Verificado contra la BD real** (Laragon): `cargar` y `guardar` devuelven datos reales de los deptos 1 y 2; `guardar` actualiza y restituido al terminar; 401 sin sesión y 403 para rol `profesor`.
-  - ⚠️ **Corrección**: la consulta hacía referencia al nombre de tabla con un typo (`contenidos_defcto_temas`); corregido para coincidir con el esquema real de v3 (`contenidos_defecto_temas`).
-- ✅ **Frontend** `frontend/js/views/temas-contenidos-defecto-view.js` (+ cliente `js/api/temas-contenidos-defecto.js`)
-  - ✅ Selector de departamento fiel a v3 (admin elige; jefe fijo a su propio dpto), igual que la 2.3.
-  - ✅ Cuatro editores TinyMCE (Contexto / Recursos / Metodología / Adaptaciones) con la misma configuración que la 2.3.
-  - ✅ Botones «Guardar cambios» (inserta/actualiza) y «Limpiar todo».
-- ✅ **Integración** (verificada por inspección de código y git): scripts en `index.html`, componente registrado en `app.js` y mapeado a `/temas_contenidos_defecto.php` en `app-layout.js`; acceso «Cont. defecto unidades» en el menú.
-
-### v4.2.4 - 2026 - Fase 2.6 «Temas / Unidades de programación» Completada
-- ✅ **Backend** `backend/api/temas.php` (PHP 5 / `mysqli_*` con sentencias preparadas; acciones por parámetro `action`):
-  - `listar_materias` / `listar` / `obtener`: materias y temas/unidades por materia (orden, título, peso, horas).
-  - `nuevo` / `guardar` / `borrar`: CRUD de temas dentro de transacción (`mysqli_begin_transaction`).
-  - `accordion_ra_ce`: carga RA/CE de la materia (cada RA con sus CE asociados, total de RA).
-  - `actualizar_ra`: edita un RA (porcentaje de evaluación, «es clave»).
-  - `recalcular_porcentajes`: recalcula y actualiza los porcentajes de evaluación de los RA.
-  - `repetir_evaluacion`: copia el campo «Evaluación» al resto de unidades de la materia.
-- ✅ **Frontend** `frontend/js/views/temas-view.js` (+ cliente `js/api/temas.js`):
-  - Listado de temas por materia con control visual de sumas (%=100, horas = horas anuales) en verde/rojo.
-  - Editor por pestañas **Datos / RA-CE** con editor TinyMCE fiel a v3 (`initTinyMCE('datostema', 350)`): contexto, recursos, metodología, adaptaciones, evaluación, con «Dejar valores por defecto» por campo.
-  - Acordeón dinámico RA→CE: checkboxes de RA/CE, modal de edición de RA (% + clave), suma controlada (debe dar 100%).
-  - Botones «Repetir en resto de unidades» y «Calcular y actualizar porcentajes» (confirma antes de sobreescribir).
-- ✅ **Integración** (verificada por inspección de código y git): scripts en `index.html`, componente registrado en `app.js` y mapeado a `/temas.php` en `app-layout.js`; acceso «Temas» en el menú.
-
-### v4.2.3 - 2026 - Fase 2.5 «Seguimiento de Programaciones» Completada
-- ✅ **Backend** `backend/api/programaciones_seguimiento/{profesores,materias,grupos,evaluaciones,cargar,guardar}.php` (PHP 5 / `mysqli_*` con sentencias preparadas):
-  - `profesores` / `materias` / `grupos` / `evaluaciones`: selectores en cascada fieles a v3.
-  - `cargar`: registro de impartición por profesor+materia+grupo+evaluación.
-  - `guardar`: inserta/actualiza el registro (temporalización, resultados académicos, inclusión del alumnado). Admin guarda para cualquier profesor; un profesor solo para sí mismo (fuerza `idProfesor` al usuario de la sesión).
-- ✅ **Frontend** `frontend/js/views/programaciones-seguimiento-view.js` (+ cliente `js/api/programaciones-seguimiento.js`):
-  - Selector en cascada fiel a v3: profesor (solo admin) + materia + grupo + evaluación.
-  - Tres editores TinyMCE WYSIWYG con la **misma configuración que 2.3/2.4**: temporalización, resultados académicos e inclusión del alumnado.
-  - Botones «Guardar cambios» y «Vista previa» (modal con las tres secciones renderizadas).
-- ✅ **Integración** (verificada por inspección de código y git): scripts en `index.html`, componente registrado en `app.js` y mapeado a `/programaciones_seguimiento_aula.php` en `app-layout.js`.
-
-### v4.2.2 - 2026 - Fase 2.4 «Programación de Aula» Completada
-- ✅ **Backend** `backend/api/programaciones_aula/{materias,grupos,temas,contenido,guardar}.php` (PHP 5 / `mysqli_*` con sentencias preparadas):
-  - `materias`: lista las materias con `tiene_programacion=1` para un profesor (admin elige; profesor usa el suyo).
-  - `grupos`: grupos asignados en la selección actual del curso (`seleccion` + `escenarios_desideratas.actual`).
-  - `temas`: unidades de una materia ordenadas por `orden`.
-  - `contenido`: texto introductorio por triplete tema+grupo+profesor desde `programaciones_aula_temas`.
-  - `guardar`: inserta/actualiza; **con texto vacío borra la fila**, idéntico al comportamiento de v3. Permisos: admin puede guardar para cualquier profesor; un profesor solo para sí mismo.
-- ✅ **Frontend** `frontend/js/views/programaciones-aula-view.js` + cliente `js/api/programaciones-aula.js`:
-  - Selector de profesor (solo visible para admin/jefe) + materia + grupo, en cascada fiel a v3.
-  - Editor TinyMCE WYSIWYG con los mismos plugins/toolbar de v3 y `css/estilos_tiny.css`, botones «Guardar cambios».
-  - Botones PDF (Separata CE / Programación de aula) como stubs informativos: se activan en la Fase 8.
-  - Integración: scripts cargados en `index.html`, componente registrado en `app.js` y mapeado a `/programaciones_aula.php` en `app-layout.js`; el acceso «Programaciones de aula» ya estaba presente en `config.php → getMenus` (visible para todos los roles, como en v3).
-- ✅ **Verificado contra la BD real** vía HTTP (Laragon): login admin OK; `materias` devuelve las materias reales del curso con programación; `grupos` resuelve por selección+escenario actual; `temas` lista unidades ordenadas; `guardar` inserta→actualiza→borra con texto vacío, restituido al terminar; 401/403 sin sesión o para roles restringidos.
-- ⚠️ **Nota de permisos**: v3 permite guardar a admin/jefe (con selector de profesor) y a cualquier profesor activo (solo el suyo). Se replica igual en v4: la API detecta rol desde la sesión y, si no es admin, fuerza `idProfesor` al propio usuario.
-
-### v4.2.1 - 2026 - Fase 2.3 «Contenidos por Defecto» Completada
-- ✅ **Backend** `backend/api/programaciones_contenidos_defecto/{cargar,guardar}.php` (PHP 5 / `mysqli_*` con sentencias preparadas):
-  - `cargar`: devuelve el `texto` de `contenidos_defecto_programaciones` para el par apartado+departamento (vacío si no existe).
-  - `guardar` (solo rol `admin`, como en la 2.2): inserta o actualiza; **con texto vacío borra la fila**, idéntico al comportamiento de v3 (`ajax/programaciones_contenidos_defecto/insertar_contenido_defecto_programacion.php`).
-- ✅ **Frontend** `frontend/js/views/programaciones-contenidos-defecto-view.js` + cliente `js/api/programaciones-contenidos-defecto.js`:
-  - Selector de departamento y de apartado. El desplegable solo muestra los apartados con `contenido_defecto = 1` y `tipo = 0`, aplicando la **numeración global fiel a v3** (1, 2… y 1.1, 1.2 en subapartados).
-  - **Comportamiento por rol (como en v3)**: un jefe de departamento queda fijo a su propio departamento (desplegable deshabilitado con su nombre) y ve los contenidos por defecto del dpto al que pertenece; un admin sin departamento asignado puede elegir cualquier departamento.
-  - **Editor TinyMCE WYSIWYG activo (igual que en v3)**: TinyMCE 7.9.1 se activa en el editor de contenidos — `frontend/lib/js/tinymce/` copiado íntegro desde `v3/lib/js/tinymce`, más `css/estilos_tiny.css`, cargado en `index.html` tras SweetAlert2 con el mismo orden que `v3/includes/cabecera.php`. La inicialización replica la `initTinyMCE('progeditar')` de v3: mismos plugins (`autolink lists advlist code fullscreen wordcount`), misma toolbar, altura 300px y `content_css: css/estilos_tiny.css`; botones «Limpiar» y «Guardar cambios» con lectura/vaciado vía `getContent()` / `setContent()`, feedback con SweetAlert2 y diseño homogéneo al resto de la aplicación.
-  - Integración: scripts cargados en `index.html`, componente registrado en `app.js` y ruta mapeada en `app-layout.js`; el acceso «Contenidos generales» ya existe en `config.php → getMenus` (visible para jefe de departamento/admin) y el sidebar lo resuelve añadiendo `.php` al link.
-- ✅ **Verificado contra la BD real** vía HTTP (Laragon): `cargar` devuelve el contenido real de un apartado existente; `guardar` probado íntegro sobre un par sin datos reales (inserta → actualiza → borra con texto vacío, restituido al terminar); 403 para rol profesor y sin sesión; menú presente para admin y ausente para profesor; `index.html` sirve los scripts nuevos y el listado de apartados que alimenta la vista.
-- 🔧 **Corrección**: los clientes de las fases 2.x llamaban a `backend/api/…` relativo (resolvía en `/v4/frontend/backend/api/…` → 404 y desplegables vacíos). Se pasa a la convención de la app `'../backend/api/…'` (vista + `js/api/programaciones-contenidos-defecto.js` + `js/api/programaciones-apartados.js`) y se corrige la numeración cuando `subapartado` llega como texto (`"0"` no es falsy en JS).
-- ⚠️ **Nota de roles**: v3 permitía guardar a `jefeDepartamento` o `admin`; en v4 todo jefe de departamento se mapea a `admin` (`auth.php`), por lo que el chequeo único de rol es equivalente y consistente con la 2.2.
-- ⚠️ **Alcance**: los datos (tabla `contenidos_defecto_programaciones`) son compartidos por apartado+departamento tal y como en v3; si un profesor rellena su propio contenido en su programación, ese prevalece sobre el por defecto (comportamiento de la generación de programaciones, fuera de alcance de esta fase).
-
-### v4.2.x - Decisión B — FASE 2.1 FIEL A V3 (Programaciones)
-- ✅ **Reencuadre de la Fase 2.1** tras detectar que el modelo inicial no era fiel a v3: en v3 **no existe tabla `programaciones`**. La programación vive en **apartados + contenidos** asociados a cada materia (flag `materias.tiene_programacion`). Se retiran las acciones crear/guardar/eliminar y la tabla ficticia.
-- **Entregables redefinidos (FIEL a v3)**:
-  - Backend `backend/api/programaciones/index.php` (compatible PHP 5 con `mysqli_*`):
-    - `listar`: materias con programación activa + estado real (nº de apartados). Curso vía `materias.idCurso → cursos`.
-    - `obtener`: apartados + contenidos de la materia (solo lectura), agrupando varios contenidos por apartado.
-    - `importar` (conservado, opera sobre las tablas reales v3): borra y re-inserta de destino←origen `contenidos_programaciones`, `temas`, `competencias_temas`/`criterios_temas`, replicando `v3/ajax/programaciones/importar_programacion.php`.
-  - Frontend `frontend/js/views/programaciones-view.js` + cliente `frontend/js/api/programaciones.js`:
-    - Listado **Materia | Curso | Horas | Apartados** con filtro por materia.
-    - Modal «Ver» (solo lectura) de apartados + contenidos; sin create/edit/delete.
-    - Importar origen→destino con doble confirmación (SweetAlert2), conservado.
-  - Integración: cargado en `index.html`, registrado en `app.js` y mapeado a la ruta `/programaciones` en `app-layout.js`.
-- ✅ **Verificado contra la BD real** (`gestionies.sql`): `php -l` limpio; `listar` devuelve materias reales (p. ej. 4º ESO «Lenguaje y Literatura», L2, 15 apartados) y `obtener` devuelve el texto real de su programación.
-- ⚠️ **Alcance**: la edición de los datos se hace en las fases 2.2–2.5 (CRUD de apartados/contenidos + temas); aquí solo se listan, ven e importan. Ver [Registro de Decisiones Técnicas](#registro-de-decisiones-técnicas).
-
-### v4.1.3 - 2025 - Fase 1 Completa (Módulos Básicos)
-- ✅ **Especialidades**: CRUD completo implementado
-- ✅ **Ciclos Formativos**: CRUD con asociación a especialidades
-- ✅ **Cursos**: CRUD con categorías (ESO/BACH/FP/OTROS)
-- ✅ **Grupos**: CRUD básico
-- ✅ **Materias**: CRUD básico
-- ✅ **Escenarios**: CRUD adaptado a tabla `escenarios_desideratas`
-- ✅ **Correcciones generales**:
-  - Todos los endpoints backend migrados a PDO con sentencias preparadas
-  - APIs frontend consistentes con el patrón establecido
-  - Vistas formateadas correctamente sin errores de sintaxis
-  - Orden de carga de scripts verificado en index.html
-  - Componentes registrados en app.js y app-layout.js
-
-### v4.1.2 - 2025 - Fase 1.2 Profesores Completada
-- ✅ **Profesores**: Módulo completo con diseño Bootstrap 5
-  - Backend: `backend/api/profesores.php` (CRUD completo, filtrado por departamento)
-  - Frontend View: `frontend/js/views/profesores-view.js`
-  - Frontend API: `frontend/js/api/profesores.js`
-  - Diseño homogéneo con Bootstrap 5.3.8
-  - Iconos Bootstrap Icons (sin imágenes PNG)
-  - CSS personalizado mínimo
-  - SweetAlert2 para mensajes y confirmaciones
-  - Modal centrado con header coloreado
-  - Listado en card con list-group-flush
-  - Funcionalidades implementadas:
-    - Listar profesores filtrados por departamento
-    - Crear profesor con asignación de departamento
-    - Editar profesor (nombre, apellidos, usuario, contraseña)
-    - Eliminar profesor con confirmación
-    - Actualizar jefe de departamento
-    - Activar/desactivar profesor
-    - Ordenar profesores (subir/bajar)
-  - ✅ **Corrección de errores**:
-    - Solucionado error de sintaxis por backticks mal escapados en templates
-    - Corregido orden de carga de scripts en index.html
-    - Backends y frontends cargan en el orden correcto
-
-### v4.1.0 - Fase 1.1 Departamentos Completada
-- ✅ **Departamentos**: Módulo completo con diseño Bootstrap 5
-  - Backend: `backend/api/departamentos.php` (CRUD completo)
-  - Frontend View: `frontend/js/views/departamentos-view.js`
-  - Frontend JS: `frontend/js/departamentos.js`
-  - Diseño homogéneo con Bootstrap 5.3.8
-  - Iconos Bootstrap Icons (sin imágenes PNG)
-  - CSS personalizado mínimo
-  - SweetAlert2 para mensajes y confirmaciones
-  - Modal centrado con header coloreado
-  - Listado en card con list-group-flush
-
-### v4.0.1 - 2025
-- ✅ Corregido error de compatibilidad PHP: migrado de `mysql_*` a `mysqli_*`
-- ✅ Login funcional usando tabla `profesores` de v3
-- ✅ Adaptado sistema de autenticación a estructura real de BD
-- ✅ Contraseñas MD5 compatibles con v3
-- ✅ Roles basados en campo `jefe_departamento`
-- ✅ Filtrado por usuarios activos (`activo = 1`)
-- ✅ README actualizado con planificación detallada
-
-### v4.0.0 - Versión inicial
-- Estructura base fullstack creada
-- Frontend Vue 3 con Bootstrap 5
-- Sistema de autenticación básico (requería correcciones)
+| Funcionalidad completa | En desarrollo (Fases 1, 2.1–2.7 y 3 completas) |
 
 ---
 
-## Metodología de Desarrollo v4
+## Notas importantes
 
-### Principios de Diseño
+- La aplicación está diseñada para funcionar en servidores antiguos con PHP 5 (sin build/compilación).
+- El frontend se sirve directamente desde el navegador; las sesiones se manejan desde el backend PHP.
+- Se debe usar **la misma base de datos que v3** (tabla `profesores`, no `usuarios`; contraseñas en MD5).
+- **Seguridad**: validar siempre en backend, escapar salidas HTML, usar `prepared statements` y verificar permisos por rol.
 
-1. **Bootstrap First**
-   - Utilizar al máximo las clases utilitarias de Bootstrap 5.3.8
-   - CSS personalizado solo cuando sea estrictamente necesario
-   - Componentes nativos de Bootstrap (modals, cards, list-groups, etc.)
+### Usuarios de prueba
 
-2. **Iconografía**
-   - Bootstrap Icons 1.13.1 exclusivamente
-   - Sin imágenes PNG/SVG personalizadas
-   - Iconos semánticos según contexto
+Cuentas creadas en `gestionies.profesores` para probar las fases 2.x sobre Laragon (usuario real, `activo=1`, depto 1). **Borrarlas una vez comprobado**:
 
-3. **Componentes Vue**
-   - Vue 3 desde CDN (sin build step)
-   - Templates como strings en archivos .js
-   - Componentes registrados globalmente
-   - Comunicación padre-hijo vía props/events
-
-4. **Responsive Design**
-   - Mobile-first approach
-   - Sidebar colapsable en pantallas <768px
-   - Menú se cierra automáticamente tras navegación
-   - Uso de container-fluid para contenido principal
-
-5. **Arquitectura Fullstack**
-   - Backend PHP 5 devuelve JSON
-   - Frontend Vue consume APIs con fetch()
-   - Sesiones manejadas desde backend
-   - Validación siempre en servidor
-
-### Patrón CRUD Base
-
-Cada módulo sigue esta estructura:
-
-```
-backend/
-└── api/
-    └── {modulo}.php       # API REST (GET, POST, DELETE)
-
-frontend/
-├── js/
-│   ├── views/
-│   │   └── {modulo}-view.js    # Template Vue del módulo
-│   └── {modulo}.js             # Lógica de negocio (cargar, crear, editar, borrar)
-```
-
-### Convenciones de Código
-
-- **Backend PHP**: 
-  - Respuestas JSON: `{success: bool, data: any, message: string}`
-  - Usar `mysqli_*` con prepared statements
-  - Validar permisos por rol
-
-- **Frontend JS**:
-  - Componentes como objetos literales
-  - Events personalizados con `$emit()`
-  - SweetAlert2 para UX feedback
-  - Iconos Bootstrap en templates
-
-### Registro de Decisiones Técnicas
-
-Las decisiones importantes de diseño e implementación se documentan en este README bajo la sección correspondiente de cada versión.
-
-#### D-2025: Fase 2.1 «Programaciones» — Decisión B, FIEL A V3 (no tabla propia)
-- **Decidido por**: Usuario («FIEL a v3»).
-- **Contexto**: la primera entrega de la 2.1 modelaba una `tabla programaciones` simplificada (una fila por materia/grupo con objetivos/metodología/etc.). Al contrastar con el modelo real de v3 se detectó que **no existe** esa tabla: en v3 la programación didáctica son **apartados + contenidos** asociados a cada materia (flag `materias.tiene_programacion`), y no hay una «fila» que crear.
-- **Decisión**: rehacer la 2.1 para ser fiel a v3. Se retiran crear/guardar/eliminar y la tabla ficticia. Entregables finales:
-  - `backend/api/programaciones/index.php`: `listar` (materias con programación + nº de apartados; curso vía `idCurso → cursos`), `obtener` (apartados + contenidos, solo lectura) e `importar` (conservado sobre las tablas reales v3).
-  - `frontend/js/views/programaciones-view.js` + cliente `api/programaciones.js`: listado **Materia | Curso | Horas | Apartados**, modal «Ver» y modal de importación; sin create/edit/delete.
-- **Consecuencia**: la edición real de los apartados/contenidos se hace en las fases 2.2–2.5 (CRUD de esos módulos). La 2.1 da visibilidad fiel al estado y conserva el Importar existente.
-- **Verificación**: `php -l` limpio; comprobado contra la BD real (`gestionies.sql`) vía HTTP: `listar` y `obtener` devuelven datos reales del curso en marcha.
-
-
-## Historial de cambios
-
-### v4.1.3 - Fase 1 completa (Módulos básicos de mantenimiento)
-
-**Fecha**: Implementación completada
-
-**Módulos implementados**:
-- ✅ **1.3 Especialidades**: CRUD completo
-  - Backend: `backend/api/especialidades/{listar,obtener,guardar,eliminar}.php`
-  - Frontend: `frontend/js/views/especialidades-view.js`, `frontend/js/api/especialidades.js`
-
-- ✅ **1.4 Ciclos Formativos**: CRUD con asociación a especialidades
-  - Backend: `backend/api/ciclos/{listar,obtener,guardar,eliminar}.php`
-  - Frontend: `frontend/js/views/ciclos-view.js`, `frontend/js/api/ciclos.js`
-
-- ✅ **1.5 Cursos**: CRUD con categorías (ESO/BACH/FP/OTROS)
-  - Backend: `backend/api/cursos/{listar,obtener,guardar,eliminar}.php`
-  - Frontend: `frontend/js/views/cursos-view.js`, `frontend/js/api/cursos.js`
-
-- ✅ **1.6 Grupos**: CRUD básico
-  - Backend: `backend/api/grupos/{listar,obtener,guardar,eliminar}.php`
-  - Frontend: `frontend/js/views/grupos-view.js`, `frontend/js/api/grupos.js`
-
-- ✅ **1.7 Materias**: CRUD básico
-  - Backend: `backend/api/materias/{listar,obtener,guardar,eliminar}.php`
-  - Frontend: `frontend/js/views/materias-view.js`, `frontend/js/api/materias.js`
-
-- ✅ **1.8 Escenarios**: CRUD básico (aulas, salas, etc.)
-  - Backend: `backend/api/escenarios/{listar,obtener,guardar,eliminar}.php`
-  - Frontend: `frontend/js/views/escenarios-view.js`, `frontend/js/api/escenarios.js`
-
-**Consideraciones técnicas**:
-1. Todos los módulos siguen el mismo patrón de diseño para facilitar mantenimiento
-2. Backend compatible con PHP 5.x usando `mysqli_*` functions
-3. Frontend Vue 3 desde CDN sin proceso de compilación
-4. Uso consistente de Bootstrap 5.3.8 y SweetAlert2
-5. Los nombres de campos en frontend coinciden con las claves primarias de BD (idEspecialidad, idCiclo, etc.)
-
-**Próximos pasos**: Fase 2 - Programaciones Didácticas
+| Usuario | Contraseña | Rol (v4) | jefatura | Notas |
+|---------|-----------|----------|----------|-------|
+| `testadmin` | `admin1234` | admin | `jefe_departamento=1` | Permite acceder a las secciones con permisos (guardar 2.2/2.3, menús de administración) |
+| `testprofe` | `profesor1` | profesor | `jefe_departamento=0` | Simula un profesor: sin acceso al menú «Contenidos generales» y 403 en `guardar` |
