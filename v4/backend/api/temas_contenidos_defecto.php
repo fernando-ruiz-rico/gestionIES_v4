@@ -53,7 +53,7 @@ if ($action === 'cargar') {
         sendJSONError('Debe indicar un departamento', 400);
     }
 
-    $stmt = mysqli_prepare($db, "SELECT contexto, recursos, metodologia, acciones
+    $stmt = mysqli_prepare($db, "SELECT contexto, recursos, metodologia, adaptaciones
                 FROM contenidos_defcto_temas WHERE idDepartamento = ?");
     if (!$stmt) {
         sendJSONError('Error al preparar la consulta: ' . mysqli_error($db), 500);
@@ -101,10 +101,10 @@ if ($action === 'guardar') {
     mysqli_free_result($resultCheck);
 
     if ($existe) {
-        $stmt = mysqli_prepare($db, "UPDATE contenidos_defcto_temas SET contexto = ?, recursos = ?, metodologia = ?, acciones = ? WHERE idDepartamento = ?");
+        $stmt = mysqli_prepare($db, "UPDATE contenidos_defcto_temas SET contexto = ?, recursos = ?, metodologia = ?, adaptaciones = ? WHERE idDepartamento = ?");
         mysqli_stmt_bind_param($stmt, "ssssi", $contexto, $recursos, $metodologia, $adaptaciones, $idDepartamento);
     } else {
-        $stmt = mysqli_prepare($db, "INSERT INTO contenidos_defcto_temas (idDepartamento, contexto, recursos, metodologia, acciones) VALUES (?, ?, ?, ?, ?)");
+        $stmt = mysqli_prepare($db, "INSERT INTO contenidos_defcto_temas (idDepartamento, contexto, recursos, metodologia, adaptaciones) VALUES (?, ?, ?, ?, ?)");
         mysqli_stmt_bind_param($stmt, "isssi", $idDepartamento, $contexto, $recursos, $metodologia, $adaptaciones);
     }
 
