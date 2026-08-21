@@ -102,6 +102,9 @@ app.component('programaciones-aula-view', ProgramacionesAulaView);
 app.component('programaciones-seguimiento-view', ProgramacionesSeguimientoView);
 app.component('temas-view', TemasView);
 app.component('temas-contenidos-defecto-view', TemasContenidosDefectoView);
+app.component('pccf-view', PCCFView);
+app.component('pccf-apartados-view', PCCFApartadosView);
+app.component('pccf-contenidos-defecto-view', PCCFContenidosDefectoView);
 
 // Montar la aplicación
 app.mount('#app');

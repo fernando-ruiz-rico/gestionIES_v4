@@ -48,7 +48,10 @@ const AppLayout = {
         'temas-contenidos-defecto-view': TemasContenidosDefectoView,
         'programaciones-aula-view': ProgramacionesAulaView,
         'programaciones-seguimiento-view': ProgramacionesSeguimientoView,
-        'temas-view': TemasView
+        'temas-view': TemasView,
+        'pccf-view': PCCFView,
+        'pccf-apartados-view': PCCFApartadosView,
+        'pccf-contenidos-defecto-view': PCCFContenidosDefectoView
     },
 
     methods: {
@@ -78,7 +81,10 @@ const AppLayout = {
                 'temas_contenidos_defecto.php': 'temas-contenidos-defecto-view',
                 'programaciones_aula.php': 'programaciones-aula-view',
                 'programaciones_seguimiento_aula.php': 'programaciones-seguimiento-view',
-                'temas.php': 'temas-view'
+                'temas.php': 'temas-view',
+                'pccf_apartados.php': 'pccf-apartados-view',
+                'pccf_contenidos_defecto.php': 'pccf-contenidos-defecto-view',
+                'pccf.php': 'pccf-view'
             };
             
             this.vistaActual = vistaMap[link] || 'home-view';

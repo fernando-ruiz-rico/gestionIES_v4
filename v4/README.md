@@ -275,21 +275,30 @@ Estos módulos son la base del sistema y deben implementarse primero:
 ### Fase 3: PCCF (Proyecto Curricular de Centro de Formación)
 
 #### 3.1 PCCF
-- **Backend**: `backend/api/pccf.php`
-  - Gestión del PCCF
-- **Frontend**: `frontend/js/views/pccf-view.js`
-- **Referencia v3**: `pccf.php`, `ajax/pccf/`
+- **Backend**: `backend/api/pccf/`
+  - `listar_ciclos.php` — lista los ciclos formativos disponibles
+  - `listar.php` — carga el contenido del PCCF (por ciclo, o por ciclo + apartado)
+  - `guardar.php` — inserta/actualiza/elimina el contenido de un ciclo y apartado (fiel a v3)
+- **Frontend**: `frontend/js/views/pccf-view.js` + `frontend/js/api/pccf.js`
+  - Editor TinyMCE, selector de ciclo y apartado, guardar cambios
+- **Referencia v3**: `pccf.php`, `ajax/pccf/cargar_contenido_pccf.php`, `ajax/pccf/insertar_contenido_pccf.php`
 
 #### 3.2 Apartados PCCF
-- **Backend**: `backend/api/pccf_apartados.php`
-  - CRUD de apartados del PCCF
-- **Frontend**: `frontend/js/views/pccf-apartados-view.js`
+- **Backend**: `backend/api/pccf_apartados/`
+  - `listar.php` — lista los apartados del PCCF
+  - `obtener.php` — datos de un apartado concreto
+  - `guardar.php` — inserta/actualiza un apartado
+  - `borrar.php` — elimina un apartado y sus conexiones
+  - `ordenar.php` — reordena los apartados según el nuevo orden
+- **Frontend**: `frontend/js/views/pccf-apartados-view.js` + `frontend/js/api/pccf_apartados.js`
+  - CRUD de apartados, numeración v3 (cont++/cont2++)
 - **Referencia v3**: `pccf_apartados.php`, `ajax/pccf_apartados/`
 
 #### 3.3 Contenidos por Defecto PCCF
-- **Backend**: `backend/api/pccf_contenidos_defecto.php`
-  - Contenidos estándar PCCF
-- **Frontend**: `frontend/js/views/pccf-contenidos-defecto-view.js`
+- **Backend**: `backend/api/pccf_contenidos_defecto/`
+  - `cargar.php` — carga el contenido por defecto de un apartado para un departamento
+  - `guardar.php` — inserta/actualiza/elimina el contenido por defecto (fiel a v3)
+- **Frontend**: `frontend/js/views/pccf-contenidos-defecto-view.js` + `frontend/js/api/pccf_contenidos_defecto.js`
 - **Referencia v3**: `pccf_contenidos_defecto.php`, `ajax/pccf_contenidos_defecto/`
 
 ### Fase 4: Resultados de Aprendizaje y Competencias
