@@ -234,20 +234,30 @@ Estos módulos son la base del sistema y deben implementarse primero:
 - **Estado**: ✅ Completado. Ver [Historial de cambios](#historial-de-cambios).
 
 #### 2.5 Seguimiento de Programaciones
-- **Backend**: `backend/api/programaciones_seguimiento.php`
-  - Registro de impartición
-  - Vista previa
-- **Frontend**: `frontend/js/views/programaciones-seguimiento-view.js`
+- **Backend**: `backend/api/programaciones_seguimiento/{profesores,materias,grupos,evaluaciones,cargar,guardar}.php`
+  - ✅ Selectores en cascada fieles a v3: profesor (solo admin; uno el suyo) → materia → grupo → evaluación (`profesores`, `materias`, `grupos`, `evaluaciones`)
+  - ✅ Cargar registro de impartición por profesor+materia+grupo+evaluación (`cargar`)
+  - ✅ Guardar registro: temporalización + resultados académicos + inclusión del alumnado (`guardar`), inserta/actualiza
+- **Frontend**: `frontend/js/views/programaciones-seguimiento-view.js` (+ cliente `frontend/js/api/programaciones-seguimiento.js`)
+  - ✅ Selector en cascada fiel a v3: profesor (solo admin) + materia + grupo + evaluación
+  - ✅ Tres editores TinyMCE WYSIWYG con la misma configuración que 2.3/2.4: temporalización, resultados académicos e inclusión del alumnado
+  - ✅ Botones «Guardar cambios» y «Vista previa» (modal con las tres secciones renderizadas)
 - **Referencia v3**: `programaciones_seguimiento.php`, `ajax/programaciones_seguimiento/`
+- **Estado**: ✅ Completado. Ver [Historial de cambios](#historial-de-cambios).
 
-#### 2.6 Temas
-- **Backend**: `backend/api/temas.php`
-  - CRUD de temas
-  - Cargar checkboxes RA/CE
-  - Recalcular porcentajes
-  - Repetir evaluación
-- **Frontend**: `frontend/js/views/temas-view.js`
+#### 2.6 Temas (Unidades de programación)
+- **Backend**: `backend/api/temas.php` (PHP 5 / `mysqli_*` con sentencias preparadas)
+  - ✅ CRUD de temas/unidades: `listar_materias`, `listar`, `obtener`, `nuevo`, `guardar`, `borrar`
+  - ✅ Cargar RA/CE por materia (`accordion_ra_ce`) y editar un RA (`actualizar_ra`)
+  - ✅ Recalcular porcentajes de evaluación de los RA (`recalcular_porcentajes`)
+  - ✅ Repetir el campo «Evaluación» en el resto de unidades de la materia (`repetir_evaluacion`)
+- **Frontend**: `frontend/js/views/temas-view.js` (+ cliente `frontend/js/api/temas.js`)
+  - ✅ Listado de temas por materia (orden, título, % y horas) con control visual de sumas (%=100, horas anuales) en verde/rojo
+  - ✅ Editor por pestañas (Datos / RA-CE) con editor TinyMCE fiel a v3 (`initTinyMCE('datostema', 350)`), «Dejar valores por defecto» por campo
+  - ✅ Acordeón dinámico RA→CE con checkboxes, modal de edición de RA (% + clave) y suma controlada
+  - ✅ Botones «Repetir en resto de unidades» y «Calcular y actualizar porcentajes» (confirma antes de sobreescribir)
 - **Referencia v3**: `temas.php`, `editar_tema.php`, `ajax/temas/`
+- **Estado**: ✅ Completado. Ver [Historial de cambios](#historial-de-cambios).
 
 #### 2.7 Contenidos por Defecto de Temas
 - **Backend**: `backend/api/temas_contenidos_defecto.php`
@@ -367,7 +377,7 @@ Implementar endpoints para generación de PDFs (usando librería compatible con 
 ### Fase 9: Características Avanzadas
 
 - [ ] Vistas previas de criterios de evaluación
-- [ ] Edición de temas con accordion RA/CE
+- [x] Edición de temas con accordion RA/CE (entregado en la Fase 2.6 — ver [Historial de cambios](#historial-de-cambios))
 - [ ] Modales reutilizables (migrar desde `modales/` de v3)
 - [ ] Sistema de activaciones por curso académico
 - [ ] Copia de seguridad y restauración
@@ -392,9 +402,9 @@ v4/
 │       ├── escenarios.php              # Pendiente
 │       ├── programaciones.php          # Pendiente
 │       ├── programaciones_apartados.php # Pendiente
-│       ├── programaciones_aula.php     # Pendiente
-│       ├── programaciones_seguimiento.php # Pendiente
-│       ├── temas.php                   # Pendiente
+│       ├── programaciones_aula.php     # ✅ Implementado
+│       ├── programaciones_seguimiento.php # ✅ Implementado
+│       ├── temas.php                   # ✅ Implementado
 │       ├── pccf.php                    # Pendiente
 │       ├── resultados_aprendizaje.php  # Pendiente
 │       ├── seleccion.php               # Pendiente
@@ -441,7 +451,8 @@ v4/
 | Escenarios | ✅ | ✅ | Completado |
 | Programaciones | ✅ | ✅ | Completado |
 | Programaciones de aula | ✅ | ✅ | Completado |
-| Temas | ❌ | ❌ | Pendiente |
+| Seguimiento de programaciones | ✅ | ✅ | Completado |
+| Temas | ✅ | ✅ | Completado |
 | PCCF | ❌ | ❌ | Pendiente |
 | Resultados Aprendizaje | ❌ | ❌ | Pendiente |
 | Selección | ❌ | ❌ | Pendiente |
@@ -494,8 +505,6 @@ Cuentas locales creadas en `gestionies.profesores` para probar las fases 2.x sob
 
 ## Próximos pasos inmediatos
 
-- **Fase 2.5 — Seguimiento de Programaciones** (`programaciones_seguimiento_aula`): registrar impartición diaria, temporalización y resultados. Incluye editor TinyMCE (misma infraestructura que 2.3/2.4).
-- **Fase 2.6 — Temas**: CRUD + checkboxes RA/CE + recálculo de porcentajes. Edición con varios editores TinyMCE (descripción, justificación, contexto, contenidos, secuenciación, recursos, evaluación, metodología).
 - **Fase 2.7 — Contenidos por Defecto de Temas**: editor TinyMCE para textos por defecto por departamento.
 - **Fase 3 — PCCF** completo: apartados + contenidos por defecto + vista previa.
 
@@ -518,9 +527,35 @@ Cuentas locales creadas en `gestionies.profesores` para probar las fases 2.x sob
 | CSS personalizado extenso | Bootstrap 5.3.8 + CSS mínimo |
 | AJAX con jQuery | Fetch API + JSON |
 | Templates PHP | Componentes Vue |
-| Funcionalidad completa | En desarrollo (login funcional) |
+| Funcionalidad completa | En desarrollo (Fase 1 y 2.1–2.6 completas) |
 
 ## Historial de cambios
+
+### v4.2.4 - 2026 - Fase 2.6 «Temas / Unidades de programación» Completada
+- ✅ **Backend** `backend/api/temas.php` (PHP 5 / `mysqli_*` con sentencias preparadas; acciones por parámetro `action`):
+  - `listar_materias` / `listar` / `obtener`: materias y temas/unidades por materia (orden, título, peso, horas).
+  - `nuevo` / `guardar` / `borrar`: CRUD de temas dentro de transacción (`mysqli_begin_transaction`).
+  - `accordion_ra_ce`: carga RA/CE de la materia (cada RA con sus CE asociados, total de RA).
+  - `actualizar_ra`: edita un RA (porcentaje de evaluación, «es clave»).
+  - `recalcular_porcentajes`: recalcula y actualiza los porcentajes de evaluación de los RA.
+  - `repetir_evaluacion`: copia el campo «Evaluación» al resto de unidades de la materia.
+- ✅ **Frontend** `frontend/js/views/temas-view.js` (+ cliente `js/api/temas.js`):
+  - Listado de temas por materia con control visual de sumas (%=100, horas = horas anuales) en verde/rojo.
+  - Editor por pestañas **Datos / RA-CE** con editor TinyMCE fiel a v3 (`initTinyMCE('datostema', 350)`): contexto, recursos, metodología, adaptaciones, evaluación, con «Dejar valores por defecto» por campo.
+  - Acordeón dinámico RA→CE: checkboxes de RA/CE, modal de edición de RA (% + clave), suma controlada (debe dar 100%).
+  - Botones «Repetir en resto de unidades» y «Calcular y actualizar porcentajes» (confirma antes de sobreescribir).
+- ✅ **Integración** (verificada por inspección de código y git): scripts en `index.html`, componente registrado en `app.js` y mapeado a `/temas.php` en `app-layout.js`; acceso «Temas» en el menú.
+
+### v4.2.3 - 2026 - Fase 2.5 «Seguimiento de Programaciones» Completada
+- ✅ **Backend** `backend/api/programaciones_seguimiento/{profesores,materias,grupos,evaluaciones,cargar,guardar}.php` (PHP 5 / `mysqli_*` con sentencias preparadas):
+  - `profesores` / `materias` / `grupos` / `evaluaciones`: selectores en cascada fieles a v3.
+  - `cargar`: registro de impartición por profesor+materia+grupo+evaluación.
+  - `guardar`: inserta/actualiza el registro (temporalización, resultados académicos, inclusión del alumnado). Admin guarda para cualquier profesor; un profesor solo para sí mismo (fuerza `idProfesor` al usuario de la sesión).
+- ✅ **Frontend** `frontend/js/views/programaciones-seguimiento-view.js` (+ cliente `js/api/programaciones-seguimiento.js`):
+  - Selector en cascada fiel a v3: profesor (solo admin) + materia + grupo + evaluación.
+  - Tres editores TinyMCE WYSIWYG con la **misma configuración que 2.3/2.4**: temporalización, resultados académicos e inclusión del alumnado.
+  - Botones «Guardar cambios» y «Vista previa» (modal con las tres secciones renderizadas).
+- ✅ **Integración** (verificada por inspección de código y git): scripts en `index.html`, componente registrado en `app.js` y mapeado a `/programaciones_seguimiento_aula.php` en `app-layout.js`.
 
 ### v4.2.2 - 2026 - Fase 2.4 «Programación de Aula» Completada
 - ✅ **Backend** `backend/api/programaciones_aula/{materias,grupos,temas,contenido,guardar}.php` (PHP 5 / `mysqli_*` con sentencias preparadas):
