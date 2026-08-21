@@ -46,7 +46,8 @@ const AppLayout = {
         'programaciones-apartados-view': ProgramacionesApartadosView,
         'programaciones-contenidos-defecto-view': ProgramacionesContenidosDefectoView,
         'programaciones-aula-view': ProgramacionesAulaView,
-        'programaciones-seguimiento-view': ProgramacionesSeguimientoView
+        'programaciones-seguimiento-view': ProgramacionesSeguimientoView,
+        'temas-view': TemasView
     },
 
     methods: {
@@ -74,7 +75,8 @@ const AppLayout = {
                 'programaciones_apartados.php': 'programaciones-apartados-view',
                 'programaciones_contenidos_defecto.php': 'programaciones-contenidos-defecto-view',
                 'programaciones_aula.php': 'programaciones-aula-view',
-                'programaciones_seguimiento_aula.php': 'programaciones-seguimiento-view'
+                'programaciones_seguimiento_aula.php': 'programaciones-seguimiento-view',
+                'temas.php': 'temas-view'
             };
             
             this.vistaActual = vistaMap[link] || 'home-view';

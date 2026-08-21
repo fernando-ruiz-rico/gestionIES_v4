@@ -138,6 +138,7 @@ function getMenus($rol, $departamentoUsuario = 0) {
         array("id" => 3, "submenu" => true, "texto" => "Competencias", "roles" => array(ROLE_ADMIN), "icono" => "bi-lightning", "link" => "competencias_ciclos"),
         array("id" => 3, "submenu" => true, "texto" => "Cualificaciones y UC", "roles" => array(ROLE_ADMIN), "icono" => "bi-award", "link" => "cualificaciones_uc"),
         array("id" => 3, "submenu" => true, "texto" => "Programaciones", "roles" => null, "icono" => "bi-file-earmark-text", "link" => "programaciones"),
+        array("id" => 3, "submenu" => true, "texto" => "Temas / Unidades", "roles" => null, "icono" => "bi-stack", "link" => "temas"),
         array("id" => 3, "submenu" => true, "texto" => "Programaciones de aula", "roles" => null, "icono" => "bi-house-door", "link" => "programaciones_aula"),
         array("id" => 3, "submenu" => true, "texto" => "Apartados PCCF", "roles" => array(ROLE_ADMIN), "icono" => "bi-list", "link" => "pccf_apartados"),
         array("id" => 3, "submenu" => true, "texto" => "Contenidos grales. PCCF", "roles" => array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO), "icono" => "bi-database", "link" => "pccf_contenidos_defecto"),

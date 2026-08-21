@@ -100,6 +100,7 @@ app.component('programaciones-apartados-view', ProgramacionesApartadosView);
 app.component('programaciones-contenidos-defecto-view', ProgramacionesContenidosDefectoView);
 app.component('programaciones-aula-view', ProgramacionesAulaView);
 app.component('programaciones-seguimiento-view', ProgramacionesSeguimientoView);
+app.component('temas-view', TemasView);
 
 // Montar la aplicación
 app.mount('#app');
