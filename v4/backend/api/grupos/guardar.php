@@ -16,12 +16,12 @@ if (!$datos) {
     exit;
 }
 
-$nombre = trim($datos['nombre'] ?? '');
-$abreviatura = trim($datos['abreviatura'] ?? '');
-$idCurso = intval($datos['idCurso'] ?? 0);
-$orden = intval($datos['orden'] ?? 0);
-$mostrar = intval($datos['mostrar'] ?? 1);
-$horas_complementarias_dual = intval($datos['horas_complementarias_dual'] ?? 0);
+$nombre = trim(isset($datos['nombre']) ? $datos['nombre'] : '');
+$abreviatura = trim(isset($datos['abreviatura']) ? $datos['abreviatura'] : '');
+$idCurso = intval(isset($datos['idCurso']) ? $datos['idCurso'] : 0);
+$orden = intval(isset($datos['orden']) ? $datos['orden'] : 0);
+$mostrar = intval(isset($datos['mostrar']) ? $datos['mostrar'] : 1);
+$horas_complementarias_dual = intval(isset($datos['horas_complementarias_dual']) ? $datos['horas_complementarias_dual'] : 0);
 $id = isset($datos['id']) ? intval($datos['id']) : 0;
 
 if (empty($nombre)) {
@@ -35,7 +35,7 @@ if ($id > 0) {
     mysqli_stmt_bind_param($stmt, "siiiiii", $nombre, $abreviatura, $idCurso, $orden, $mostrar, $horas_complementarias_dual, $id);
 } else {
     $stmt = mysqli_prepare($db, "INSERT INTO grupos (nombre, abreviatura, idCurso, orden, mostrar, horas_complementarias_dual) VALUES (?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "siiii", $nombre, $abreviatura, $idCurso, $orden, $mostrar, $horas_complementarias_dual);
+    mysqli_stmt_bind_param($stmt, "ssiiii", $nombre, $abreviatura, $idCurso, $orden, $mostrar, $horas_complementarias_dual);
 }
 
 $ok = mysqli_stmt_execute($stmt);

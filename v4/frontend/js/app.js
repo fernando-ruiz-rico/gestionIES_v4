@@ -48,7 +48,7 @@ const app = createApp({
             Swal.fire({
                 icon: 'success',
                 title: '¡Bienvenido!',
-                text: `Hola ${userData.nombre} ${userData.apellidos}`,
+                text: `Hola ${userData.nombre}`,
                 timer: 2000,
                 showConfirmButton: false
             });

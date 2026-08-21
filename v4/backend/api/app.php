@@ -45,34 +45,34 @@ function getMenusAPI() {
 
 function getActivaciones() {
     $conn = getDBConnection();
-    
+
     if (!$conn) {
         sendJSONError('Error de conexión a la base de datos');
     }
-    
-    // Obtener configuraciones de activación (similar a comprobar_activaciones.php de v3)
+
+    // Estado de las activaciones, igual que includes/comprobar_activaciones.php de v3:
+    // la tabla real es 'config' con columnas 'clave' y 'valor' ('ON' / 'OFF').
     $activaciones = array(
-        'desideratasActivadas' => false,
-        'programacionesActivadas' => true
+        'desideratas' => false,
+        'programaciones' => false
     );
-    
-    // Consultar tabla de configuración si existe
-    $query = "SELECT nombre, valor FROM configuracion WHERE nombre IN ('desideratas_activadas', 'programaciones_activadas')";
-    $result = mysqli_query($conn, $query);
-    
+
+    $result = mysqli_query($conn, "SELECT clave, valor FROM config WHERE clave IN ('desideratas', 'programaciones')");
+
     if ($result) {
         while ($row = mysqli_fetch_assoc($result)) {
-            if ($row['nombre'] == 'desideratas_activadas') {
-                $activaciones['desideratasActivadas'] = ($row['valor'] == '1' || $row['valor'] == 'true');
+            if ($row['clave'] == 'desideratas') {
+                $activaciones['desideratas'] = ($row['valor'] == 'ON');
             }
-            if ($row['nombre'] == 'programaciones_activadas') {
-                $activaciones['programacionesActivadas'] = ($row['valor'] == '1' || $row['valor'] == 'true');
+            if ($row['clave'] == 'programaciones') {
+                $activaciones['programaciones'] = ($row['valor'] == 'ON');
             }
         }
+        mysqli_free_result($result);
     }
-    
+
     closeDBConnection($conn);
-    
+
     sendJSONSuccess($activaciones);
 }
 ?>

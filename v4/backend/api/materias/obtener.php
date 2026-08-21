@@ -9,7 +9,7 @@ if (!$db) {
     exit;
 }
 
-$id = intval($_GET['id'] ?? 0);
+$id = intval(isset($_GET['id']) ? $_GET['id'] : 0);
 if ($id <= 0) {
     http_response_code(400);
     echo json_encode(['error' => 'ID inválido']);

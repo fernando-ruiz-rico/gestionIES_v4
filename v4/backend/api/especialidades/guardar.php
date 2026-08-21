@@ -16,11 +16,11 @@ if (!$datos) {
     exit;
 }
 
-$id = trim($datos['id'] ?? '');
-$descripcion = trim($datos['descripcion'] ?? '');
-$idDepartamento = intval($datos['idDepartamento'] ?? 0);
-$horasTutoria = intval($datos['horasTutoria'] ?? 0);
-$horasIngles = intval($datos['horasIngles'] ?? 0);
+$id = trim(isset($datos['id']) ? $datos['id'] : '');
+$descripcion = trim(isset($datos['descripcion']) ? $datos['descripcion'] : '');
+$idDepartamento = intval(isset($datos['idDepartamento']) ? $datos['idDepartamento'] : 0);
+$horasTutoria = intval(isset($datos['horasTutoria']) ? $datos['horasTutoria'] : 0);
+$horasIngles = intval(isset($datos['horasIngles']) ? $datos['horasIngles'] : 0);
 
 if (empty($id)) {
     http_response_code(400);

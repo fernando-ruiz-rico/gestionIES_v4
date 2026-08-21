@@ -66,8 +66,9 @@ if (empty($_POST['id'])) {
         $clave = md5($usuario);
     }
     
-    $query = "INSERT INTO profesores (idDepartamento, nombre, abreviatura, usuario, clave, idEspecialidad, observaciones_horario, telefono, email) 
-              VALUES ($idDepartamento, '$nombre', $abreviatura_sql, $usuario_sql, '$clave', $idEspecialidad_sql, $observaciones_sql, $telefono_sql, $email_sql)";
+    // La columna "grupo" es NOT NULL sin valor por defecto; v3 no la pide, así que se guarda vacía
+    $query = "INSERT INTO profesores (idDepartamento, nombre, abreviatura, usuario, clave, idEspecialidad, observaciones_horario, telefono, email, grupo) 
+              VALUES ($idDepartamento, '$nombre', $abreviatura_sql, $usuario_sql, '$clave', $idEspecialidad_sql, $observaciones_sql, $telefono_sql, $email_sql, '')";
     
     $result = mysqli_query($db, $query);
     

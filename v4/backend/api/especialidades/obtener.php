@@ -9,14 +9,14 @@ if (!$db) {
     exit;
 }
 
-$id = trim($_GET['id'] ?? '');
+$id = trim(isset($_GET['id']) ? $_GET['id'] : '');
 if (empty($id)) {
     http_response_code(400);
     echo json_encode(['error' => 'ID inválido']);
     exit;
 }
 
-$stmt = mysqli_prepare($db, "SELECT e.*, d.nombre as departamento FROM especialidades e LEFT JOIN departamentos d ON e.idDepartamento = d.idDepartamento WHERE e.id = ?");
+$stmt = mysqli_prepare($db, "SELECT e.*, d.nombre as departamento FROM especialidades e LEFT JOIN departamentos d ON e.idDepartamento = d.id WHERE e.id = ?");
 mysqli_stmt_bind_param($stmt, "s", $id);
 mysqli_stmt_execute($stmt);
 $res = mysqli_stmt_get_result($stmt);

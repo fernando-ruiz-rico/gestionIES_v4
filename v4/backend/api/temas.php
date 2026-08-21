@@ -400,7 +400,7 @@ try {
                         secuenciacion = ?, recursos = ?, evaluacion = ?, metodologia = ?, adaptaciones = ?,
                         contexto_defecto = ?, recursos_defecto = ?, metodologia_defecto = ?, adaptaciones_defecto = ?
                         WHERE id = ?");
-            mysqli_stmt_bind_param($upd, "isiisssssssssssssi",
+            mysqli_stmt_bind_param($upd, "isiiisssssssssssssi",
                 $orden, $titulo, $horas, $trimestre, $peso,
                 $descripcion, $justificacion, $contexto, $contenidos,
                 $secuenciacion, $recursos, $evaluacion, $metodologia, $adaptaciones,

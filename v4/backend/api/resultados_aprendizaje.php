@@ -119,7 +119,7 @@ try {
             $idMateria = intval($datos['idMateria']);
             $texto = $datos['texto'];
             $orden = intval($datos['orden']);
-            $porcentajeEmpresa = intval($datos['porcentaje_empresa'] ?? 0);
+            $porcentajeEmpresa = intval(isset($datos['porcentaje_empresa']) ? $datos['porcentaje_empresa'] : 0);
             if ($idMateria <= 0 || empty($texto)) {
                 throw new Exception('Datos incompletos para guardar el resultado');
             }
@@ -156,7 +156,7 @@ try {
         // Actualiza el % de evaluación y si un RA es clave
         case 'actualizar_evaluacion':
             $idResultado = intval($datos['idResultado']);
-            $porcentajeEvaluacion = intval($datos['porcentaje_evaluacion'] ?? 0);
+            $porcentajeEvaluacion = intval(isset($datos['porcentaje_evaluacion']) ? $datos['porcentaje_evaluacion'] : 0);
             $esClave = isset($datos['es_clave']) ? 1 : 0;
             if ($idResultado <= 0) {
                 throw new Exception('ID de resultado inválido');

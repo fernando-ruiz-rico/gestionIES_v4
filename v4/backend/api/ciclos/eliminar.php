@@ -1,4 +1,7 @@
 <?php
+// API para eliminar un ciclo formativo (Fase 1)
+// Equivalente a v3/ajax/ciclos/borrar_ciclo.php
+// No se puede borrar un ciclo si tiene cursos asociados (tabla cursos_ciclos).
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
@@ -9,27 +12,42 @@ if (!$db) {
     exit;
 }
 
-$datos = json_decode(file_get_contents('php://input'), true);
-$idCiclo = intval($datos['idCiclo'] ?? 0);
+@session_start();
+$rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
+if ($rol !== 'admin') {
+    http_response_code(403);
+    echo json_encode(['error' => 'Solo el administrador puede eliminar ciclos']);
+    exit;
+}
 
+$datos = json_decode(file_get_contents('php://input'), true);
+$idCiclo = isset($datos['id']) ? intval($datos['id']) : 0;
 if ($idCiclo <= 0) {
     http_response_code(400);
     echo json_encode(['error' => 'ID inválido']);
     exit;
 }
 
-$stmt = mysqli_prepare($db, "DELETE FROM ciclos WHERE idCiclo = ?");
-mysqli_stmt_bind_param($stmt, "i", $idCiclo);
-mysqli_stmt_execute($stmt);
-
-if (mysqli_stmt_affected_rows($stmt) === 0) {
-    http_response_code(404);
-    echo json_encode(['error' => 'No encontrado']);
+// Si el ciclo tiene cursos asociados no se puede borrar
+$result = mysqli_query($db, "SELECT COUNT(*) AS total FROM cursos_ciclos WHERE idCiclo = $idCiclo");
+$fila = mysqli_fetch_assoc($result);
+mysqli_free_result($result);
+if ($fila['total'] > 0) {
+    http_response_code(409);
+    echo json_encode(['error' => 'El ciclo tiene cursos asociados. Elimina primero esas asociaciones.']);
     exit;
 }
 
-echo json_encode(['success' => true, 'message' => 'Eliminado correctamente']);
+// Borramos las unidades de competencia asociadas al ciclo
+mysqli_query($db, "DELETE FROM unidades_ciclos WHERE idCiclo = $idCiclo");
+mysqli_query($db, "DELETE FROM ciclos WHERE id = $idCiclo");
 
-mysqli_stmt_close($stmt);
-mysqli_close($db);
+if (mysqli_affected_rows($db) == 0) {
+    http_response_code(404);
+    echo json_encode(['error' => 'No se ha eliminado nada']);
+    exit;
+}
+
+closeDBConnection($db);
+echo json_encode(['success' => true, 'message' => 'Ciclo eliminado']);
 ?>

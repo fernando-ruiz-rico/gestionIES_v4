@@ -1,42 +1,57 @@
 <?php
+// API para eliminar un curso (Fase 1)
+// Equivalente a v3/ajax/cursos/borrar_curso.php:
+// no se puede borrar un curso que tenga grupos o materias;
+// al borrarlo se limpian sus datos seleccion, materias y grupos.
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+
 $db = getDBConnection();
-if (!$db) { http_response_code(500); echo json_encode(['error' => 'Error conexión']); exit; }
-$accion = basename(__FILE__, '.php');
-if ($accion === 'listar') {
-    $r = mysqli_query($db, "SELECT * FROM cursos ORDER BY nombre");
-    $d = []; while($f = mysqli_fetch_assoc($r)) { $d[] = $f; }
-    echo json_encode($d);
-} elseif ($accion === 'obtener') {
-    $id = intval($_GET['id'] ?? 0);
-    if ($id <= 0) { http_response_code(400); echo json_encode(['error' => 'ID inválido']); exit; }
-    $stmt = mysqli_prepare($db, "SELECT * FROM cursos WHERE idCurso = ?");
-    mysqli_stmt_bind_param($stmt, "i", $id);
-    mysqli_stmt_execute($stmt);
-    $res = mysqli_stmt_get_result($stmt);
-    $row = mysqli_fetch_assoc($res);
-    if (!$row) { http_response_code(404); echo json_encode(['error' => 'No encontrado']); exit; }
-    echo json_encode($row);
-} elseif ($accion === 'guardar') {
-    $datos = json_decode(file_get_contents('php://input'), true);
-    $nombre = trim($datos['nombre'] ?? '');
-    $categoria = trim($datos['categoria'] ?? '');
-    $id = isset($datos['idCurso']) ? intval($datos['idCurso']) : 0;
-    if (empty($nombre)) { http_response_code(400); echo json_encode(['error' => 'Nombre obligatorio']); exit; }
-    if ($id > 0) { $stmt = mysqli_prepare($db, "UPDATE cursos SET nombre=?, categoria=? WHERE idCurso=?"); mysqli_stmt_bind_param($stmt, "ssi", $nombre, $categoria, $id); }
-    else { $stmt = mysqli_prepare($db, "INSERT INTO cursos (nombre, categoria) VALUES (?, ?)"); mysqli_stmt_bind_param($stmt, "ss", $nombre, $categoria); }
-    $ok = mysqli_stmt_execute($stmt);
-    echo json_encode(['success' => $ok, 'message' => $ok ? 'Guardado' : 'Error']);
-} elseif ($accion === 'eliminar') {
-    $datos = json_decode(file_get_contents('php://input'), true);
-    $id = intval($datos['idCurso'] ?? 0);
-    if ($id <= 0) { http_response_code(400); echo json_encode(['error' => 'ID inválido']); exit; }
-    $stmt = mysqli_prepare($db, "DELETE FROM cursos WHERE idCurso = ?");
-    mysqli_stmt_bind_param($stmt, "i", $id);
-    mysqli_stmt_execute($stmt);
-    if (mysqli_stmt_affected_rows($stmt) === 0) { http_response_code(404); echo json_encode(['error' => 'No encontrado']); exit; }
-    echo json_encode(['success' => true, 'message' => 'Eliminado']);
+if (!$db) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de conexión']);
+    exit;
 }
+
+@session_start();
+$rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
+if ($rol !== 'admin') {
+    http_response_code(403);
+    echo json_encode(['error' => 'Solo el administrador puede eliminar cursos']);
+    exit;
+}
+
+$datos = json_decode(file_get_contents('php://input'), true);
+$id = isset($datos['id']) ? intval($datos['id']) : 0;
+if ($id <= 0) {
+    http_response_code(400);
+    echo json_encode(['error' => 'ID inválido']);
+    exit;
+}
+
+// Si el curso tiene grupos o materias no se puede borrar
+$result = mysqli_query($db, "SELECT id FROM grupos WHERE idCurso = $id UNION SELECT id FROM materias WHERE idCurso = $id");
+if (mysqli_num_rows($result) > 0) {
+    mysqli_free_result($result);
+    http_response_code(409);
+    echo json_encode(['error' => 'El curso tiene grupos o materias. Elimínalas antes de borrar el curso.']);
+    exit;
+}
+mysqli_free_result($result);
+
+// Limpiamos los datos asociados al curso
+mysqli_query($db, "DELETE FROM seleccion WHERE idMateria IN (SELECT id FROM materias WHERE idCurso = $id)");
+mysqli_query($db, "DELETE FROM materias WHERE idCurso = $id");
+mysqli_query($db, "DELETE FROM grupos WHERE idCurso = $id");
+mysqli_query($db, "DELETE FROM cursos_ciclos WHERE idCurso = $id");
+mysqli_query($db, "DELETE FROM cursos WHERE id = $id");
+
+if (mysqli_affected_rows($db) == 0) {
+    http_response_code(404);
+    echo json_encode(['error' => 'No se ha eliminado nada']);
+    exit;
+}
+
 mysqli_close($db);
+echo json_encode(['success' => true, 'message' => 'Curso eliminado']);
 ?>

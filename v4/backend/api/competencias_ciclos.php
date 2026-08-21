@@ -89,7 +89,7 @@ try {
             $id = isset($datos['id']) && !empty($datos['id']) ? intval($datos['id']) : 0;
             $codigo = $datos['codigo'];
             $texto = $datos['texto'];
-            $tipo = intval($datos['tipo'] ?? 1);
+            $tipo = intval(isset($datos['tipo']) ? $datos['tipo'] : 1);
             $idCiclo = intval($datos['idCiclo']);
             if ($id > 0) {
                 $codigo = mysqli_real_escape_string($db, $codigo);
@@ -101,7 +101,11 @@ try {
                 }
                 $codigo = mysqli_real_escape_string($db, $codigo);
                 $texto = mysqli_real_escape_string($db, $texto);
-                $query = "INSERT INTO competencias_ciclos (codigo, texto, tipo, idCiclo) VALUES ('$codigo', '$texto', $tipo, $idCiclo)";
+                // "orden" es NOT NULL sin valor por defecto; v3 no la pedía, así que la ponemos al final de la lista
+                $sel = mysqli_query($db, "SELECT MAX(orden) AS maxo FROM competencias_ciclos WHERE idCiclo = $idCiclo");
+                $filaMax = mysqli_fetch_assoc($sel);
+                $orden = ($filaMax && $filaMax['maxo'] !== null) ? intval($filaMax['maxo']) + 1 : 1;
+                $query = "INSERT INTO competencias_ciclos (codigo, texto, tipo, idCiclo, orden) VALUES ('$codigo', '$texto', $tipo, $idCiclo, $orden)";
             }
             if (!mysqli_query($db, $query)) {
                 throw new Exception(mysqli_error($db));

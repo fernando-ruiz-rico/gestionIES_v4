@@ -21,14 +21,18 @@ const CursosView = {
                                     <tr>
                                         <th>ID</th>
                                         <th>Nombre</th>
+                                        <th>Abreviatura</th>
+                                        <th>Horas semanales</th>
                                         <th>Categoría</th>
                                         <th class="text-end">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="c in cursos" :key="c.idCurso">
-                                        <td>{{ c.idCurso }}</td>
+                                    <tr v-for="c in cursos" :key="c.id">
+                                        <td>{{ c.id }}</td>
                                         <td>{{ c.nombre }}</td>
+                                        <td>{{ c.abreviatura }}</td>
+                                        <td>{{ c.horas_semana || 0 }}</td>
                                         <td>{{ c.categoria || '-' }}</td>
                                         <td class="text-end">
                                             <button class="btn btn-sm btn-outline-primary me-1" @click="editar(c)">
@@ -40,7 +44,7 @@ const CursosView = {
                                         </td>
                                     </tr>
                                     <tr v-if="!cursos.length">
-                                        <td colspan="4" class="text-center text-muted py-4">Sin cursos</td>
+                                        <td colspan="6" class="text-center text-muted py-4">Sin cursos</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -64,8 +68,23 @@ const CursosView = {
                                     <input type="text" class="form-control" v-model="form.nombre" required>
                                 </div>
                                 <div class="mb-3">
+                                    <label class="form-label">Abreviatura *</label>
+                                    <input type="text" class="form-control" v-model="form.abreviatura" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Horas de clase semanales</label>
+                                    <input type="number" min="0" class="form-control" v-model="form.horas_semana"
+                                           placeholder="Deja el campo vacío o pon 0 si el curso no debe sumar X horas semanales">
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label">Categoría</label>
-                                    <input type="text" class="form-control" v-model="form.categoria">
+                                    <select class="form-select" v-model="form.categoria">
+                                        <option value="">--Selecciona una categoría--</option>
+                                        <option value="ESO">ESO</option>
+                                        <option value="BACH">Bachillerato</option>
+                                        <option value="FP">FP</option>
+                                        <option value="OTROS">Otros</option>
+                                    </select>
                                 </div>
                             </form>
                         </div>
@@ -84,7 +103,7 @@ const CursosView = {
     data() {
         return {
             cursos: [],
-            form: { idCurso: 0, nombre: '', categoria: '' },
+            form: { id: 0, nombre: '', abreviatura: '', horas_semana: '', categoria: '' },
             esEdicion: false,
             modal: null
         };
@@ -106,13 +125,19 @@ const CursosView = {
         },
 
         abrirModal() {
-            this.form = { idCurso: 0, nombre: '', categoria: '' };
+            this.form = { id: 0, nombre: '', abreviatura: '', horas_semana: '', categoria: '' };
             this.esEdicion = false;
             this.modal.show();
         },
 
         editar(curso) {
-            this.form = { ...curso };
+            this.form = {
+                id: curso.id,
+                nombre: curso.nombre,
+                abreviatura: curso.abreviatura,
+                horas_semana: curso.horas_semana,
+                categoria: curso.categoria
+            };
             this.esEdicion = true;
             this.modal.show();
         },
@@ -150,7 +175,7 @@ const CursosView = {
                 cancelButtonText: 'Cancelar'
             }).then(async (res) => {
                 if (res.isConfirmed) {
-                    const result = await CursosAPI.eliminar(curso.idCurso);
+                    const result = await CursosAPI.eliminar(curso.id);
 
                     if (result.success) {
                         Swal.fire({

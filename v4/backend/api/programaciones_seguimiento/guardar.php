@@ -84,11 +84,11 @@ if ($existe) {
     $stmt = mysqli_prepare($db, "UPDATE seguimiento_programaciones_aula
                                 SET temporalizacion = ?, resultados = ?, inclusion = ?, num_aprobados = ?, num_suspensos = ?, num_otros = ?
                                 WHERE idMateria = ? AND idGrupo = ? AND idProfesor = ? AND curso = ? AND evaluacion = ?");
-    mysqli_stmt_bind_param($stmt, "ssiisiiisi", $temporalizacion, $resultados, $inclusion, $numAprobados, $numSuspensos, $numOtros, $idMateria, $idGrupo, $idProfesor, $curso, $idEvaluacion);
+    mysqli_stmt_bind_param($stmt, "sssiiiiiisi", $temporalizacion, $resultados, $inclusion, $numAprobados, $numSuspensos, $numOtros, $idMateria, $idGrupo, $idProfesor, $curso, $idEvaluacion);
 } else {
     $stmt = mysqli_prepare($db, "INSERT INTO seguimiento_programaciones_aula (idMateria, idGrupo, idProfesor, curso, evaluacion, temporalizacion, resultados, inclusion, num_aprobados, num_suspensos, num_otros)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "iisssssiisi", $idMateria, $idGrupo, $idProfesor, $curso, $idEvaluacion, $temporalizacion, $resultados, $inclusion, $numAprobados, $numSuspensos, $numOtros);
+    mysqli_stmt_bind_param($stmt, "iiisisssiii", $idMateria, $idGrupo, $idProfesor, $curso, $idEvaluacion, $temporalizacion, $resultados, $inclusion, $numAprobados, $numSuspensos, $numOtros);
 }
 
 if (mysqli_stmt_execute($stmt)) {

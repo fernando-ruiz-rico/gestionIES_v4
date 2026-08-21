@@ -23,9 +23,8 @@ Aplicación fullstack para la gestión interna de centros educativos (IESSV). Re
 ```
 v4/
 ├── backend/           # API PHP 5 (mysqli_*, PHP 5)
-│   ├── config.php     # Configuración y funciones comunes
+│   ├── config.php     # Configuración y funciones comunes (BD, sesión, roles, menús)
 │   ├── create_table.sql
-│   ├── dbcheck.php    # Diagnóstico de conexión/esquema
 │   └── api/           # Endpoints de la API (namespace por módulo)
 │       ├── auth.php               # Autenticación (login, logout, check)
 │       ├── app.php                # Datos de la aplicación (menús, activaciones)
@@ -42,7 +41,7 @@ v4/
 │       ├── programaciones_contenidos_defecto/# Fase 2.3
 │       ├── programaciones_aula/               # Fase 2.4
 │       ├── programaciones_seguimiento/        # Fase 2.5
-│       ├── temas/                 # Fase 2.6
+│       ├── temas.php               # Fase 2.6
 │       ├── temas_contenidos_defecto.php         # Fase 2.7
 │       ├── pccf/                  # Fase 3.1
 │       ├── pccf_apartados/        # Fase 3.2
@@ -225,7 +224,7 @@ Módulos de base del sistema:
 
 | Módulo | Backend | Frontend | Referencia v3 | Estado |
 |--------|---------|----------|---------------|:------:|
-| 3.1 PCCF | `backend/api/pccf/{listar, listar_ciclos, guardar}.php` | `pccf-view.js` + `api/pccf.js` | `pccf.php`, `ajax/pccf/` | Completado |
+| 3.1 PCCF | `backend/api/pccf/{listar, listar_ciclos, guardar, generar}.php` | `pccf-view.js` + `api/pccf.js` | `pccf.php`, `ajax/pccf/` | Completado |
 | 3.2 Apartados PCCF | `backend/api/pccf_apartados/{listar, obtener, guardar, borrar, ordenar}.php` | `pccf-apartados-view.js` | `pccf_apartados.php`, `ajax/pccf_apartados/` | Completado |
 | 3.3 Cont. defecto PCCF | `backend/api/pccf_contenidos_defecto/{cargar, guardar}.php` | `pccf-contenidos-defecto-view.js` | `pccf_contenidos_defecto.php`, `ajax/pccf_contenidos_defecto/` | Completado |
 
@@ -272,7 +271,7 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 
 - ✅ Edición de temas con accordion RA/CE (entregado en la Fase 2.6)
 - ✅ Modales reutilizables: `frontend/js/components/modales/modales.js` (`ModalConfirmacion`, `ModalMensaje`), equivalentes a `modales/mensaje.php` y a las ventanas de confirmación de v3; los modales específicos de cada módulo se definen inline en sus vistas.
-- ⬜ Sistema de activaciones por curso académico
+- ✅ Sistema de activaciones (ON/OFF de `programaciones` y `desideratas`): lo cubre la Fase 7.3 en `configuracion.php` (el frontend envía `evaluacionRA`/`seleccion`; se mapea a las filas `programaciones`/`desideratas`, mismo modelo que v3)
 - ⬜ Copia de seguridad y restauración
 - ⬜ Importación/exportación de datos (parcial: la exportación a CSV en `excel-view.js` cubre la exportación; la importación queda pendiente)
 
@@ -399,7 +398,7 @@ frontend/
 | CSS personalizado extenso | Bootstrap 5.3.8 + CSS mínimo |
 | AJAX con jQuery | Fetch API + JSON |
 | Templates PHP | Componentes Vue |
-| Funcionalidad completa | En desarrollo (Fases 1, 2.1–2.7 y 3 completas) |
+| Funcionalidad completa | Paridad funcional completada (Fases 1–8) |
 
 ---
 
@@ -412,9 +411,45 @@ frontend/
 
 ### Usuarios de prueba
 
-Cuentas creadas en `gestionies.profesores` para probar las fases 2.x sobre Laragon (usuario real, `activo=1`, depto 1). **Borrarlas una vez comprobado**:
+Cuentas creadas en `gestionies.profesores` para probar sobre Laragon (usuario real, `activo=1`, depto 1). **No borrarlas de la BD sin avisar** (se usan en las verificaciones).
 
-| Usuario | Contraseña | Rol (v4) | jefatura | Notas |
-|---------|-----------|----------|----------|-------|
-| `testadmin` | `admin1234` | admin | `jefe_departamento=1` | Permite acceder a las secciones con permisos (guardar 2.2/2.3, menús de administración) |
-| `testprofe` | `profesor1` | profesor | `jefe_departamento=0` | Simula un profesor: sin acceso al menú «Contenidos generales» y 403 en `guardar` |
+| Usuario | Contraseña | Rol v4 | jefatura | Notas |
+|---------|-----------|--------|----------|-------|
+| `testadmin` | `admin1234` | jefeDepartamento | `jefe_departamento=1` | Accede a todas las secciones de administración/jefe (guardar 2.2–2.7, 3.x, 4.x, 5.1, actas, históricos, configuración). **No** es el `admin` de la tabla `config`. |
+| `testprofe` | `profesor1` | profesor | `jefe_departamento=0` | Simula un profesor: menús filtrados y 403 en escrituras de jefe/admin. |
+
+El **`admin`** de verdad (usuario `admin` de la tabla `config`, contraseña en MD5) sigue funcionando para el login de `v4`; es el único con rol `admin` (p. ej. menús restringidos a admin). Para probar con él temporalmente se cambió la contraseña de `config` a un valor de prueba durante las verificaciones y se restauró después.
+
+---
+
+## Verificación de paridad con v3 (realizada)
+
+### Cobertura de pruebas
+- **Suite GET** (`/tmp/test_v4_api.sh`): 55 comprobaciones de solo lectura, todas `PASS` con el admin real y con `testadmin`; `testprofe` devuelve 403 esperados en las escrituras de jefe/admin y lee el resto de módulos como profesor.
+- **Suite de escritura** (`/tmp/test_v4_write.sh`): 52 operaciones de escritura con **rollback** (filas `ZZ` distinguibles, creadas y eliminadas; `config` restaurado). Todas `PASS` con el admin real.
+- **PDF** (`pdf_acta.php?idActa=1`, `pdf_seleccion.php?idProfesor=217&idEscenario=1`): HTTP 200 y PDF válido.
+- **Sintaxis**: `php -l` limpio en todos los `.php` del `backend/` (salvo `lib/`); `node --check` limpio en todos los `.js` del `frontend/`.
+
+### Compatibilidad PHP 5.6
+- **Sin sintaxis PHP 7+**: 0 usos de `??`, `?->`, `fn(`, `match`, tipado de propiedades, ni builtins de 7.3+/8.x (`str_contains`, `array_key_first`, `is_countable`, etc.).
+- **TCPDF** (`backend/lib/php/tcpdf/`) **idéntico byte a byte** al de v3 (mismo `diff`), por lo que su compatibilidad con PHP 5.6 es la misma que la de v3.
+- La verificación de sintaxis se hace con `php -l` y `grep` porque el servidor Laragon actual sirve PHP 8.3; el objetivo de compatibilidad es PHP 5.6 (mismo criterio que v3).
+
+### Errores latentes de v3 corregidos en v4
+v4 usa el mismo esquema que v3, pero corrige varios errores latentes que en MySQL con `STRICT_TRANS_TABLES` harían fallar INSERTs:
+- `ciclos.horas`, `materias.grupo`, `profesores.grupo`: columnas `NOT NULL` sin default → v4 las explícitamente al INSERT.
+- `competencias_ciclos.orden`: v4 inserta `MAX(orden)+1` por ciclo (antes era omisa y fallaba).
+- `escenarios/eliminar`: v3 apuntaba a la tabla equivocada / dispatcher roto → v4 elimina de `escenarios_desideratas` con `LIMIT 1`.
+- `ciclos/eliminar`: v4 mantiene la comprobación real de cursos asociados antes de borrar.
+
+### Archivos muertos eliminados
+Se eliminaron ficheros sin ninguna referencia (dead code) en v4:
+- `backend/api/grupos/index.php`
+- `backend/api/apartados_programaciones/` (directorio huérfano; el módulo real es `programaciones_apartados/`)
+- `backend/_insp.php`, `backend/test_conn.php`, `backend/dbcheck.php` (rascunes de desarrollo)
+
+Se **conservan** los que sí se usan, aunque parezcan duplicados: `backend/api/materias/index.php` (lo referencia `programaciones-view.js`), `backend/api/programaciones/index.php` (lo referencia `api/programaciones.js`), `backend/api/pccf/generar.php` (lo referencia `pccf-view.js`), y `frontend/js/departamentos.js` (lo monta `departamentos-view.js`).
+
+### Notas de paridad
+- **Menú «Selección»**: v3 **no** bloquea la vista de selección en función de `desideratas` (v3/`seleccion.php` no usa `$desideratasActivadas`), por lo que v4 tampoco la bloquea; la activación solo afecta a la edición, igual que en v3.
+- **Seguridad de datos**: se restauraron desde `gestionies.sql` todas las filas de prueba `ZZ` creadas durante las verificaciones, y se corrigió (restaurando la fila real `apartados_pccf.id=1`) un borrado accidental detectado durante las pruebas. No quedan restos de datos de prueba en la BD compartida.

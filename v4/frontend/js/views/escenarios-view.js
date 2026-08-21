@@ -25,8 +25,8 @@ const EscenariosView = {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="e in escenarios" :key="e.idEscenario">
-                                        <td>{{ e.idEscenario }}</td>
+                                    <tr v-for="e in escenarios" :key="e.id">
+                                        <td>{{ e.id }}</td>
                                         <td>{{ e.nombre }}</td>
                                         <td class="text-end">
                                             <button class="btn btn-sm btn-outline-primary me-1" @click="editar(e)">
@@ -78,7 +78,7 @@ const EscenariosView = {
     data() {
         return {
             escenarios: [],
-            form: { idEscenario: 0, nombre: '' },
+            form: { id: 0, nombre: '' },
             esEdicion: false,
             modal: null
         };
@@ -100,7 +100,7 @@ const EscenariosView = {
         },
 
         abrirModal() {
-            this.form = { idEscenario: 0, nombre: '' };
+            this.form = { id: 0, nombre: '' };
             this.esEdicion = false;
             this.modal.show();
         },
@@ -144,7 +144,7 @@ const EscenariosView = {
                 cancelButtonText: 'Cancelar'
             }).then(async (res) => {
                 if (res.isConfirmed) {
-                    const result = await EscenariosAPI.eliminar(escenario.idEscenario);
+                    const result = await EscenariosAPI.eliminar(escenario.id);
 
                     if (result.success) {
                         Swal.fire({

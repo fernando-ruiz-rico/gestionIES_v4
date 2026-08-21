@@ -10,7 +10,7 @@ if (!$db) {
 }
 
 $datos = json_decode(file_get_contents('php://input'), true);
-$id = intval($datos['id'] ?? 0);
+$id = intval(isset($datos['id']) ? $datos['id'] : 0);
 
 if ($id <= 0) {
     http_response_code(400);

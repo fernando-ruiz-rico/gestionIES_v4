@@ -10,7 +10,7 @@ if (!$db) {
 }
 
 $datos = json_decode(file_get_contents('php://input'), true);
-$id = trim($datos['id'] ?? '');
+$id = trim(isset($datos['id']) ? $datos['id'] : '');
 
 if (empty($id)) {
     http_response_code(400);

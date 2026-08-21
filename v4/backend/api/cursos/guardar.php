@@ -1,42 +1,54 @@
 <?php
+// API para crear o modificar un curso (Fase 1)
+// Equivalente a v3/ajax/cursos/insertar_curso.php
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+
 $db = getDBConnection();
-if (!$db) { http_response_code(500); echo json_encode(['error' => 'Error conexión']); exit; }
-$accion = basename(__FILE__, '.php');
-if ($accion === 'listar') {
-    $r = mysqli_query($db, "SELECT * FROM cursos ORDER BY nombre");
-    $d = []; while($f = mysqli_fetch_assoc($r)) { $d[] = $f; }
-    echo json_encode($d);
-} elseif ($accion === 'obtener') {
-    $id = intval($_GET['id'] ?? 0);
-    if ($id <= 0) { http_response_code(400); echo json_encode(['error' => 'ID inválido']); exit; }
-    $stmt = mysqli_prepare($db, "SELECT * FROM cursos WHERE idCurso = ?");
-    mysqli_stmt_bind_param($stmt, "i", $id);
-    mysqli_stmt_execute($stmt);
-    $res = mysqli_stmt_get_result($stmt);
-    $row = mysqli_fetch_assoc($res);
-    if (!$row) { http_response_code(404); echo json_encode(['error' => 'No encontrado']); exit; }
-    echo json_encode($row);
-} elseif ($accion === 'guardar') {
-    $datos = json_decode(file_get_contents('php://input'), true);
-    $nombre = trim($datos['nombre'] ?? '');
-    $categoria = trim($datos['categoria'] ?? '');
-    $id = isset($datos['idCurso']) ? intval($datos['idCurso']) : 0;
-    if (empty($nombre)) { http_response_code(400); echo json_encode(['error' => 'Nombre obligatorio']); exit; }
-    if ($id > 0) { $stmt = mysqli_prepare($db, "UPDATE cursos SET nombre=?, categoria=? WHERE idCurso=?"); mysqli_stmt_bind_param($stmt, "ssi", $nombre, $categoria, $id); }
-    else { $stmt = mysqli_prepare($db, "INSERT INTO cursos (nombre, categoria) VALUES (?, ?)"); mysqli_stmt_bind_param($stmt, "ss", $nombre, $categoria); }
-    $ok = mysqli_stmt_execute($stmt);
-    echo json_encode(['success' => $ok, 'message' => $ok ? 'Guardado' : 'Error']);
-} elseif ($accion === 'eliminar') {
-    $datos = json_decode(file_get_contents('php://input'), true);
-    $id = intval($datos['idCurso'] ?? 0);
-    if ($id <= 0) { http_response_code(400); echo json_encode(['error' => 'ID inválido']); exit; }
-    $stmt = mysqli_prepare($db, "DELETE FROM cursos WHERE idCurso = ?");
-    mysqli_stmt_bind_param($stmt, "i", $id);
-    mysqli_stmt_execute($stmt);
-    if (mysqli_stmt_affected_rows($stmt) === 0) { http_response_code(404); echo json_encode(['error' => 'No encontrado']); exit; }
-    echo json_encode(['success' => true, 'message' => 'Eliminado']);
+if (!$db) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de conexión']);
+    exit;
 }
+
+@session_start();
+$rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
+if ($rol !== 'admin') {
+    http_response_code(403);
+    echo json_encode(['error' => 'Solo el administrador puede guardar cursos']);
+    exit;
+}
+
+$datos = json_decode(file_get_contents('php://input'), true);
+$nombre      = isset($datos['nombre']) ? trim($datos['nombre']) : '';
+$abreviatura = isset($datos['abreviatura']) ? trim($datos['abreviatura']) : '';
+$horas       = isset($datos['horas_semana']) ? intval($datos['horas_semana']) : 0;
+$categoria   = isset($datos['categoria']) ? trim($datos['categoria']) : '';
+$id          = isset($datos['id']) ? intval($datos['id']) : 0;
+
+if ($nombre === '' || $abreviatura === '') {
+    http_response_code(400);
+    echo json_encode(['error' => 'Faltan datos obligatorios (nombre y abreviatura)']);
+    exit;
+}
+
+// En v3 el campo "horas semanales" puede llegar vacío; en ese caso se guarda 0
+if ($id > 0) {
+    $stmt = mysqli_prepare($db, "UPDATE cursos SET nombre = ?, abreviatura = ?, horas_semana = ?, categoria = ? WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, "ssssi", $nombre, $abreviatura, $horas, $categoria, $id);
+} else {
+    $stmt = mysqli_prepare($db, "INSERT INTO cursos (nombre, abreviatura, horas_semana, categoria) VALUES (?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt, "ssss", $nombre, $abreviatura, $horas, $categoria);
+}
+
+$exito = mysqli_stmt_execute($stmt);
+$nuevoId = ($id > 0) ? $id : mysqli_insert_id($db);
+mysqli_stmt_close($stmt);
 mysqli_close($db);
+
+echo json_encode([
+    'success' => (bool) $exito,
+    'message' => $exito ? 'Curso guardado correctamente' : 'Error al guardar el curso',
+    'id' => (int) $nuevoId
+]);
 ?>

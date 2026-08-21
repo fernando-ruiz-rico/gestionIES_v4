@@ -16,7 +16,7 @@ const HeaderBar = {
                 <!-- Información del usuario a la derecha -->
                 <div class="ms-auto d-flex align-items-center">
                     <span class="text-muted me-3 d-none d-md-block">
-                        <i class="bi bi-person-circle"></i> {{ usuario.nombre }} {{ usuario.apellidos }}
+                        <i class="bi bi-person-circle"></i> {{ usuario.nombre }}
                     </span>
                     <span class="badge bg-secondary me-3">
                         <i class="bi bi-shield-lock"></i> {{ getRolTexto(usuario.rol) }}

@@ -34,27 +34,27 @@ function getConfigValue($db, $clave)
 
 try {
     switch ($action) {
-        // Devuelve el estado de configuración
+        // Devuelve el estado de configuración.
+        // El frontend espera {data: {activaciones: {evaluacionRA, seleccion}}};
+        // la evaluación de RA la controla la fila "programaciones" y la
+        // selección de materias la fila "desideratas" (mismo modelo que v3).
         case 'obtener':
-            $sql = "SELECT clave, valor FROM config";
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $config = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $config[$fila['clave']] = $fila['valor'];
-            }
-            mysqli_free_result($result);
+            $programaciones = getConfigValue($db, 'programaciones');
+            $desideratas = getConfigValue($db, 'desideratas');
             closeDBConnection($db);
-            sendJSONSuccess($config);
+            sendJSONSuccess(array(
+                'activaciones' => array(
+                    'evaluacionRA' => ($programaciones === 'ON'),
+                    'seleccion'    => ($desideratas === 'ON')
+                )
+            ));
             break;
 
         // Cambia la contraseña del administrador
         case 'actualizar_password':
-            $antiguo = isset($datos['antiguo']) ? $datos['antiguo'] : '';
-            $nuevo = isset($datos['nuevo']) ? $datos['nuevo'] : '';
-            $repetirNuevo = isset($datos['repetirnuevo']) ? $datos['repetirnuevo'] : '';
+            $antiguo = isset($datos['passwordActual']) ? $datos['passwordActual'] : '';
+            $nuevo = isset($datos['nuevaPassword']) ? $datos['nuevaPassword'] : '';
+            $repetirNuevo = isset($datos['passwordConfirmacion']) ? $datos['passwordConfirmacion'] : '';
             if ($nuevo !== $repetirNuevo) {
                 throw new Exception('La nueva contraseña y la repetición no coinciden');
             }
@@ -68,14 +68,25 @@ try {
             sendJSONSuccess(null, 'Contraseña de administrador actualizada');
             break;
 
-        // Activa/desactiva un período
+        // Activa/desactiva un período.
+        // El frontend envía "evaluacionRA" (fila programaciones) o "seleccion"
+        // (fila desideratas); también aceptamos los nombres de las filas.
         case 'actualizar_activacion':
             $clave = isset($datos['clave']) ? $datos['clave'] : '';
             $valor = isset($datos['valor']) ? $datos['valor'] : '';
-            if ($clave !== 'desideratas' && $clave !== 'programaciones') {
+            $claves = array('evaluacionRA' => 'programaciones', 'seleccion' => 'desideratas', 'programaciones' => 'programaciones', 'desideratas' => 'desideratas');
+            if (!isset($claves[$clave])) {
                 throw new Exception('Clave de activación no válida');
             }
-            $activo = ($valor === 'ON' || $valor === '1' || $valor === 'true') ? 'ON' : 'OFF';
+            $clave = $claves[$clave];
+            // Aceptamos el valor como booleano JSON o como texto ON/OFF
+            if ($valor === true || $valor === 'ON' || $valor === '1' || $valor === 'true') {
+                $activo = 'ON';
+            } elseif ($valor === false || $valor === 'OFF' || $valor === '0' || $valor === 'false') {
+                $activo = 'OFF';
+            } else {
+                throw new Exception('Valor de activación no válido');
+            }
             $result = mysqli_query($db, "UPDATE config SET valor='" . $activo . "' WHERE clave='" . $clave . "'");
             if (!$result) {
                 throw new Exception(mysqli_error($db));

@@ -37,12 +37,35 @@ function handleLogin() {
         sendJSONError('Usuario y contraseña son requeridos');
     }
     
-    $username = escapeString($username, $conn);
+    // Primero miramos si el login es del administrador de la aplicación
+    // (tabla config, clave 'admin'), como en v3/login.php
+    $md5pass = md5($password);
+    $queryAdm = mysqli_query($conn, "SELECT valor FROM config WHERE clave='admin' AND valor = '" . $md5pass . "'");
+    if ($queryAdm && mysqli_num_rows($queryAdm) > 0) {
+        @session_start();
+        session_destroy();
+        @session_start();
+        $_SESSION['idUsuario'] = 'admin';
+        $_SESSION['rol'] = 'admin';
+        $_SESSION['loginUsuario'] = 'admin';
+        $_SESSION['nombre'] = 'Administrador';
+
+        closeDBConnection($conn);
+        sendJSONSuccess(array(
+            'idUsuario' => 'admin',
+            'loginUsuario' => 'admin',
+            'rol' => 'admin',
+            'nombre' => 'Administrador',
+            'idDepartamento' => null
+        ), 'Login correcto');
+        return;
+    }
     
-    // Consulta compatible con PHP 5+ (tabla profesores, no usuarios)
+    // Si no, permitimos entrar a profesores con credenciales correctas y actualmente activos
+    $username = escapeString($username, $conn);
     $query = "SELECT id, nombre, usuario, clave, idDepartamento, jefe_departamento, activo 
               FROM profesores 
-              WHERE usuario = '$username' AND activo = 1";
+              WHERE usuario = '$username' AND clave = '" . $md5pass . "' AND activo = 1";
     
     $result = mysqli_query($conn, $query);
     
@@ -58,29 +81,22 @@ function handleLogin() {
     
     $user = mysqli_fetch_assoc($result);
     
-    // Verificar contraseña (MD5 como en v3)
-    $validPassword = false;
-    
-    // Intentar con MD5 primero (común en apps antiguas)
-    if (md5($password) == $user['clave']) {
-        $validPassword = true;
-    }
-    // Si no, comparar directo (texto plano)
-    else if ($password == $user['clave']) {
-        $validPassword = true;
-    }
-    
-    if (!$validPassword) {
-        closeDBConnection($conn);
-        sendJSONError('Usuario o contraseña incorrectos');
-    }
-    
-    // Iniciar sesión y guardar datos del usuario
+    // Iniciar sesión y guardar datos del usuario (misma lógica de roles que v3/login.php)
     @session_start();
     $_SESSION['idUsuario'] = $user['id'];
     $_SESSION['loginUsuario'] = $user['usuario'];
-    $_SESSION['rol'] = ($user['jefe_departamento'] == 1) ? 'admin' : 'profesor';
     $_SESSION['nombre'] = $user['nombre'];
+    if ($user['jefe_departamento']) {
+        $_SESSION['rol'] = 'jefeDepartamento';
+    } else {
+        $_SESSION['rol'] = 'profesor';
+    }
+    if (!empty($user['idEspecialidad'])) {
+        $_SESSION['especialidadUsuario'] = $user['idEspecialidad'];
+    }
+    if (!empty($user['idDepartamento'])) {
+        $_SESSION['departamentoUsuario'] = $user['idDepartamento'];
+    }
     $_SESSION['idDepartamento'] = $user['idDepartamento'];
     $_SESSION['activo'] = $user['activo'];
 
@@ -89,7 +105,7 @@ function handleLogin() {
     sendJSONSuccess(array(
         'idUsuario' => $user['id'],
         'loginUsuario' => $user['usuario'],
-        'rol' => ($_SESSION['rol'] == 'admin') ? 'admin' : 'profesor',
+        'rol' => $_SESSION['rol'],
         'nombre' => $user['nombre'],
         'idDepartamento' => $user['idDepartamento']
     ), 'Login correcto');

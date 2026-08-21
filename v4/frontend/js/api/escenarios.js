@@ -44,7 +44,7 @@ const EscenariosAPI = {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idEscenario: id })
+                body: JSON.stringify({ id: id })
             });
             return await response.json();
         } catch (e) {

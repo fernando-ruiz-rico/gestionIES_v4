@@ -10,7 +10,7 @@ if (!$db) {
 }
 
 $datos = json_decode(file_get_contents('php://input'), true);
-$nombre = trim($datos['nombre'] ?? '');
+$nombre = trim(isset($datos['nombre']) ? $datos['nombre'] : '');
 $id = isset($datos['id']) ? intval($datos['id']) : 0;
 $actual = isset($datos['actual']) ? intval($datos['actual']) : 0;
 $activo_desideratas = isset($datos['activo_desideratas']) ? intval($datos['activo_desideratas']) : 0;
