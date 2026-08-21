@@ -45,6 +45,7 @@ const AppLayout = {
         'programaciones-view': ProgramacionesView,
         'programaciones-apartados-view': ProgramacionesApartadosView,
         'programaciones-contenidos-defecto-view': ProgramacionesContenidosDefectoView,
+        'temas-contenidos-defecto-view': TemasContenidosDefectoView,
         'programaciones-aula-view': ProgramacionesAulaView,
         'programaciones-seguimiento-view': ProgramacionesSeguimientoView,
         'temas-view': TemasView
@@ -74,6 +75,7 @@ const AppLayout = {
                 'programaciones.php': 'programaciones-view',
                 'programaciones_apartados.php': 'programaciones-apartados-view',
                 'programaciones_contenidos_defecto.php': 'programaciones-contenidos-defecto-view',
+                'temas_contenidos_defecto.php': 'temas-contenidos-defecto-view',
                 'programaciones_aula.php': 'programaciones-aula-view',
                 'programaciones_seguimiento_aula.php': 'programaciones-seguimiento-view',
                 'temas.php': 'temas-view'
