@@ -32,6 +32,20 @@ const PCCFView = {
                 </div>
             </div>
 
+            <!-- Botones para generar el PDF del PCCF -->
+            <div class="row mb-3" v-if="idCiclo">
+                <div class="col-md">
+                    <button class="btn btn-light w-100" :disabled="!idApartado" @click="generarPDFApartado()" title="Genera el PDF de un ciclo y apartado concretos">
+                        <i class="bi bi-filetype-pdf me-1"></i>Generar PDF de Apartado
+                    </button>
+                </div>
+                <div class="col-md">
+                    <button class="btn btn-light w-100" @click="generarPDF()" title="Genera el PDF completo del ciclo">
+                        <i class="bi bi-filetype-pdf me-1"></i>Generar PDF
+                    </button>
+                </div>
+            </div>
+
             <!-- Zona de edición con TinyMCE -->
             <div v-if="idApartado && idCiclo">
                 <div class="card shadow-sm">
@@ -207,6 +221,30 @@ const PCCFView = {
             } finally {
                 this.guardando = false;
             }
+        },
+
+        // Genera el PDF completo del PCCF del ciclo (sin apartado)
+        generarPDF() {
+            if (!this.idCiclo) {
+                Swal.fire('Error', 'Deves seleccionar un ciclo', 'warning');
+                return;
+            }
+            window.open(
+                `../backend/api/pccf/generar.php?modo=completo&idCiclo=${this.idCiclo}`,
+                '_blank'
+            );
+        },
+
+        // Genera el PDF de un ciclo y apartado concretos
+        generarPDFApartado() {
+            if (!this.idCiclo || !this.idApartado) {
+                Swal.fire('Error', 'Deves seleccionar un ciclo y un apartado', 'warning');
+                return;
+            }
+            window.open(
+                `../backend/api/pccf/generar.php?modo=apartado&idCiclo=${this.idCiclo}&idApartado=${this.idApartado}`,
+                '_blank'
+            );
         },
 
         limpiar() {
