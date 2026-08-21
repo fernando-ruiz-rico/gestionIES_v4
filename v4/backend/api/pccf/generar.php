@@ -19,8 +19,9 @@
 header('Content-Type: application/pdf; charset=utf-8');
 
 require_once '../../config.php';
-require_once __DIR__ . '/../../../frontend/lib/php/tcpdf/examples/tcpdf_include.php';
-require_once __DIR__ . '/../../../frontend/lib/php/tcpdf/tcpdf.php';
+// Librería TCPDF compartida en backend/lib (misma que usa pdf_acta/pdf_seleccion).
+require_once __DIR__ . '/../../lib/php/tcpdf/examples/tcpdf_include.php';
+require_once __DIR__ . '/../../lib/php/tcpdf/tcpdf.php';
 
 // ============================================================================
 // Consultas a la base de datos (patrón mysqli de v4)
@@ -226,7 +227,7 @@ function generarApartadoPredefinido($db, $tipo, $idCiclo, $ciclo)
         case 1: // Identificación
             return generarContenidoIdentificacion($db, $idCiclo, $ciclo);
         case 4: // Competencias profesionales
-            returngenerarApartadoCompetenciasModulos($db, $idCiclo, 1);
+            return generarApartadoCompetenciasModulos($db, $idCiclo, 1);
         case 5: // Competencias de empleabilidad
             return generarApartadoCompetenciasModulos($db, $idCiclo, 2);
         case 7: // Distribución de módulos

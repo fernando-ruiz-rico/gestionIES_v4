@@ -450,6 +450,9 @@ Se eliminaron ficheros sin ninguna referencia (dead code) en v4:
 
 Se **conservan** los que sí se usan, aunque parezcan duplicados: `backend/api/materias/index.php` (lo referencia `programaciones-view.js`), `backend/api/programaciones/index.php` (lo referencia `api/programaciones.js`), `backend/api/pccf/generar.php` (lo referencia `pccf-view.js`), y `frontend/js/departamentos.js` (lo monta `departamentos-view.js`).
 
+### Duplicado de TCPDF eliminado
+Había **dos copias** de TCPDF en v4 (`backend/lib/php/tcpdf` y `frontend/lib/php/tcpdf`, idénticas, ~32 MB cada una). La de `frontend/` solo la usaba `backend/api/pccf/generar.php` por una ruta relativa (`__DIR__ . '/../../../frontend/…'`), además de estar en un sitio inadecuado (una lib PHP bajo `frontend/`). Se unificó todo en **`backend/lib/php/tcpdf`** (la misma que ya usaban `pdf_acta.php` y `pdf_seleccion.php`) y se eliminó `frontend/lib/php/tcpdf`. Mientras, `pccf/generar.php` dejaba un error fatal por un `return` pegado al nombre de función (`returngenerar…`); corregido. Verificado por HTTP: `pdf_acta`, `pdf_seleccion` y `pccf/generar` (modos `completo` y `apartado`) devuelven PDF válidos.
+
 ### Notas de paridad
 - **Menú «Selección»**: v3 **no** bloquea la vista de selección en función de `desideratas` (v3/`seleccion.php` no usa `$desideratasActivadas`), por lo que v4 tampoco la bloquea; la activación solo afecta a la edición, igual que en v3.
 - **Seguridad de datos**: se restauraron desde `gestionies.sql` todas las filas de prueba `ZZ` creadas durante las verificaciones, y se corrigió (restaurando la fila real `apartados_pccf.id=1`) un borrado accidental detectado durante las pruebas. No quedan restos de datos de prueba en la BD compartida.
