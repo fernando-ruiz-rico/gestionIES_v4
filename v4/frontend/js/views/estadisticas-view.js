@@ -39,7 +39,7 @@ const EstadisticasView = {
 
             <div v-if="idDepartamento && idEscenario">
                 <div v-for="s in estadisticas" :key="s.idProfesor" class="card mb-3">
-                    <div class="card-header bg-light">
+                    <div class="card-header">
                         <h5 class="h6 mb-0">{{ s.nombreProfesor }}</h5>
                     </div>
                     <div class="card-body d-flex">

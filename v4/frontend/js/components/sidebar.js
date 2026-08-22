@@ -1,9 +1,9 @@
 // Componente Sidebar (menú lateral)
 const Sidebar = {
     template: `
-        <div class="bg-light border-end" id="sidebar-wrapper">
-            <div class="sidebar-heading">
-                Gestión IES<br />
+        <div class="border-end" id="sidebar-wrapper">
+            <div class="p-3 text-center border-bottom">
+                <strong class="d-block text-uppercase">Gestión IES</strong>
                 <em>{{ usuario.loginUsuario }}</em>
             </div>
             <div class="list-group list-group-flush">
@@ -12,7 +12,7 @@ const Sidebar = {
                     <a v-if="!menu.submenu && menu.link" 
                        href="#" 
                        @click.prevent="navigate(menu.link)"
-                       class="list-group-item list-group-item-action bg-light">
+                       :class="['list-group-item', 'list-group-item-action', { active: menu.link === linkActual }]">
                         <i :class="'bi ' + menu.icono"></i>
                         {{ menu.texto }}
                     </a>
@@ -20,7 +20,7 @@ const Sidebar = {
                     <!-- Menú principal sin link (desplegable) -->
                     <a v-else-if="!menu.submenu && !menu.link" 
                        href="#" 
-                       class="list-group-item list-group-item-action bg-light"
+                       class="list-group-item list-group-item-action"
                        @click.prevent="toggleSubmenu(menu.id)">
                         <i :class="'bi ' + menu.icono"></i>
                         {{ menu.texto }}
@@ -32,7 +32,7 @@ const Sidebar = {
                     <a v-else-if="menu.submenu" 
                        v-show="submenuAbierto === getParentMenuId(menu.id)"
                        href="#"
-                       class="list-group-item list-group-item-action submenu"
+                       :class="['list-group-item', 'list-group-item-action', 'ps-4', { active: menu.link === linkActual }]"
                        @click.prevent="navigate(menu.link)">
                         <i :class="'bi ' + menu.icono"></i>
                         {{ menu.texto }}
@@ -50,6 +50,10 @@ const Sidebar = {
         menus: {
             type: Array,
             required: true
+        },
+        linkActual: {
+            type: String,
+            default: ''
         }
     },
     

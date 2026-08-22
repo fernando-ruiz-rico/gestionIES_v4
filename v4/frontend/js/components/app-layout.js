@@ -6,11 +6,11 @@ const AppLayout = {
             <header-bar :usuario="usuario" @logout="handleLogout" @close-menu="handleCloseMenu"></header-bar>
             
             <!-- Sidebar con menú -->
-            <sidebar :usuario="usuario" :menus="menus" @navigate="handleNavigate" @close-menu="handleCloseMenu"></sidebar>
+            <sidebar :usuario="usuario" :menus="menus" :link-actual="linkActual" @navigate="handleNavigate" @close-menu="handleCloseMenu"></sidebar>
             
             <!-- Contenido principal -->
             <div id="page-content-wrapper" class="container-fluid">
-                <component :is="vistaActual" :usuario="usuario"></component>
+                <component :is="vistaActual" :usuario="usuario" @navigate="handleNavigate"></component>
             </div>
         </div>
     `,
@@ -28,7 +28,8 @@ const AppLayout = {
     
     data() {
         return {
-            vistaActual: 'home-view'
+            vistaActual: 'home-view',
+            linkActual: ''
         };
     },
 
@@ -43,6 +44,9 @@ const AppLayout = {
         },
 
         handleNavigate(link) {
+            // Recordar el enlace activo para resaltar el elemento del menú
+            this.linkActual = link || '';
+
             // Mapear links a vistas
             const vistaMap = {
                 'departamentos.php': 'departamentos-view',

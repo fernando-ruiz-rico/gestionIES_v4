@@ -49,6 +49,7 @@ const ExcelView = {
 
             <div v-else-if="datos">
                 <h5>Cursos ({{ datos.cursos.length }})</h5>
+                <div class="table-responsive">
                 <table class="table table-sm table-bordered">
                     <thead><tr><th>ID</th><th>Código</th><th>Nombre</th><th>Abrev.</th></tr></thead>
                     <tbody>
@@ -57,8 +58,10 @@ const ExcelView = {
                         </tr>
                     </tbody>
                 </table>
+                </div>
 
                 <h5>Materias ({{ datos.materias.length }})</h5>
+                <div class="table-responsive">
                 <table class="table table-sm table-bordered">
                     <thead><tr><th>ID</th><th>Código</th><th>Nombre</th><th>Curso</th></tr></thead>
                     <tbody>
@@ -67,8 +70,10 @@ const ExcelView = {
                         </tr>
                     </tbody>
                 </table>
+                </div>
 
                 <h5>Selecciones ({{ datos.selecciones.length }})</h5>
+                <div class="table-responsive">
                 <table class="table table-sm table-bordered">
                     <thead><tr><th>Profesor</th><th>Materia</th><th>Curso</th><th>Grupo</th><th>Horas</th></tr></thead>
                     <tbody>
@@ -77,6 +82,7 @@ const ExcelView = {
                         </tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
     `,

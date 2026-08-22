@@ -87,19 +87,19 @@ const TemasContenidosDefectoView = {
 
                                 <div class="tab-content mt-3 mb-3" id="contenidoTabs">
                                     <div class="tab-pane fade show active" id="seccion_contexto" role="tabpanel" aria-labelledby="tab_contexto">
-                                        <label class="control-label" for="contexto">Contexto</label>
+                                        <label class="form-label" for="contexto">Contexto</label>
                                         <textarea id="contexto" class="datostema" rows="10"></textarea>
                                     </div>
                                     <div class="tab-pane fade" id="seccion_recursos" role="tabpanel" aria-labelledby="tab_recursos">
-                                        <label class="control-label" for="recursos">Recursos</label>
+                                        <label class="form-label" for="recursos">Recursos</label>
                                         <textarea id="recursos" class="datostema" rows="10"></textarea>
                                     </div>
                                     <div class="tab-pane fade" id="seccion_metodologia" role="tabpanel" aria-labelledby="tab_metodologia">
-                                        <label class="control-label" for="metodologia">Metodología</label>
+                                        <label class="form-label" for="metodologia">Metodología</label>
                                         <textarea id="metodologia" class="datostema" rows="10"></textarea>
                                     </div>
                                     <div class="tab-pane fade" id="seccion_adaptaciones" role="tabpanel" aria-labelledby="tab_adaptaciones">
-                                        <label class="control-label" for="adaptaciones">Adaptaciones</label>
+                                        <label class="form-label" for="adaptaciones">Adaptaciones</label>
                                         <textarea id="adaptaciones" class="datostema" rows="10"></textarea>
                                     </div>
                                 </div>

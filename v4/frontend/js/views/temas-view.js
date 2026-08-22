@@ -34,6 +34,7 @@ const TemasView = {
             <!-- Listado de temas + totales -->
             <div class="row mt-4" v-if="idMateria > 0">
                 <div class="col-12">
+                    <div class="table-responsive">
                     <table class="table table-striped align-middle">
                         <thead>
                             <tr>
@@ -59,6 +60,7 @@ const TemasView = {
                             </tr>
                         </tbody>
                     </table>
+                    </div>
 
                     <!-- Totales (igual criterio que v3) -->
                     <div class="text-center fw-bold" v-if="sumaPesos > 0 || sumaHoras > 0">

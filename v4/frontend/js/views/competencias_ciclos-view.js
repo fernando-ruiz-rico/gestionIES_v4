@@ -39,9 +39,9 @@ const CompetenciasCiclosView = {
                         Este ciclo no tiene competencias.
                     </div>
                     <div v-else>
-                        <div class="listado claro" v-for="(c, i) in competencias" :key="c.id">
-                            <div class="izquierda">{{ i+1 }}. {{ c.texto }}</div>
-                            <div class="derecha">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-2 mb-2" v-for="(c, i) in competencias" :key="c.id">
+                            <div class="flex-grow-1">{{ i+1 }}. {{ c.texto }}</div>
+                            <div class="d-flex gap-2">
                                 <button class="btn btn-sm btn-outline-secondary" @click="abrirModal(c)" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </button>

@@ -21,7 +21,7 @@ const ConfiguracionView = {
             <div class="row">
                 <div class="col-md-6">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-light"><h5 class="h6 mb-0">Cambiar contraseña</h5></div>
+                        <div class="card-header"><h5 class="h6 mb-0">Cambiar contraseña</h5></div>
                         <div class="card-body">
                             <div class="mb-3">
                                 <label class="form-label">Contraseña actual</label>
@@ -44,7 +44,7 @@ const ConfiguracionView = {
 
                 <div class="col-md-6" v-if="esAdmin">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-light"><h5 class="h6 mb-0">Ajustes de aplicación</h5></div>
+                        <div class="card-header"><h5 class="h6 mb-0">Ajustes de aplicación</h5></div>
                         <div class="card-body">
                             <div class="form-check form-switch mb-3">
                                 <input type="checkbox" class="form-check-input" id="toggleRA" :checked="activaciones.evaluacionRA" @change="toggle('evaluacionRA', $event.target.checked)">

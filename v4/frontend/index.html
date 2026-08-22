@@ -6,7 +6,60 @@
     <title>GestionIES v4</title>
     
     <!-- Bootstrap 5.3.8 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link id="bootstrap-css" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    
+    <!-- Gestor de temas: Bootstrap por defecto o Bootswatch. La selección
+         (menú lateral) se guarda en el navegador (localStorage) y se aplica
+         aquí, antes de pintar, para evitar el "destello" con el tema por
+         defecto. Si el tema guardado no se puede cargar, se vuelve a
+         Bootstrap estándar. -->
+    <script>
+        window.Temas = {
+            CLAVE: 'tema-gesionies',
+            POR_DEFECTO: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css',
+            CLAROS: [
+                'default', 'brite', 'cerulean', 'cosmo', 'flatly', 'journal',
+                'litera', 'lumen', 'lux', 'materia', 'minty', 'morph', 'pulse',
+                'sandstone', 'simplex', 'sketchy', 'spacelab', 'united', 'yeti', 'zephyr'
+            ],
+            // 'dark' = la hoja de Bootstrap por defecto + data-bs-theme="dark"
+            OSCUROS: ['dark', 'cyborg', 'darkly', 'quartz', 'slate', 'solar', 'superhero', 'vapor'],
+            nombre: function (t) {
+                // 'default' y 'dark' comparten etiqueta: el grupo ya indica si es claro u oscuro
+                if (t === 'default' || t === 'dark') { return 'Bootstrap'; }
+                return t.charAt(0).toUpperCase() + t.slice(1);
+            },
+            url: function (t) {
+                return (t === 'default' || t === 'dark')
+                    ? this.POR_DEFECTO
+                    : 'https://cdn.jsdelivr.net/npm/bootswatch@5.3.8/dist/' + t + '/bootstrap.min.css';
+            },
+            guardar: function (t) {
+                if (t === 'default') { localStorage.removeItem(this.CLAVE); }
+                else { localStorage.setItem(this.CLAVE, t); }
+            },
+            actual: function () {
+                return localStorage.getItem(this.CLAVE) || 'default';
+            },
+            aplicar: function (t) {
+                var l = document.getElementById('bootstrap-css');
+                // La integrity (SRI) solo corresponde a la hoja por defecto.
+                l.removeAttribute('integrity');
+                l.removeAttribute('crossorigin');
+                var porDefecto = this.POR_DEFECTO;
+                l.onerror = function () {
+                    l.onerror = null;
+                    l.href = porDefecto;
+                    document.documentElement.setAttribute('data-bs-theme', 'light');
+                    localStorage.setItem('tema-gesionies', 'default');
+                };
+                l.href = this.url(t);
+                // data-bs-theme (Bootstrap 5.3): 'dark' usa el modo oscuro del propio Bootstrap
+                document.documentElement.setAttribute('data-bs-theme', t === 'dark' ? 'dark' : 'light');
+            }
+        };
+        if (window.Temas.actual() !== 'default') { window.Temas.aplicar(window.Temas.actual()); }
+    </script>
     
     <!-- Bootstrap Icons 1.13.1 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">

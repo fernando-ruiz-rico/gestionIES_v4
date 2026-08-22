@@ -46,15 +46,15 @@ const ResultadosArendizajeView = {
                         esta materia no tiene resultados de aprendizaje.
                     </div>
                     <div v-else>
-                        <div class="listado claro" v-for="r in resultados" :key="r.id">
-                            <div class="izquierda">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-2 mb-2" v-for="r in resultados" :key="r.id">
+                            <div class="flex-grow-1">
                                 {{ r.orden }}. {{ r.texto }}
                                 <em v-if="r.porcentaje_empresa"> ({{ r.porcentaje_empresa }}% empresa)</em>
                                 <span v-if="r.es_clave" class="badge bg-success ms-2" title="RA clave">
                                     <i class="bi bi-star-fill"></i>
                                 </span>
                             </div>
-                            <div class="derecha">
+                            <div class="d-flex gap-2">
                                 <button class="btn btn-sm btn-outline-secondary" @click="abrirEvaluar(r)" title="Asociar criterios de evaluación">
                                     <i class="bi bi-tree"></i>
                                 </button>
@@ -145,9 +145,10 @@ const ResultadosArendizajeView = {
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <div v-for="c in criterios" :key="'cce'+c.codigo" class="listado claro">
-                                <div class="izquierda">{{ c.codigo }}. {{ c.texto }}</div>
-                                <div class="derecha">
+                            <div v-for="c in criterios" :key="'cce'+c.codigo"
+                                 class="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-2 mb-2">
+                                <div class="flex-grow-1">{{ c.codigo }}. {{ c.texto }}</div>
+                                <div class="d-flex gap-2">
                                     <button class="btn btn-sm btn-outline-secondary" @click="actualizarCriterio(c)" title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </button>

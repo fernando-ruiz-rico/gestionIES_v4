@@ -47,15 +47,14 @@ const SeleccionView = {
                 <!-- Panel de materias -->
                 <div class="col-md-6">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-light"><h5 class="h6 mb-0"><i class="bi bi-book me-2"></i>Materias</h5></div>
+                        <div class="card-header"><h5 class="h6 mb-0"><i class="bi bi-book me-2"></i>Materias</h5></div>
                         <div class="card-body">
-                            <div v-for="m in materias" :key="m.idMateria" class="listado claro">
-                                <div class="izquierda">{{ m.nombre }}<em v-if="m.tipo === 'TUTORIA'"> (Tutoría)</em></div>
-                                <div class="derecha">
-                                    <button class="btn btn-sm btn-outline-primary" @click="insertarSeleccion(m)" title="Añadir a la selección">
-                                        <i class="bi bi-plus"></i>
-                                    </button>
-                                </div>
+                            <div v-for="m in materias" :key="m.idMateria"
+                                 class="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-2 mb-2">
+                                <div class="flex-grow-1">{{ m.nombre }}<em v-if="m.tipo === 'TUTORIA'"> (Tutoría)</em></div>
+                                <button class="btn btn-sm btn-outline-primary" @click="insertarSeleccion(m)" title="Añadir a la selección">
+                                    <i class="bi bi-plus"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -64,19 +63,18 @@ const SeleccionView = {
                 <!-- Panel de selección -->
                 <div class="col-md-6">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-light"><h5 class="h6 mb-0"><i class="bi bi-check2-square me-2"></i>Selección</h5></div>
+                        <div class="card-header"><h5 class="h6 mb-0"><i class="bi bi-check2-square me-2"></i>Selección</h5></div>
                         <div class="card-body">
                             <div v-if="selecciones.length === 0" class="text-muted">
                                 No hay selecciones.
                             </div>
                             <div v-else>
-                                <div v-for="(s, i) in selecciones" :key="s.id" class="listado claro">
-                                    <div class="izquierda">{{ i+1 }}. {{ s.nombre }} ({{ s.abrevCurso }}{{ s.abrevGrupo }}, {{ s.horas }}h)</div>
-                                    <div class="derecha">
-                                        <button class="btn btn-sm btn-outline-danger" @click="borrarSeleccion(s)" title="Eliminar">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
+                                <div v-for="(s, i) in selecciones" :key="s.id"
+                                     class="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-2 mb-2">
+                                    <div class="flex-grow-1">{{ i+1 }}. {{ s.nombre }} ({{ s.abrevCurso }}{{ s.abrevGrupo }}, {{ s.horas }}h)</div>
+                                    <button class="btn btn-sm btn-outline-danger" @click="borrarSeleccion(s)" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </div>
                                 <div class="mt-3" v-if="totalHoras">
                                     <span class="badge bg-primary">Total: {{ totalHoras }}h</span>

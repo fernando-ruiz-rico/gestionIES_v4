@@ -18,7 +18,7 @@ const DepartamentosView = {
             
             <!-- Listado de departamentos -->
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light">
+                <div class="card-header">
                     <h5 class="mb-0 h6"><i class="bi bi-list-ul me-2"></i>Listado de departamentos</h5>
                 </div>
                 <div class="card-body p-0">

@@ -17,11 +17,12 @@ const CualificacionesUCView = {
                 <!-- Panel izquierdo: cualificaciones -->
                 <div class="col-md-6">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-light"><h5 class="h6 mb-0"><i class="bi bi-briefcase me-2"></i>Cualificaciones</h5></div>
+                        <div class="card-header"><h5 class="h6 mb-0"><i class="bi bi-briefcase me-2"></i>Cualificaciones</h5></div>
                         <div class="card-body">
-                            <div v-for="q in cualificaciones" :key="q.codigo" class="listado claro">
-                                <div class="izquierda">{{ q.codigo }} — {{ q.texto }}</div>
-                                <div class="derecha">
+                            <div v-for="q in cualificaciones" :key="q.codigo"
+                                 class="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-2 mb-2">
+                                <div class="flex-grow-1">{{ q.codigo }} — {{ q.texto }}</div>
+                                <div class="d-flex gap-2">
                                     <button class="btn btn-sm btn-outline-secondary" @click="abrirAsociar(q)" title="Asociar unidades">
                                         <i class="bi bi-tree"></i>
                                     </button>
@@ -46,11 +47,12 @@ const CualificacionesUCView = {
                 <!-- Panel derecho: unidades de competencia -->
                 <div class="col-md-6">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-light"><h5 class="h6 mb-0"><i class="bi bi-list-check me-2"></i>Unidades de Competencia</h5></div>
+                        <div class="card-header"><h5 class="h6 mb-0"><i class="bi bi-list-check me-2"></i>Unidades de Competencia</h5></div>
                         <div class="card-body">
-                            <div v-for="u in unidades" :key="u.codigo" class="listado claro">
-                                <div class="izquierda">{{ u.codigo }} — {{ u.texto }}</div>
-                                <div class="derecha">
+                            <div v-for="u in unidades" :key="u.codigo"
+                                 class="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-2 mb-2">
+                                <div class="flex-grow-1">{{ u.codigo }} — {{ u.texto }}</div>
+                                <div class="d-flex gap-2">
                                     <button class="btn btn-sm btn-outline-danger" @click="eliminarUnidad(u)" title="Eliminar">
                                         <i class="bi bi-trash"></i>
                                     </button>
@@ -82,10 +84,11 @@ const CualificacionesUCView = {
                             <div v-if="asociaciones.length === 0" class="text-muted">
                                 No hay unidades asociadas.
                             </div>
-                            <div v-else class="listado claro">
-                                <div v-for="a in asociaciones" :key="a.codigoUnidad" class="izquierda">
-                                    {{ a.codigoUnidad }} — {{ a.texto }}
-                                    <button class="btn btn-sm btn-outline-danger float-end" @click="eliminarAsociacion(a)" title="Desasociar">
+                            <div v-else>
+                                <div v-for="a in asociaciones" :key="a.codigoUnidad"
+                                     class="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-2 mb-2">
+                                    <div class="flex-grow-1">{{ a.codigoUnidad }} — {{ a.texto }}</div>
+                                    <button class="btn btn-sm btn-outline-danger" @click="eliminarAsociacion(a)" title="Desasociar">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </div>

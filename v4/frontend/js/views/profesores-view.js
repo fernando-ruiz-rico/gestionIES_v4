@@ -15,7 +15,7 @@ const ProfesoresView = {
             
             <!-- Selector de departamento -->
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light">
+                <div class="card-header">
                     <h5 class="mb-0 h6"><i class="bi bi-building me-2"></i>Seleccionar departamento</h5>
                 </div>
                 <div class="card-body">
@@ -38,7 +38,7 @@ const ProfesoresView = {
             
             <!-- Listado de profesores -->
             <div class="card shadow-sm mb-4" v-if="idDepartamentoSeleccionado">
-                <div class="card-header bg-light">
+                <div class="card-header">
                     <h5 class="mb-0 h6"><i class="bi bi-list-ul me-2"></i>Listado de profesores</h5>
                 </div>
                 <div class="card-body p-0">
@@ -52,7 +52,7 @@ const ProfesoresView = {
                             No hay profesores en este departamento
                         </div>
                         <div v-else 
-                             class="list-group-item d-flex justify-content-between align-items-center profesor-item"
+                             class="list-group-item d-flex justify-content-between align-items-center"
                              v-for="profesor in profesores"
                              :key="'pr' + profesor.id"
                              :id="'pr' + profesor.id">
@@ -163,7 +163,8 @@ const ProfesoresView = {
                                         </p>
                                         <div id="prefhoras" class="preferencias-container">
                                             <!-- Tabla de preferencias horarias -->
-                                            <table class="table table-bordered table-sm preferencias">
+                                            <div class="table-responsive">
+                                            <table class="table table-bordered table-sm">
                                                 <thead>
                                                     <tr>
                                                         <th></th>
@@ -192,6 +193,7 @@ const ProfesoresView = {
                                                     </tr>
                                                 </tbody>
                                             </table>
+                                            </div>
                                             <small class="text-muted">
                                                 Máximo <strong>{{ maxRojas }}</strong> casillas rojas (actualmente {{ contRojas }})
                                             </small>

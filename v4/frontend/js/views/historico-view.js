@@ -43,15 +43,14 @@ const HistoricoView = {
                         No hay datos.
                     </div>
                     <div v-for="p in datos" :key="p.idProfesor" class="card mb-3">
-                        <div class="card-header bg-light">
+                        <div class="card-header">
                             <h5 class="h6 mb-0">{{ p.nombreProfesor }}<span v-if="p.conflicto" class="badge bg-danger ms-2">Conflicto</span></h5>
                         </div>
                         <div class="card-body">
-                            <div v-for="s in p.seleccion" :key="s.id" class="listado claro">
-                                <div class="izquierda">{{ s.nombre }} ({{ s.abrevCurso }}{{ s.abrevGrupo }}, {{ s.horas }}h)</div>
-                                <div class="derecha">
-                                    <span v-if="s.conflicto" class="badge bg-warning">Doble</span>
-                                </div>
+                            <div v-for="s in p.seleccion" :key="s.id"
+                                 class="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-2 mb-2">
+                                <div class="flex-grow-1">{{ s.nombre }} ({{ s.abrevCurso }}{{ s.abrevGrupo }}, {{ s.horas }}h)</div>
+                                <span v-if="s.conflicto" class="badge bg-warning">Doble</span>
                             </div>
                         </div>
                     </div>
