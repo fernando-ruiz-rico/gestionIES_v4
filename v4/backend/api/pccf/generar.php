@@ -164,7 +164,7 @@ function generarApartadoCompetenciasModulos($db, $idCiclo, $tipo)
 
     // Competencias del tipo indicado
     $sqlComp = $tipo === 1
-        ? "SELECT DISTINCT codigo, texto FROM competencias_ciclos WHERE idCiclo = ? AND tipo = 1 ORDER BY orden"
+        ? "SELECT codigo, texto FROM competencias_ciclos WHERE idCiclo = ? AND tipo = 1 GROUP BY codigo, texto ORDER BY MIN(orden)"
         : "SELECT codigo, texto FROM competencias_ciclos WHERE idCiclo = ? AND tipo = '2' ORDER BY orden";
     $competencias = consultar($db, $sqlComp, [$idCiclo], 'i');
 

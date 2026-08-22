@@ -4,7 +4,7 @@ header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
 @session_start();
-$permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';
+$permisos = isset($_SESSION['rol']) && ($_SESSION['rol'] == 'jefeDepartamento' || $_SESSION['rol'] == 'admin');
 if (!$permisos) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'No tiene permisos para realizar esta acción']);
@@ -51,7 +51,7 @@ $id = isset($data['id']) && $data['id'] > 0 ? intval($data['id']) : 0;
 if ($id > 0) {
     // Actualizar
     $stmt = mysqli_prepare($db, "UPDATE apartados_programaciones SET titulo=?, subapartado=?, requerido=?, contenido_defecto=?, categoria=?, tipo=? WHERE id=?");
-    mysqli_stmt_bind_param($stmt, "siisiss", $titulo, $subapartado, $requerido, $contenidoDefecto, $categoria, $tipo, $id);
+    mysqli_stmt_bind_param($stmt, "siiisii", $titulo, $subapartado, $requerido, $contenidoDefecto, $categoria, $tipo, $id);
 
     if (mysqli_stmt_execute($stmt)) {
         echo json_encode(['success' => true, 'id' => $id]);
@@ -67,7 +67,7 @@ if ($id > 0) {
     mysqli_free_result($resultOrden);
 
     $stmt = mysqli_prepare($db, "INSERT INTO apartados_programaciones (titulo, subapartado, requerido, contenido_defecto, categoria, tipo, orden) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "siisisi", $titulo, $subapartado, $requerido, $contenidoDefecto, $categoria, $tipo, $nuevoOrden);
+    mysqli_stmt_bind_param($stmt, "siiisii", $titulo, $subapartado, $requerido, $contenidoDefecto, $categoria, $tipo, $nuevoOrden);
 
     if (mysqli_stmt_execute($stmt)) {
         echo json_encode(['success' => true, 'id' => mysqli_insert_id($db)]);

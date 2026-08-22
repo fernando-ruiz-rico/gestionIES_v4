@@ -9,6 +9,9 @@ if (!$db) {
     exit;
 }
 
+// Permiso fiel a v3: jefe de departamento o admin
+checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
+
 $datos = json_decode(file_get_contents('php://input'), true);
 $nombre = trim(isset($datos['nombre']) ? $datos['nombre'] : '');
 $id = isset($datos['id']) ? intval($datos['id']) : 0;

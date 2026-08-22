@@ -24,6 +24,9 @@ if (!$db) {
     sendJSONError('Error de conexión a la base de datos');
 }
 
+// Permiso fiel a v3: solo admin
+checkPermission(array(ROLE_ADMIN));
+
 // Consulta un valor de la tabla config
 function getConfigValue($db, $clave)
 {

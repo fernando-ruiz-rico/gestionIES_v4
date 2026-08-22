@@ -9,6 +9,9 @@ if (!$db) {
     exit;
 }
 
+// Permiso fiel a v3: solo admin
+checkPermission(array(ROLE_ADMIN));
+
 $datos = json_decode(file_get_contents('php://input'), true);
 if (!$datos) {
     http_response_code(400);

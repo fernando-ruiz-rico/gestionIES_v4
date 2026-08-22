@@ -14,6 +14,9 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
 
+// Fiel a v3 (página con cabecera): requiere sesión iniciada
+checkSession();
+
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 // Horas lectivas de referencia para un profesor (según v3)

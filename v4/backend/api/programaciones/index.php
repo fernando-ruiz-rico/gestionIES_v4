@@ -96,6 +96,8 @@ try {
         case 'POST':
             // Acción especial: importar programación desde otra materia
             if ($action === 'importar') {
+                // Permiso fiel a v3 (importar_programacion.php): solo admin
+                checkPermission(array(ROLE_ADMIN));
                 $input = file_get_contents('php://input');
                 $data = json_decode($input, true);
 

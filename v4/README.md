@@ -258,14 +258,15 @@ Módulos de base del sistema:
 | 7.4 Exportación a Excel | `backend/api/excel.php` | `excel-view.js` | `excel.php` |
 | 7.5 Ayuda | — | — | Pendiente (página estática de ayuda) |
 
-### Fase 8: Generación de PDFs (Completado)
+### Fase 8: Generación de PDFs (Completado con matices)
 
 Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/php/tcpdf/`):
 
-- `backend/pdf_acta.php` — PDF del acta de departamento (`?idActa=X`), fiel a `v3/pdf_acta.php`.
-- `backend/pdf_seleccion.php` — PDF de la selección de materias de un profesor (`?idProfesor=X&idEscenario=Y`), reimplantación funcional de `v3/pdf_desiderata.php`.
+- `backend/pdf_acta.php` — PDF del acta de departamento (`?idActa=X`), fiel a `v3/pdf_acta.php`. ✅ Verificado en vivo (≈27 KB, el de v3 hace 27 KB).
+- `backend/pdf_seleccion.php` — PDF de la selección de materias de un profesor (`?idProfesor=X&idEscenario=Y`), reimplantación funcional de `v3/pdf_desiderata.php`. ✅ Verificado en vivo (≈7,5 KB).
+- `backend/api/pccf/generar.php` — PDF del PCCF (`modo=completo` / `modo=apartado`). ⚠️ Con MySQL 8 (`ONLY_FULL_GROUP_BY`) el modo `completo` genera siempre un PDF de una página con el error SQL 3087 (ver bug **B-3**); en `modo=apartado` funcionan los tipos 0/7/12 y falla el tipo 4.
 
-> Los documentos de planificación (programaciones, PCCF, separata de CE, etc.) ya se generan con el flujo de la app; los PDFs de los módulos de la Fase 2 se siguen abriendo desde sus vistas.
+> Los botones PDF de `programaciones-aula` y `programaciones-seguimiento` siguen siendo stubs informativos (igual que en la entrega 2.4/2.5); los PDFs de la Fase 2 se abren desde sus vistas.
 
 ### Fase 9: Características Avanzadas (Parcial)
 
@@ -280,6 +281,21 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 ## Historial de cambios
 
 > Registro cronológico (más reciente primero) de las entregas por versión.
+
+### Corrección de errores de la auditoría en vivo (B-1…B-6 + hueco de permisos)
+- **B-1** `programaciones_contenidos_defecto/guardar.php`: `admin` → `jefeDepartamento || admin` (fiel a v3).
+- **B-2** `configuracion.php`: ahora inicia sesión y exige `admin` (`checkPermission`) — antes no había chequeo.
+- **B-3** `pccf/generar.php`: consulta de competencias sin `DISTINCT … ORDER BY` no agrupado (`GROUP BY … ORDER BY MIN(orden)`); ya no falla con `ONLY_FULL_GROUP_BY` (3087).
+- **B-4** `programaciones_apartados/guardar.php`: `bind_param` corregido a `"siiisii"` (5º hueco `s` = cadena `categoria`) en INSERT y UPDATE.
+- **B-5** `cualificaciones_uc.php` + `cualificaciones_uc-view.js`: edición por **código anterior** (`id`) fiel a v3 (UPDATE + join), la vista envía `id`; ya no hace `INSERT` duplicado al editar.
+- **B-6** `grupos/guardar.php`: `bind_param` del UPDATE a `"ssiiiii"` (cadena `abreviatura`); además fiel a v3 el UPDATE no toca `idCurso`/`orden`, el CREATE no fija `orden` y **puebla `materias_grupos`**; `grupos/eliminar.php` borra `materias_grupos`/`programaciones_aula_temas`/`seleccion` del grupo.
+- **Hueco de permisos**: `checkPermission` con el rol de v3 en `ciclos/grupos/especialidades` (admin), `materias/escenarios` (jefe/admin), `programaciones importar` (admin) y `programaciones_apartados` (jefe/admin); `historico`/`excel`/`estadisticas` exigen sesión iniciada.
+- **Verificado en vivo**: matriz de roles (profe 403; jefe/admin pasan), CRUD de prueba de grupos sin restos, round-trips de apartados/cualificaciones, PDFs PCCF válidos; `php -l` limpio en los 20 archivos; BD devuelta a **idéntica al dump en las 40 tablas** (salvo `testadmin`/`testprofe`).
+
+### Auditoría en vivo — paridad, perfiles y permisos (verificación)
+- Suite en vivo contra la BD compartida (Laragon): matriz de roles/403 con los 3 perfiles (admin, `testadmin` jefe, `testprofe` profesor), round-trips de igual a igual, TinyMCE (idéntico al de v3) y permisos punto a punto.
+- Detectados **6 bugs (B-1…B-6)** y el **hueco sistémico de permisos** (ciclos/grupos/materias/especialidades/escenarios, `programaciones import`, `configuracion.php`) — **sin corregir**, entregado como informe.
+- **Datos**: BD restaurada y **idéntica al dump en las 40 tablas** (salvo `testadmin`/`testprofe`); eliminados los 8 restos de prueba; restaurada la contraseña `config.admin`.
 
 ### v4.4.0 — Fases 4 a 9 Completadas
 - ✅ **Fase 4 — Resultados y Competencias** (backend `backend/api/resultados_aprendizaje.php`, `competencias_ciclos.php`, `cualificaciones_uc.php`; frontend `resultados_aprendizaje-view.js`, `competencias_ciclos-view.js`, `cualificaciones_uc-view.js` + clientes `api/`): RA por materia con % empresa, % evaluación, RA clave y criterios de evaluación (CRUD completo de `resultados_aprendizaje` + `criterios_evaluacion`); competencias por ciclo (CRUD + reordenar); cualificaciones profesionales y unidades de competencia con asociaciones (CRUD + `guardar/eliminar/listar_asociaciones`).
@@ -453,6 +469,60 @@ Se **conservan** los que sí se usan, aunque parezcan duplicados: `backend/api/m
 ### Duplicado de TCPDF eliminado
 Había **dos copias** de TCPDF en v4 (`backend/lib/php/tcpdf` y `frontend/lib/php/tcpdf`, idénticas, ~32 MB cada una). La de `frontend/` solo la usaba `backend/api/pccf/generar.php` por una ruta relativa (`__DIR__ . '/../../../frontend/…'`), además de estar en un sitio inadecuado (una lib PHP bajo `frontend/`). Se unificó todo en **`backend/lib/php/tcpdf`** (la misma que ya usaban `pdf_acta.php` y `pdf_seleccion.php`) y se eliminó `frontend/lib/php/tcpdf`. Mientras, `pccf/generar.php` dejaba un error fatal por un `return` pegado al nombre de función (`returngenerar…`); corregido. Verificado por HTTP: `pdf_acta`, `pdf_seleccion` y `pccf/generar` (modos `completo` y `apartado`) devuelven PDF válidos.
 
+### Auditoría en vivo sobre la BD compartida (realizada)
+
+Suite de pruebas **en vivo** contra Laragon (BD `gestionies`, la misma que v3), con los tres perfiles reales:
+
+- **Matriz de roles / 403**: `testprofe` (profesor) recibe 403 esperados en todas las escrituras de jefe/admin (2.2–2.7, 3.x, 4.x, 5.1, actas, configuración) y lee el resto como profesor; `testadmin` (jefeDepartamento, id 217) guarda en todo **salvo** `programaciones_contenidos_defecto/guardar` (403 → bug **B-1**); el `admin` real escribe en todas partes (incluidas competencias_ciclos, cualificaciones, cursos con su chequeo de admin).
+- **Round-trips de igual a igual** (leer → guardar con el mismo valor): ciclos, cursos, grupos, materias, especialidades, escenarios, competencias_ciclos, pccf, contenidos_defecto, actas, seguimiento — todas devuelven `success`; algunos expusieron los bugs de binding **B-4/B-6** y el paso NULL→0 (datos restaurados).
+- **TinyMCE**: 7.9.1 local, **idéntico al de v3** (verificado por md5); los editores de todas las vistas se inicializan con los mismos plugins/ajustes que v3 (`initTinyMCE`) y el contenido viaja y vuelve por `fetch` sin pérdida.
+- **Permisos**: verificación punto a punto de los endpoints de escritura contra los chequeos de v3 → detectado el hueco sistémico de permisos (ver sección siguiente).
+
+### Bugs de v4 detectados en la auditoría en vivo (corregidos)
+
+Hallazgos de la auditoría, **corregidos y verificados en vivo** (round-trip CREATE/UPDATE/DELETE sin restos, BD devuelta a idéntica al dump):
+
+| # | Archivo | Descripción | v3 |
+|---|---------|-------------|-----|
+| B-1 | `api/programaciones_contenidos_defecto/guardar.php` | exige solo `admin` (jefe → 403), pero el menú del jefe sí muestra la página | v3: `jefeDepartamento \|\| admin` |
+| B-2 | `api/configuracion.php` | **sin chequeo de sesión ni rol**: `obtener` / `actualizar_activacion` / `actualizar_password` funcionan sin cookie | v3: solo admin |
+| B-3 | `api/pccf/generar.php` (línea ~167) | `SELECT DISTINCT codigo, texto … ORDER BY orden` → error 3087 de MySQL 8 (`ONLY_FULL_GROUP_BY`) → `modo=completo` siempre devuelve un PDF de 1 página con el error; `modo=apartado` tipo 4 falla, 0/7/12 OK | v3: PDF de 48 páginas válido |
+| B-4 | `api/programaciones_apartados/guardar.php` (línea 54) | `bind_param(…, "siisiss", …)`: el 5º hueco `i` recibe la cadena `categoria` → siempre llega como 0 | v3: correcto |
+| B-5 | `api/cualificaciones_uc.php` (`guardar_cualificacion` / `guardar_unidad`) | el frontend no envía `id` (el formulario no lo tiene) → `$id` siempre 0 → siempre `INSERT` → `Duplicate entry 'ADG082_3' for key '…PRIMARY'` al editar filas existentes | v3: actualiza por `idCualificacion` / `idUnidad` |
+| B-6 | `api/grupos/guardar.php` | el `bind_param` del UPDATE usa `"siiiiii"`: la cadena `abreviatura` entra en un hueco `i` → la abreviatura se trunca a `0` en cada edición (reproducido en vivo; fila restaurada) | v3: correcto |
+
+**Correcciones aplicadas** (verificadas en vivo):
+- **B-1**: `guardar` ahora acepta `jefeDepartamento || admin` (igual que v3). Verificado: jefe ya no recibe 403.
+- **B-2**: `configuracion.php` ahora inicia sesión y exige `admin` (`checkPermission`). Verificado: admin 200, profesor/jefe 403.
+- **B-3**: la consulta de competencias de `pccf/generar.php` ya no usa `DISTINCT … ORDER BY` no agrupado: `GROUP BY codigo, texto ORDER BY MIN(orden)`. Verificado: `modo=completo` y `modo=apartado` devuelven PDF válidos (0 errores 3087).
+- **B-4**: el `bind_param` de `programaciones_apartados/guardar.php` (INSERT y UPDATE) corregido a `"siiisii"` (el 5º hueco `s` ahora recibe la cadena `categoria`). Verificado: `categoria` (`ESO/BACH`, `TODOS`) se guarda íntegra en CREATE y UPDATE.
+- **B-5**: `cualificaciones_uc.php` ahora edita por el **código anterior** (`id`), fiel a v3 (`WHERE codigo=<id>` + actualización del join `cualificaciones_unidades` / `unidades_ciclos` si el código cambia); la vista (`cualificaciones_uc-view.js`) envía el `id` (código anterior) al editar. Verificado: editar una fila existente hace `UPDATE` (sin duplicado) y una nueva hace `INSERT`.
+- **B-6**: el `bind_param` del UPDATE de `grupos/guardar.php` corregido a `"ssiiiii"` (la cadena `abreviatura` ya no entra en un hueco `i`). Además, fiel a v3: el UPDATE ya no sobreescribe `idCurso`/`orden` (el `orden` lo gestiona la reordenación), el CREATE no fija `orden` y **puebla `materias_grupos`** con las materias del curso; `grupos/eliminar.php` borra también `materias_grupos`, `programaciones_aula_temas` y `seleccion` del grupo (evita huérfanas). Verificado: CREATE/UPDATE/DELETE de un grupo de prueba sin restos.
+
+### Hueco sistémico de permisos (v4) — corregido
+
+v3 protegía todos estos endpoints con sesión + rol; en v4 **no había chequeo** y un usuario sin rol (e incluso un `POST` anónimo) podía escribir. **Corregido**: cada endpoint ahora aplica `checkPermission` con el rol exacto de v3. Verificado en vivo (profesor 403; jefe/admin pasan la puerta y llegan a la validación):
+
+| Endpoint | Rol en v3 | Chequeo en v4 (tras corrección) |
+|----------|----------|---------------------------------|
+| `ciclos/guardar` / `ciclos/eliminar` | admin | `admin` ✅ |
+| `grupos/guardar` / `grupos/eliminar` | admin | `admin` ✅ |
+| `materias/guardar` / `materias/eliminar` | jefe o admin | `jefeDepartamento \|\| admin` ✅ |
+| `especialidades/guardar` / `especialidades/eliminar` | admin | `admin` ✅ |
+| `escenarios/guardar` / `escenarios/eliminar` | jefe o admin | `jefeDepartamento \|\| admin` ✅ |
+| `programaciones/index.php` (`importar`) | admin | `admin` ✅ (es **destructivo**: `DELETE` del destino + copia del origen; ahora solo admin) |
+| `configuracion.php` | admin | `admin` ✅ (ver B-2) |
+| `programaciones_contenidos_defecto/guardar` / `programaciones_apartados/{guardar,ordenar,eliminar}` | jefe o admin | `jefeDepartamento \|\| admin` ✅ (antes solo `admin` → ver B-1) |
+
+`cursos/guardar.php` ya hacía su chequeo de admin. **Exposición de solo lectura**: los `listar`/`obtener`/`cargar` y `pccf/generar.php` quedan **sin sesión, fiel a v3** (los handlers `cargar_*` de v3 tampoco la inician; `pdf_pccf.php` de v3 es de navegador directo). Los endpoints de página `historico.php`, `excel.php` y `estadisticas.php` ahora exigen **sesión iniciada** (`checkSession`, 401) porque en v3 eran páginas con cabecera (login). `temas.php` sin chequeo de rol es **fiel a v3** (OK).
+
+### Coherencia de los datos (BD compartida)
+
+- Auditoría de las **40 tablas** de `gestionies.sql` contra la BD en vivo (cuentas + hash de contenido fila a fila): **40/40 idénticas** salvo `profesores` (los usuarios de prueba documentados 217/218).
+- Las pruebas expusieron y se **restauraron desde el dump** las filas tocadas por los guardar de v4: `grupos.id=1` (abreviatura `P`, `orden` `NULL`), `especialidades.id='ADE'` (horas `NULL`), `actas_departamentos.id=1` (texto), `contenidos_defecto_temas` deptos 1 y 2 (recursos/metodología/adaptaciones) y, de la sesión previa, pccf `2,6`, `cdpccf` 1–2, `apartados_pccf.id=6` y la fila 6 de `apartados_programaciones`.
+- **Restos de prueba eliminados** (filas ausentes del dump, inequívocamente de prueba): `apartados_pccf` «TEST APARTADO», `resultados_aprendizaje` «RA de prueba v4», 2 filas de `seguimiento_programaciones_aula`, 3 filas de `seleccion`, `temas` «Tema prueba v2.6». Se conservan `testadmin`/`testprofe` (necesarios para las verificaciones).
+- `config.admin` **restaurado** a la contraseña original (MD5 `a6bdc78a74e71c67512990822c183d09`) tras el cambio temporal de las pruebas.
+
 ### Notas de paridad
 - **Menú «Selección»**: v3 **no** bloquea la vista de selección en función de `desideratas` (v3/`seleccion.php` no usa `$desideratasActivadas`), por lo que v4 tampoco la bloquea; la activación solo afecta a la edición, igual que en v3.
-- **Seguridad de datos**: se restauraron desde `gestionies.sql` todas las filas de prueba `ZZ` creadas durante las verificaciones, y se corrigió (restaurando la fila real `apartados_pccf.id=1`) un borrado accidental detectado durante las pruebas. No quedan restos de datos de prueba en la BD compartida.
+- **Seguridad de datos**: se restauraron desde `gestionies.sql` todas las filas de prueba creadas durante las verificaciones (filas `ZZ` y las 8 filas restantes eliminadas en la auditoría en vivo; ver «Coherencia de los datos») y se corrigió un borrado accidental. La BD compartida quedó **idéntica al dump en las 40 tablas** (salvo los usuarios de prueba documentados) y no quedan restos de datos de prueba.

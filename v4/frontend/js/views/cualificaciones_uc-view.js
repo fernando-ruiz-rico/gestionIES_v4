@@ -227,7 +227,8 @@ const CualificacionesUCView = {
         },
 
         abrirModal(q) {
-            this.formCualificacion = { ...q };
+            // Fiel a v3: se envía el código anterior como clave de edición (id)
+            this.formCualificacion = { ...q, id: q.codigo };
             this.esEdicionC = true;
             this.modalCualificacion.show();
         },
@@ -274,7 +275,8 @@ const CualificacionesUCView = {
         },
 
         abrirUnidadModal(u) {
-            this.formUnidad = { ...u };
+            // Fiel a v3: se envía el código anterior como clave de edición (id)
+            this.formUnidad = { ...u, id: u.codigo };
             this.esEdicionU = true;
             this.modalUnidad.show();
         },

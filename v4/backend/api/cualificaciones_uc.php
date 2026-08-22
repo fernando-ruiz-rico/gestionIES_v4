@@ -76,22 +76,33 @@ try {
             }
             $codigo = $datos['codigo'];
             $texto = $datos['texto'];
-            $id = isset($datos['id']) && !empty($datos['id']) ? intval($datos['id']) : 0;
+            // Fiel a v3: "idCualificacion" es el código ANTERIOR (clave de edición),
+            // no la llave primaria de la tabla.
+            $id = isset($datos['id']) && !empty($datos['id']) ? trim($datos['id']) : '';
             if (empty($codigo) || empty($texto)) {
                 throw new Exception('Datos incompletos para guardar la cualificación');
             }
             $codigo = mysqli_real_escape_string($db, $codigo);
             $texto = mysqli_real_escape_string($db, $texto);
-            if ($id > 0) {
-                $query = "UPDATE cualificaciones_profesionales SET codigo='$codigo', texto='$texto' WHERE codigo='$codigo'";
+            $id = mysqli_real_escape_string($db, $id);
+            if ($id !== '') {
+                $query = "UPDATE cualificaciones_profesionales SET codigo='$codigo', texto='$texto' WHERE codigo='$id'";
+                if (!mysqli_query($db, $query)) {
+                    throw new Exception(mysqli_error($db));
+                }
+                // Si el código ha cambiado, las unidades asociadas siguen al nuevo (v3)
+                $query = "UPDATE cualificaciones_unidades SET codigoCualificacion='$codigo' WHERE codigoCualificacion='$id'";
+                if (!mysqli_query($db, $query)) {
+                    throw new Exception(mysqli_error($db));
+                }
             } else {
                 $query = "INSERT INTO cualificaciones_profesionales (codigo, texto) VALUES ('$codigo', '$texto')";
-            }
-            if (!mysqli_query($db, $query)) {
-                throw new Exception(mysqli_error($db));
+                if (!mysqli_query($db, $query)) {
+                    throw new Exception(mysqli_error($db));
+                }
             }
             closeDBConnection($db);
-            sendJSONSuccess($id > 0 ? array('codigo' => $codigo) : array('codigo' => $codigo), 'Cualificación guardada');
+            sendJSONSuccess(array('codigo' => $codigo), 'Cualificación guardada');
             break;
 
         // Elimina una cualificación (solo si no tiene UC asociadas)
@@ -156,22 +167,32 @@ try {
             }
             $codigo = $datos['codigo'];
             $texto = $datos['texto'];
-            $id = isset($datos['id']) && !empty($datos['id']) ? intval($datos['id']) : 0;
+            // Fiel a v3: "idUnidad" es el código ANTERIOR (clave de edición).
+            $id = isset($datos['id']) && !empty($datos['id']) ? trim($datos['id']) : '';
             if (empty($codigo) || empty($texto)) {
                 throw new Exception('Datos incompletos para guardar la unidad');
             }
             $codigo = mysqli_real_escape_string($db, $codigo);
             $texto = mysqli_real_escape_string($db, $texto);
-            if ($id > 0) {
-                $query = "UPDATE unidades_competencia SET codigo='$codigo', texto='$texto' WHERE codigo='$codigo'";
+            $id = mysqli_real_escape_string($db, $id);
+            if ($id !== '') {
+                $query = "UPDATE unidades_competencia SET codigo='$codigo', texto='$texto' WHERE codigo='$id'";
+                if (!mysqli_query($db, $query)) {
+                    throw new Exception(mysqli_error($db));
+                }
+                // Si el código ha cambiado, las asociaciones siguen al nuevo (v3)
+                $query = "UPDATE unidades_ciclos SET codigoUnidad='$codigo' WHERE codigoUnidad='$id'";
+                if (!mysqli_query($db, $query)) {
+                    throw new Exception(mysqli_error($db));
+                }
             } else {
                 $query = "INSERT INTO unidades_competencia (codigo, texto) VALUES ('$codigo', '$texto')";
-            }
-            if (!mysqli_query($db, $query)) {
-                throw new Exception(mysqli_error($db));
+                if (!mysqli_query($db, $query)) {
+                    throw new Exception(mysqli_error($db));
+                }
             }
             closeDBConnection($db);
-            sendJSONSuccess($id > 0 ? array('codigo' => $codigo) : array('codigo' => $codigo), 'Unidad de competencia guardada');
+            sendJSONSuccess(array('codigo' => $codigo), 'Unidad de competencia guardada');
             break;
 
         // Elimina una unidad de competencia (solo si no está asociada)
