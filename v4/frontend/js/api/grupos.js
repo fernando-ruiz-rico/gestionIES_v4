@@ -44,7 +44,7 @@ const GruposAPI = {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idGrupo: id })
+                body: JSON.stringify({ id: id })
             });
             return await response.json();
         } catch (e) {

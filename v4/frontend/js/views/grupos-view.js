@@ -21,13 +21,15 @@ const GruposView = {
                                     <tr>
                                         <th>ID</th>
                                         <th>Nombre</th>
+                                        <th>Curso</th>
                                         <th class="text-end">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="g in grupos" :key="g.idGrupo">
-                                        <td>{{ g.idGrupo }}</td>
+                                    <tr v-for="g in grupos" :key="g.id">
+                                        <td>{{ g.id }}</td>
                                         <td>{{ g.nombre }}</td>
+                                        <td>{{ g.nombreCurso || '—' }}</td>
                                         <td class="text-end">
                                             <button class="btn btn-sm btn-outline-primary me-1" @click="editar(g)">
                                                 <i class="bi bi-pencil"></i>
@@ -38,7 +40,7 @@ const GruposView = {
                                         </td>
                                     </tr>
                                     <tr v-if="!grupos.length">
-                                        <td colspan="3" class="text-center text-muted py-4">Sin grupos</td>
+                                        <td colspan="4" class="text-center text-muted py-4">Sin grupos</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -61,6 +63,15 @@ const GruposView = {
                                     <label class="form-label">Nombre *</label>
                                     <input type="text" class="form-control" v-model="form.nombre" required>
                                 </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Curso *</label>
+                                    <!-- Fiel a v3: el curso solo se elige al crear el grupo
+                                         (guardar.php no lo toca al editar). -->
+                                    <select class="form-select" v-model="form.idCurso" :disabled="esEdicion">
+                                        <option value="0">--Selecciona un curso--</option>
+                                        <option v-for="c in cursos" :key="c.id" :value="c.id">{{ c.nombre }}</option>
+                                    </select>
+                                </div>
                             </form>
                         </div>
                         <div class="modal-footer">
@@ -78,7 +89,8 @@ const GruposView = {
     data() {
         return {
             grupos: [],
-            form: { idGrupo: 0, nombre: '' },
+            cursos: [],
+            form: { id: 0, nombre: '', idCurso: 0 },
             esEdicion: false,
             modal: null
         };
@@ -86,6 +98,7 @@ const GruposView = {
 
     mounted() {
         this.cargar();
+        this.cargarCursos();
         this.modal = new bootstrap.Modal(document.getElementById('modalGrupo'));
     },
 
@@ -99,8 +112,13 @@ const GruposView = {
             }
         },
 
+        async cargarCursos() {
+            const result = await CursosAPI.listar();
+            this.cursos = result.success ? result.data : [];
+        },
+
         abrirModal() {
-            this.form = { idGrupo: 0, nombre: '' };
+            this.form = { id: 0, nombre: '', idCurso: 0 };
             this.esEdicion = false;
             this.modal.show();
         },
@@ -112,6 +130,11 @@ const GruposView = {
         },
 
         async guardar() {
+            if (!this.esEdicion && !this.form.idCurso) {
+                Avisos.error('Debes seleccionar un curso para el grupo');
+                return;
+            }
+
             const result = await GruposAPI.guardar(this.form);
 
             if (result.success) {
@@ -127,7 +150,7 @@ const GruposView = {
         eliminar(grupo) {
             Avisos.confirmar('¿Eliminar grupo?', grupo.nombre).then(async (res) => {
                 if (res.isConfirmed) {
-                    const result = await GruposAPI.eliminar(grupo.idGrupo);
+                    const result = await GruposAPI.eliminar(grupo.id);
 
                     if (result.success) {
                         Avisos.exito();

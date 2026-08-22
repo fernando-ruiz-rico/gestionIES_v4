@@ -9,7 +9,12 @@ if (!$db) {
     exit;
 }
 
-$result = mysqli_query($db, "SELECT * FROM grupos ORDER BY nombre");
+// Se trae el nombre del curso al que pertenece cada grupo (cursos.nombre)
+// para que la vista de grupos muestre el curso en conjunto con cada grupo.
+$result = mysqli_query($db, "SELECT g.*, c.nombre AS nombreCurso
+                              FROM grupos g
+                              LEFT JOIN cursos c ON c.id = g.idCurso
+                              ORDER BY g.nombre");
 if (!$result) {
     http_response_code(500);
     echo json_encode(['error' => mysqli_error($db)]);
