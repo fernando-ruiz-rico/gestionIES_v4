@@ -115,16 +115,19 @@ const PCCFContenidosDefectoView = {
     },
 
     methods: {
-        inicializarEditor(texto) {
-            if (!window.tinymce) {
+        async inicializarEditor(texto) {
+            if (!TinyMCEUtils.disponible()) {
                 console.warn('TinyMCE no disponible — se muestra el textarea plano');
                 return;
             }
+            const ids = ['editorPCCFDefecto'];
+            // TinyMCE 7: init y remove son asíncronos; hay que esperar a que
+            // la destrucción de la instancia anterior termine de verdad.
+            await TinyMCEUtils.quitar(ids);
             const area = document.querySelector('textarea#editorPCCFDefecto');
             if (!area) return;
             area.value = texto || '';
-            this.borrarEditor();
-            tinymce.init({
+            await TinyMCEUtils.iniciar({
                 selector: 'textarea#editorPCCFDefecto',
                 height: 400,
                 resize: true,
@@ -139,13 +142,11 @@ const PCCFContenidosDefectoView = {
                         this.contenido = editor.getContent();
                     });
                 }
-            });
+            }, ids);
         },
 
         borrarEditor() {
-            if (window.tinymce && tinymce.get('editorPCCFDefecto')) {
-                tinymce.remove('editorPCCFDefecto');
-            }
+            return TinyMCEUtils.quitar(['editorPCCFDefecto']);
         },
 
         cambiarDepartamento() {

@@ -141,16 +141,19 @@ const ProgramacionesAulaView = {
 
     methods: {
         // --- TinyMCE (misma configuración que v3) ---
-        inicializarEditor(texto) {
-            if (!window.tinymce) {
+        async inicializarEditor(texto) {
+            if (!TinyMCEUtils.disponible()) {
                 console.warn('TinyMCE no disponible — se muestra el textarea plano');
                 return;
             }
+            const ids = ['editorAula'];
+            // TinyMCE 7: init y remove son asíncronos; hay que esperar a que
+            // la destrucción de la instancia anterior termine de verdad.
+            await TinyMCEUtils.quitar(ids);
             const area = document.querySelector('textarea#editorAula');
             if (!area) return;
             area.value = texto || '';
-            this.borrarEditor();
-            tinymce.init({
+            await TinyMCEUtils.iniciar({
                 selector: 'textarea#editorAula',
                 height: 300,
                 resize: true,
@@ -165,13 +168,11 @@ const ProgramacionesAulaView = {
                         this.contenido = editor.getContent();
                     });
                 }
-            });
+            }, ids);
         },
 
         borrarEditor() {
-            if (window.tinymce && tinymce.get('editorAula')) {
-                tinymce.remove('editorAula');
-            }
+            return TinyMCEUtils.quitar(['editorAula']);
         },
 
         // --- Carga de datos ---

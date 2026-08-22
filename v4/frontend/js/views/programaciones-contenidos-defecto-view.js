@@ -134,17 +134,20 @@ const ProgramacionesContenidosDefectoView = {
 
     methods: {
         // TinyMCE (misma configuración que v3: initTinyMCE('progeditar'))
-        inicializarEditor(texto) {
-            if (!window.tinymce) {
+        async inicializarEditor(texto) {
+            if (!TinyMCEUtils.disponible()) {
                 console.warn('TinyMCE no disponible — se muestra el textarea plano');
                 return;
             }
+            const ids = ['editorContenidoDefecto'];
+            // TinyMCE 7: init y remove son asíncronos; hay que esperar a que
+            // la destrucción de la instancia anterior termine de verdad.
+            await TinyMCEUtils.quitar(ids);
             const area = document.querySelector('textarea#editorContenidoDefecto');
             if (!area) return;
             // TinyMCE 7 lee el contenido inicial desde el valor del textarea
             area.value = texto || '';
-            this.borrarEditor();
-            tinymce.init({
+            await TinyMCEUtils.iniciar({
                 selector: 'textarea#editorContenidoDefecto',
                 height: 300,
                 resize: true,
@@ -159,13 +162,11 @@ const ProgramacionesContenidosDefectoView = {
                         this.contenido = editor.getContent();
                     });
                 }
-            });
+            }, ids);
         },
 
         borrarEditor() {
-            if (window.tinymce && tinymce.get('editorContenidoDefecto')) {
-                tinymce.remove('editorContenidoDefecto');
-            }
+            return TinyMCEUtils.quitar(['editorContenidoDefecto']);
         },
 
         async cargarDepartamentos() {

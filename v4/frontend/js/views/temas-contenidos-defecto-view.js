@@ -181,20 +181,37 @@ const TemasContenidosDefectoView = {
 
     methods: {
         // -- TinyMCE (misma configuración que la 2.3) --------------------------------
-        inicializarEditor(campo, texto) {
-            if (!window.tinymce) {
-                this.editores[campo] = texto || '';
+        camposEditores() {
+            return ['contexto', 'recursos', 'metodologia', 'adaptaciones'];
+        },
+
+        async inicializarTodosLosEditores() {
+            const ids = this.camposEditores();
+            if (!TinyMCEUtils.disponible()) {
+                // Sin TinyMCE: se quedan los textareas planos con su valor
+                console.warn('TinyMCE no disponible — se muestran los textareas planos');
+                ids.forEach(campo => {
+                    const el = document.getElementById(campo);
+                    if (el) el.value = this.editores[campo] || '';
+                });
                 return;
             }
-            const area = document.querySelector(`textarea#${campo}`);
-            if (!area) {
-                this.editores[campo] = texto || '';
-                return;
-            }
-            area.value = texto || '';
-            this.borrarEditor(campo);
-            tinymce.init({
-                selector: `textarea#${campo}`,
+            // TinyMCE 7: init y remove son asíncronos; hay que esperar a que
+            // la destrucción de las instancias anteriores termine de verdad
+            // (ojo: "Unidades" reutiliza estos mismos ids).
+            await TinyMCEUtils.quitar(ids);
+
+            // Cargar el contenido en los textareas antes de inicializar
+            ids.forEach(campo => {
+                const el = document.getElementById(campo);
+                if (el) el.value = this.editores[campo] || '';
+            });
+
+            const areas = ids.map(campo => document.getElementById(campo));
+            if (areas.some(el => !el)) return;
+
+            await TinyMCEUtils.iniciar({
+                selector: 'textarea.datostema',
                 height: 260,
                 resize: true,
                 plugins: 'autolink lists advlist code fullscreen wordcount',
@@ -205,29 +222,14 @@ const TemasContenidosDefectoView = {
                 content_css: 'css/estilos_tiny.css',
                 setup: (editor) => {
                     editor.on('input change', () => {
-                        this.editores[campo] = editor.getContent();
+                        this.editores[editor.id] = editor.getContent();
                     });
                 }
-            });
-        },
-
-        borrarEditor(campo) {
-            if (window.tinymce && tinymce.get(campo)) {
-                tinymce.remove(campo);
-            }
-        },
-
-        inicializarTodosLosEditores() {
-            this.inicializarEditor('contexto', this.editores.contexto);
-            this.inicializarEditor('recursos', this.editores.recursos);
-            this.inicializarEditor('metodologia', this.editores.metodologia);
-            this.inicializarEditor('adaptaciones', this.editores.adaptaciones);
+            }, ids);
         },
 
         borrarTodosLosEditores() {
-            ['contexto', 'recursos', 'metodologia', 'adaptaciones'].forEach(campo => {
-                this.borrarEditor(campo);
-            });
+            return TinyMCEUtils.quitar(this.camposEditores());
         },
 
         // -- Departamento / contenido ----------------------------------------------

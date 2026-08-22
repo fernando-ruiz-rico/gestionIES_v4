@@ -281,11 +281,15 @@ const ProgramacionesSeguimientoView = {
             return ['editorTemporalizacion', 'editorResultados', 'editorInclusion'];
         },
 
-        inicializarEditores() {
-            if (!window.tinymce) {
+        async inicializarEditores() {
+            if (!TinyMCEUtils.disponible()) {
                 console.warn('TinyMCE no disponible — se muestran los textareas planos');
                 return;
             }
+
+            // TinyMCE 7: init y remove son asíncronos; hay que esperar a que
+            // la destrucción de las instancias anteriores termine de verdad.
+            await TinyMCEUtils.quitar(this.idsEditores());
 
             // Cargar el contenido en los textareas antes de inicializar el editor
             const areaTemporalizacion = document.getElementById('editorTemporalizacion');
@@ -296,9 +300,7 @@ const ProgramacionesSeguimientoView = {
             areaResultados.value = this.resultados || '';
             areaInclusion.value = this.inclusion || '';
 
-            this.borrarEditores();
-
-            tinymce.init({
+            await TinyMCEUtils.iniciar({
                 selector: 'textarea#editorTemporalizacion, textarea#editorResultados, textarea#editorInclusion',
                 height: 300,
                 resize: true,
@@ -319,15 +321,11 @@ const ProgramacionesSeguimientoView = {
                         this[campo] = editor.getContent();
                     });
                 }
-            });
+            }, this.idsEditores());
         },
 
         borrarEditores() {
-            this.idsEditores().forEach(id => {
-                if (window.tinymce && tinymce.get(id)) {
-                    tinymce.remove(id);
-                }
-            });
+            return TinyMCEUtils.quitar(this.idsEditores());
         },
 
         // Sincroniza el estado con los editores y devuelve el contenido final

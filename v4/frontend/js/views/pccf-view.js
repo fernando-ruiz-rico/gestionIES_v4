@@ -135,16 +135,20 @@ const PCCFView = {
     },
 
     methods: {
-        inicializarEditor(texto) {
-            if (!window.tinymce) {
+        async inicializarEditor(texto) {
+            if (!TinyMCEUtils.disponible()) {
                 console.warn('TinyMCE no disponible — se muestra el textarea plano');
                 return;
             }
+            const ids = ['editorPCCF'];
+            // TinyMCE 7: init y remove son asíncronos; hay que esperar a que
+            // la destrucción de la instancia anterior termine de verdad.
+            await TinyMCEUtils.quitar(ids);
             const area = document.querySelector('textarea#editorPCCF');
             if (!area) return;
+            // TinyMCE 7 lee el contenido inicial desde el valor del textarea
             area.value = texto || '';
-            this.borrarEditor();
-            tinymce.init({
+            await TinyMCEUtils.iniciar({
                 selector: 'textarea#editorPCCF',
                 height: 400,
                 resize: true,
@@ -159,13 +163,11 @@ const PCCFView = {
                         this.contenido = editor.getContent();
                     });
                 }
-            });
+            }, ids);
         },
 
         borrarEditor() {
-            if (window.tinymce && tinymce.get('editorPCCF')) {
-                tinymce.remove('editorPCCF');
-            }
+            return TinyMCEUtils.quitar(['editorPCCF']);
         },
 
         cambiarCiclo() {

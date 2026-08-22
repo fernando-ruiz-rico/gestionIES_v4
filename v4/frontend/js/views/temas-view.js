@@ -409,11 +409,16 @@ const TemasView = {
             return ['descripcion', 'justificacion', 'contexto', 'contenidos', 'secuenciacion', 'recursos', 'evaluacion', 'metodologia', 'adaptaciones'];
         },
 
-        inicializarEditores() {
-            if (!window.tinymce) {
+        async inicializarEditores() {
+            if (!TinyMCEUtils.disponible()) {
                 console.warn('TinyMCE no disponible — se muestran los textareas planos');
                 return;
             }
+            // TinyMCE 7: init y remove son asíncronos; hay que esperar a que
+            // la destrucción de las instancias anteriores termine de verdad
+            // (ojo: "Contenidos por defecto de temas" reutiliza estos ids).
+            await TinyMCEUtils.quitar(this.camposEditores());
+
             // Rellenar los values antes de inicializar el editor
             this.camposEditores().forEach(f => {
                 const el = document.getElementById(f);
@@ -422,9 +427,7 @@ const TemasView = {
                 }
             });
 
-            this.borrarEditores();
-
-            tinymce.init({
+            await TinyMCEUtils.iniciar({
                 selector: 'textarea.datostema',
                 height: 350,
                 resize: true,
@@ -439,16 +442,11 @@ const TemasView = {
                         this.tema[editor.id] = editor.getContent();
                     });
                 }
-            });
+            }, this.camposEditores());
         },
 
         borrarEditores() {
-            if (!window.tinymce) return;
-            this.camposEditores().forEach(id => {
-                if (tinymce.get(id)) {
-                    tinymce.remove(id);
-                }
-            });
+            return TinyMCEUtils.quitar(this.camposEditores());
         },
 
         // Sincroniza el contenido de los editores con el objeto tema

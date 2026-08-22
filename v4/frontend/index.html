@@ -95,6 +95,9 @@
     <!-- TinyMCE (editor WYSIWYG, misma versión que v3) -->
     <script src="lib/js/tinymce/tinymce.min.js?v=7.9.1"></script>
 
+    <!-- Ciclo de vida de TinyMCE 7: init/remove son asíncronos (ver js/tinymce-helpers.js) -->
+    <script src="js/tinymce-helpers.js"></script>
+
     <!-- Componentes y lógica de la aplicación -->
     <script src="js/views/home-view.js"></script>
     <script src="js/views/departamentos-view.js"></script>
