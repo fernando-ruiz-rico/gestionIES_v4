@@ -7,7 +7,7 @@ const Sidebar = {
                 <em>{{ usuario.loginUsuario }}</em>
             </div>
             <div class="list-group list-group-flush">
-                <template v-for="menu in menusFiltrados" :key="menu.id + '-' + menu.texto + '-' + (menu.submenu ? 'sub' : 'main')">
+                <template v-for="menu in menus" :key="menu.id + '-' + menu.texto + '-' + (menu.submenu ? 'sub' : 'main')">
                     <!-- Menú principal con link -->
                     <a v-if="!menu.submenu && menu.link" 
                        href="#" 
@@ -59,13 +59,6 @@ const Sidebar = {
         };
     },
     
-    computed: {
-        menusFiltrados() {
-            // Los menús ya vienen filtrados por rol desde el backend
-            return this.menus;
-        }
-    },
-    
     methods: {
         toggleSubmenu(id) {
             if (this.submenuAbierto === id) {
@@ -94,12 +87,5 @@ const Sidebar = {
         }
     },
     
-    emits: ['navigate', 'close-menu'],
-    
-    mounted() {
-        // Escuchar cambios de ruta para cerrar menú automáticamente
-        window.addEventListener('hashchange', () => {
-            this.$emit('close-menu');
-        });
-    }
+    emits: ['navigate', 'close-menu']
 };

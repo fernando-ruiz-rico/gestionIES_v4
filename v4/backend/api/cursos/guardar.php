@@ -11,13 +11,8 @@ if (!$db) {
     exit;
 }
 
-@session_start();
-$rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
-if ($rol !== 'admin') {
-    http_response_code(403);
-    echo json_encode(['error' => 'Solo el administrador puede guardar cursos']);
-    exit;
-}
+// Solo admin
+checkPermission(array(ROLE_ADMIN));
 
 $datos = json_decode(file_get_contents('php://input'), true);
 $nombre      = isset($datos['nombre']) ? trim($datos['nombre']) : '';

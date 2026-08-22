@@ -6,20 +6,13 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-@session_start();
-$session = $_SESSION;
-
-if (empty($session['idUsuario'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'No hay sesión activa']);
-    exit;
-}
+$session = checkSession();
 
 // En v3 el guardado está permitido a admin/jefe (para cualquier profesor) y a un profesor para sí mismo
 $rol = $session['rol'];
 $idUsuarioSesion = intval($session['idUsuario']);
 
-if ($rol === 'admin' || $rol === 'jefeDepartamento') {
+if (esUsuarioSuper($rol)) {
     // Admin puede guardar para cualquier profesor
 } else {
     // Un profesor solo puede guardar el seguimiento de sí mismo
@@ -45,7 +38,7 @@ $numSuspensos   = isset($data['num_suspensos']) ? intval($data['num_suspensos'])
 $numOtros       = isset($data['num_otros']) ? intval($data['num_otros']) : 0;
 
 // Determinar idProfesor según rol
-if ($rol === 'admin' || $rol === 'jefeDepartamento') {
+if (esUsuarioSuper($rol)) {
     $idProfesor = isset($data['idProfesor']) ? intval($data['idProfesor']) : $idUsuarioSesion;
 } else {
     $idProfesor = $idUsuarioSesion;

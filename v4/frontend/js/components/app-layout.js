@@ -31,28 +31,6 @@ const AppLayout = {
             vistaActual: 'home-view'
         };
     },
-    
-    components: {
-        'home-view': HomeView,
-        'departamentos-view': DepartamentosView,
-        'profesores-view': ProfesoresView,
-        'especialidades-view': EspecialidadesView,
-        'ciclos-view': CiclosView,
-        'cursos-view': CursosView,
-        'grupos-view': GruposView,
-        'materias-view': MateriasView,
-        'escenarios-view': EscenariosView,
-        'programaciones-view': ProgramacionesView,
-        'programaciones-apartados-view': ProgramacionesApartadosView,
-        'programaciones-contenidos-defecto-view': ProgramacionesContenidosDefectoView,
-        'temas-contenidos-defecto-view': TemasContenidosDefectoView,
-        'programaciones-aula-view': ProgramacionesAulaView,
-        'programaciones-seguimiento-view': ProgramacionesSeguimientoView,
-        'temas-view': TemasView,
-        'pccf-view': PCCFView,
-        'pccf-apartados-view': PCCFApartadosView,
-        'pccf-contenidos-defecto-view': PCCFContenidosDefectoView
-    },
 
     methods: {
         handleLogout() {
@@ -97,11 +75,6 @@ const AppLayout = {
             };
             
             this.vistaActual = vistaMap[link] || 'home-view';
-            console.log('Navegar a:', link, 'Vista:', this.vistaActual);
         }
-    },
-    
-    mounted() {
-        // Cargar datos iniciales si es necesario
     }
 };

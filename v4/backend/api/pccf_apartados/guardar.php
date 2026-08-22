@@ -5,12 +5,8 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-@session_start();
-$rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
-$permisos = ($rol == 'admin' || $rol == 'jefeDepartamento');
-if (!$permisos) {
-    sendJSONError('No tiene permisos para realizar esta acción', 403);
-}
+// Permiso fiel a v3: admin o jefe de departamento
+checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
 $data = json_decode(file_get_contents('php://input'), true);
 $data = $data ?: [];
@@ -32,15 +28,14 @@ if (!$db) {
 }
 
 try {
-    $tituloEscapado = escapeString($titulo, $db);
+    // Tipo: s (titulo) + i x 5. La sentencia preparada ya escapa el texto.
+    $tipoStr = 'siiiii';
 
     if ($id > 0) {
         // Actualización. Orden de los '?': titulo, subapartado, requerido, tipo, contenido, id
         $stmt = mysqli_prepare($db,
             "UPDATE apartados_pccf SET titulo = ?, subapartado = ?, requerido = ?, tipo = ?, contenido_defecto = ? WHERE id = ?");
-        // Tipo: s (titulo) + i x 5
-        $tipoStr = 's' . 'i' . 'i' . 'i' . 'i' . 'i';
-        mysqli_stmt_bind_param($stmt, $tipoStr, $tituloEscapado, $subapartado, $requerido, $tipo, $contenidoDefecto, $id);
+        mysqli_stmt_bind_param($stmt, $tipoStr, $titulo, $subapartado, $requerido, $tipo, $contenidoDefecto, $id);
     } else {
         // Inserción: calculamos el orden a partir del máximo actual.
         $orden = 1;
@@ -51,9 +46,7 @@ try {
         }
         $stmt = mysqli_prepare($db,
             "INSERT INTO apartados_pccf (titulo, orden, subapartado, requerido, tipo, contenido_defecto) VALUES (?, ?, ?, ?, ?, ?)");
-        // Tipo: s (titulo) + i x 5
-        $tipoStr = 's' . 'i' . 'i' . 'i' . 'i' . 'i';
-        mysqli_stmt_bind_param($stmt, $tipoStr, $tituloEscapado, $orden, $subapartado, $requerido, $tipo, $contenidoDefecto);
+        mysqli_stmt_bind_param($stmt, $tipoStr, $titulo, $orden, $subapartado, $requerido, $tipo, $contenidoDefecto);
     }
 
     if (!mysqli_stmt_execute($stmt)) {

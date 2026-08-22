@@ -10,20 +10,6 @@ define('DB_NAME', 'gestionies');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 
-// Función para conectar a la base de datos con PDO
-function getPDOConnection() {
-    try {
-        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8";
-        $options = [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        ];
-        return new PDO($dsn, DB_USER, DB_PASS, $options);
-    } catch (PDOException $e) {
-        return null;
-    }
-}
-
 // Constantes de la aplicación
 define('APP_NAME', 'GestionIES');
 define('APP_VERSION', '4.0');
@@ -33,7 +19,12 @@ define('ROLE_ADMIN', 'admin');
 define('ROLE_JEFE_DEPARTAMENTO', 'jefeDepartamento');
 define('ROLE_PROFESOR', 'profesor');
 
-// Función para conectar a la base de datos (compatible con PHP 7+)
+// Un usuario "super" es admin o jefe de departamento (misma distinción que en v3)
+function esUsuarioSuper($rol) {
+    return ($rol == ROLE_ADMIN || $rol == ROLE_JEFE_DEPARTAMENTO);
+}
+
+// Función para conectar a la base de datos
 function getDBConnection() {
     $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     if (!$conn) {

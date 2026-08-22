@@ -3,20 +3,13 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-@session_start();
-$session = $_SESSION;
-
-if (empty($session['idUsuario'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'No hay sesión activa']);
-    exit;
-}
+$session = checkSession();
 
 // En v3 el guardado solo está permitido con permisos (admin/jefe) o un profesor para sí mismo.
 $rol = $session['rol'];
 $idUsuarioSesion = intval($session['idUsuario']);
 
-if ($rol === 'admin' || $rol === 'jefeDepartamento') {
+if (esUsuarioSuper($rol)) {
     // Admin puede guardar para cualquier profesor
 } else {
     // Un profesor solo puede guardar el contenido de sí mismo
@@ -36,7 +29,7 @@ $idGrupo    = isset($data['idGrupo']) ? intval($data['idGrupo']) : 0;
 $texto      = isset($data['texto']) ? $data['texto'] : '';
 
 // Determinar idProfesor según rol
-if ($rol === 'admin' || $rol === 'jefeDepartamento') {
+if (esUsuarioSuper($rol)) {
     $idProfesor = isset($data['idProfesor']) ? intval($data['idProfesor']) : $idUsuarioSesion;
 } else {
     $idProfesor = $idUsuarioSesion;

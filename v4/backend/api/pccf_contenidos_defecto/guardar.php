@@ -6,12 +6,8 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-@session_start();
-$rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
-$permisos = ($rol == 'admin' || $rol == 'jefeDepartamento');
-if (!$permisos) {
-    sendJSONError('No tiene permisos para realizar esta acción', 403);
-}
+// Permiso fiel a v3: admin o jefe de departamento
+checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
 $data = json_decode(file_get_contents('php://input'), true);
 $data = $data ?: [];
@@ -51,15 +47,13 @@ try {
         $resultCheck = mysqli_stmt_get_result($stmtCheck);
 
         if (mysqli_num_rows($resultCheck) > 0) {
-            // Actualizamos.
+            // Actualizamos (la sentencia preparada ya escapa el texto).
             $stmt = mysqli_prepare($db, "UPDATE contenidos_defecto_pccf SET texto = ? WHERE idApartado = ? AND idDepartamento = ?");
-            $textoEscapado = escapeString($texto, $db);
-            mysqli_stmt_bind_param($stmt, "sii", $textoEscapado, $idApartado, $idDepartamento);
+            mysqli_stmt_bind_param($stmt, "sii", $texto, $idApartado, $idDepartamento);
         } else {
-            // Insertamos.
+            // Insertamos (la sentencia preparada ya escapa el texto).
             $stmt = mysqli_prepare($db, "INSERT INTO contenidos_defecto_pccf (idDepartamento, idApartado, texto) VALUES (?, ?, ?)");
-            $textoEscapado = escapeString($texto, $db);
-            mysqli_stmt_bind_param($stmt, "iis", $idDepartamento, $idApartado, $textoEscapado);
+            mysqli_stmt_bind_param($stmt, "iis", $idDepartamento, $idApartado, $texto);
         }
 
         if (!mysqli_stmt_execute($stmt)) {

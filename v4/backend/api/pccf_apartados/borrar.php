@@ -5,12 +5,8 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-@session_start();
-$rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
-$permisos = ($rol == 'admin' || $rol == 'jefeDepartamento');
-if (!$permisos) {
-    sendJSONError('No tiene permisos para realizar esta acción', 403);
-}
+// Permiso fiel a v3: admin o jefe de departamento
+checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 if ($id <= 0) {

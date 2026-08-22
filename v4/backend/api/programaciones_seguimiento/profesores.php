@@ -4,18 +4,11 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-@session_start();
-$session = $_SESSION;
-
-if (empty($session['idUsuario'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'No hay sesión activa']);
-    exit;
-}
+$session = checkSession();
 
 // Solo un administrador o jefe de departamento puede elegir profesor
 $rol = $session['rol'];
-if (!($rol === 'admin' || $rol === 'jefeDepartamento')) {
+if (!esUsuarioSuper($rol)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'No tiene permisos para realizar esta acción']);
     exit;

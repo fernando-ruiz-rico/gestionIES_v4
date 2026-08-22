@@ -13,13 +13,8 @@ if (!$db) {
     exit;
 }
 
-@session_start();
-$rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
-if ($rol !== 'admin') {
-    http_response_code(403);
-    echo json_encode(['error' => 'Solo el administrador puede eliminar cursos']);
-    exit;
-}
+// Solo admin
+checkPermission(array(ROLE_ADMIN));
 
 $datos = json_decode(file_get_contents('php://input'), true);
 $id = isset($datos['id']) ? intval($datos['id']) : 0;

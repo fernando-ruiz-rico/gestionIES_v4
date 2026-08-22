@@ -3,14 +3,7 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-@session_start();
-$session = $_SESSION;
-
-if (empty($session['idUsuario'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'No hay sesión activa']);
-    exit;
-}
+$session = checkSession();
 
 $idTema     = isset($_GET['idTema']) ? intval($_GET['idTema']) : 0;
 $idGrupo    = isset($_GET['idGrupo']) ? intval($_GET['idGrupo']) : 0;
@@ -18,7 +11,7 @@ $rol        = $session['rol'];
 $idUsuarioSesion = intval($session['idUsuario']);
 
 // Admin puede ver contenido de cualquier profesor
-if ($rol === 'admin' || $rol === 'jefeDepartamento') {
+if (esUsuarioSuper($rol)) {
     $idProfesor = isset($_GET['idProfesor']) ? intval($_GET['idProfesor']) : $idUsuarioSesion;
 } else {
     $idProfesor = $idUsuarioSesion;

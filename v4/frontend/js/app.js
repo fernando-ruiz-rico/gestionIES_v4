@@ -114,8 +114,6 @@ app.component('historico-view', HistoricoView);
 app.component('estadisticas-view', EstadisticasView);
 app.component('configuracion-view', ConfiguracionView);
 app.component('excel-view', ExcelView);
-app.component('modal-confirmacion', ModalConfirmacion);
-app.component('modal-mensaje', ModalMensaje);
 
 // Montar la aplicación
 app.mount('#app');

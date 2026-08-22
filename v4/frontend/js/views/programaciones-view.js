@@ -186,8 +186,9 @@ const ProgramacionesView = {
 
         async cargarCatalogos() {
             try {
-                const res = await fetch('../backend/api/materias/index.php?action=listar').then(r => r.json());
-                if (res.success) this.materias = res.data || [];
+                // listar.php devuelve el array de materias directamente
+                const res = await fetch('../backend/api/materias/listar.php').then(r => r.json());
+                if (Array.isArray(res)) this.materias = res;
             } catch (error) {
                 console.error('Error al cargar catálogos:', error);
             }

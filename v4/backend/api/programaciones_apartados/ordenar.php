@@ -3,13 +3,8 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-@session_start();
-$permisos = isset($_SESSION['rol']) && ($_SESSION['rol'] == 'jefeDepartamento' || $_SESSION['rol'] == 'admin');
-if (!$permisos) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'No tiene permisos para realizar esta acción']);
-    exit;
-}
+// Permiso fiel a v3: admin o jefe de departamento
+checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
 $orden = isset($_POST['orden']) ? $_POST['orden'] : '';
 

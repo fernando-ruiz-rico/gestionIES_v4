@@ -3,14 +3,7 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-@session_start();
-$session = $_SESSION;
-
-if (empty($session['idUsuario'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'No hay sesión activa']);
-    exit;
-}
+$session = checkSession();
 
 $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
 if ($idMateria <= 0) {

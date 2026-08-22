@@ -33,11 +33,13 @@ function consultar($db, $sql, $params = [], $types = 'i')
         throw new Exception('Error preparando la consulta: ' . mysqli_error($db));
     }
     if (!empty($params)) {
-        $refs = [];
-        foreach ($params as $i => $p) {
-            $refs[] = &$params[$i];
+        // Compatible con PHP 5: sin "..." (PHP 5.6+); se pasan los valores por copia,
+        // que es suficiente porque se ejecuta la sentencia enseguida con los mismos.
+        $args = array($stmt, $types);
+        foreach ($params as $p) {
+            $args[] = $p;
         }
-        mysqli_stmt_bind_param($stmt, $types, ...$refs);
+        call_user_func_array('mysqli_stmt_bind_param', $args);
     }
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
@@ -134,7 +136,7 @@ function obtenerResultadosAprendizaje($db, $idMateria)
 // ============================================================================
 function generarContenidoIdentificacion($db, $idCiclo, $ciclo)
 {
-    list($anyo1, $anyo2) = cursoActual();
+    list($anyo1, $anyo2) = explode('/', cursoActual());
     $html = "<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\" width=\"100%\">
                 <tr><td width=\"35%\"><strong>Centro:</strong></td><td width=\"65%\">IES San Vicente</td></tr>
                 <tr><td><strong>Familia Profesional:</strong></td><td>"
@@ -292,7 +294,7 @@ function generarPDFPccf($db, $idCiclo)
     $datosCiclo = obtenerDatosCiclo($db, $idCiclo);
     $nivelCiclo = $datosCiclo['nivel'];
     $idDepartamento = obtenerIdDepartamentoDeCiclo($db, $idCiclo);
-    list($anyo1, $anyo2) = cursoActual();
+    list($anyo1, $anyo2) = explode('/', cursoActual());
 
     $pdf = new MiPDF();
     $pdf->SetAuthor('I.E.S. San Vicente');

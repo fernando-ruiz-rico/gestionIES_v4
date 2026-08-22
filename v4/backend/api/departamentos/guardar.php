@@ -7,14 +7,8 @@ header('Content-Type: application/json; charset=utf-8');
 session_start();
 require_once '../../config.php';
 
-// Verificar permisos de administrador
-$permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';
-
-if (!$permisos) {
-    http_response_code(403);
-    echo json_encode(['error' => 'No tiene permisos para realizar esta acción']);
-    exit;
-}
+// Solo admin (fiel a v3)
+checkPermission(array(ROLE_ADMIN));
 
 if (empty($_POST['nombre'])) {
     http_response_code(400);
@@ -22,16 +16,15 @@ if (empty($_POST['nombre'])) {
     exit;
 }
 
-$nombre = mysqli_real_escape_string(getDBConnection(), $_POST['nombre']);
-$id = isset($_POST['id']) && !empty($_POST['id']) ? intval($_POST['id']) : null;
-
 $db = getDBConnection();
-
 if (!$db) {
     http_response_code(500);
     echo json_encode(['error' => 'Error de conexión a la base de datos']);
     exit;
 }
+
+$nombre = mysqli_real_escape_string($db, $_POST['nombre']);
+$id = isset($_POST['id']) && !empty($_POST['id']) ? intval($_POST['id']) : null;
 
 if ($id === null) {
     // Insertar nuevo departamento

@@ -75,8 +75,7 @@ v4/
         │   ├── login-view.js      # Componente de login
         │   ├── app-layout.js      # Layout principal (mapeo de rutas)
         │   ├── sidebar.js         # Menú lateral
-        │   ├── header-bar.js      # Barra superior
-        │   └── modales/modales.js # Fase 9 (ModalConfirmacion, ModalMensaje)
+        │   └── header-bar.js      # Barra superior
         └── views/
             ├── home-view.js       # Página de inicio
             └── ...                # Una vista por módulo
@@ -178,7 +177,7 @@ v4/
 | **Fase 8 – PDFs** | ✅ | N/A | Completado (TCPDF: actas y selección) |
 | **Fase 9 – Características Avanzadas** | | | |
 | Edición de temas con accordion RA/CE | ✅ | ✅ | Completado (Fase 2.6) |
-| Modales reutilizables | ✅ | ✅ | Completado |
+| Modales reutilizables globales | — | — | Retirados en v4.4.1 (ninguna vista los usaba; los modales de cada módulo son inline en sus vistas) |
 | Resto de características avanzadas | ⬜ | ⬜ | Pendiente |
 
 ✅ = Implementado | ❌ = Pendiente
@@ -271,7 +270,7 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 ### Fase 9: Características Avanzadas (Parcial)
 
 - ✅ Edición de temas con accordion RA/CE (entregado en la Fase 2.6)
-- ✅ Modales reutilizables: `frontend/js/components/modales/modales.js` (`ModalConfirmacion`, `ModalMensaje`), equivalentes a `modales/mensaje.php` y a las ventanas de confirmación de v3; los modales específicos de cada módulo se definen inline en sus vistas.
+- ➖ Modales reutilizables: `ModalConfirmacion`/`ModalMensaje` (v4.4.0) se retiraron en v4.4.1 por no usarse en ninguna vista; los modales específicos de cada módulo se definen inline en sus vistas (los genéricos se resuelven con SweetAlert2).
 - ✅ Sistema de activaciones (ON/OFF de `programaciones` y `desideratas`): lo cubre la Fase 7.3 en `configuracion.php` (el frontend envía `evaluacionRA`/`seleccion`; se mapea a las filas `programaciones`/`desideratas`, mismo modelo que v3)
 - ⬜ Copia de seguridad y restauración
 - ⬜ Importación/exportación de datos (parcial: la exportación a CSV en `excel-view.js` cubre la exportación; la importación queda pendiente)
@@ -281,6 +280,16 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 ## Historial de cambios
 
 > Registro cronológico (más reciente primero) de las entregas por versión.
+
+### v4.4.1 — Revisión exhaustiva: simplificación, correcciones de escapado y código muerto
+- 🐞 **Escapado doble (corrupción de datos)**: `pccf/guardar.php`, `pccf_apartados/guardar.php`, `pccf_contenidos_defecto/guardar.php` y `programaciones_apartados/guardar.php` escapaban el texto **antes** de `mysqli_stmt_bind_param` (`escapeString`/`real_escape_string` + `bind_param`) → los textos con `'`, `"` u `\` se guardaban doble-escapados (literal `\'`, `\\`). Ahora se enlazan los valores tal cual: la sentencia preparada ya escapa. Verificado en vivo con round-trips byte-exactos (apóstrofos, comillas y backslash).
+- 🐞 **Año académico del PDF del PCCF**: `pccf/generar.php` hacía `list($anyo1, $anyo2) = cursoActual()`, pero `cursoActual()` devuelve la cadena `"2025/2026"` → años vacíos en portada e identificación. Ahora `list($anyo1, $anyo2) = explode('/', cursoActual())`. Verificado: el PDF emite `[(2025/2026)] TJ` en el apartado «Identificación».
+- 🔧 **Fuga de conexión** en `departamentos/guardar.php`: `mysqli_real_escape_string(getDBConnection(), …)` abría una segunda conexión sin cerrar; ahora se escapa sobre la única conexión que se usa.
+- 🗑 **Código muerto**: `getPDOConnection()` (nunca llamada) fuera de `config.php`; `api/materias/index.php` fuera de juego (solo `?action=listar` era usado y duplicaba `listar.php`; sus ramas POST/DELETE referenciaban columnas inexistentes de `materias`) — `programaciones-view.js` ahora usa `materias/listar.php` (devuelve el array directamente); `components/modales/modales.js` (`ModalConfirmacion`/`ModalMensaje`, sin uso) fuera de juego con sus registros en `app.js` y su `<script>` en `index.html`; mapa local `components` redundante fuera de `app-layout.js` (las vistas ya se registran globalmente en `app.js`), su `console.log` y `mounted()` vacío; `computed menusFiltrados` y el listener `hashchange` fuera de `sidebar.js` (v4 no usa routing por hash).
+- ♻️ **Deduplicación de sesión/permisos**: el bloque repetido `@session_start(); $session = $_SESSION; if (empty($session['idUsuario'])) { 401 }` → `checkSession()` (14 archivos: `programaciones_aula/*`, `programaciones_seguimiento/*`, `temas.php`, `temas_contenidos_defecto.php`); el chequeo repetido `if ($session['rol'] === 'admin' || $session['rol'] === 'jefeDepartamento')` → `esUsuarioSuper($rol)` (helper nuevo en `config.php`, misma distinción que v3) en los 10 archivos de `programaciones_aula/*`/`programaciones_seguimiento/*` que lo usaban. Los chequeos admin/jefe y solo-admin repetidos → `checkPermission(array(…))` en `pccf/guardar.php`, `pccf_apartados/{guardar,borrar,ordenar}.php`, `pccf_contenidos_defecto/guardar.php`, `programaciones_apartados/{guardar,eliminar,ordenar}.php`, `programaciones_contenidos_defecto/guardar.php`, `cursos/{guardar,eliminar}.php`, `ciclos/{eliminar, guardar_asociacion_curso, borrar_asociacion_curso, guardar_asociacion_unidad, borrar_asociacion_unidad}.php` y `departamentos/guardar.php`. **Cambio de comportamiento (deliberado)**: el acceso **anónimo** a esos endpoints pasa de 403 a **401** «No hay sesión activa» (coherente con el resto de la API); el usuario logueado con rol insuficiente sigue recibiendo 403.
+- ♻️ **Compatible PHP 5 (sin 5.6+)**: el helper `consultar()` de `pccf/generar.php` ya no usa `…` (desempaquetado de argumentos, PHP 5.6+); ahora `call_user_func_array('mysqli_stmt_bind_param', …)`. Era la única construcción que exigía 5.6; el resto del backend ya era PHP 5 (suelo efectivo 5.4 por los literales `[]`, como el resto del código).
+- ✅ **Verificado en vivo** (Laragon): PDF PCCF completo y de apartado válidos con el año correcto; round-trips de escapado en los 5 endpoints afectados (HEX en BD) sin restos; matriz de roles (anónimo 401, `testprofe` 403 en escrituras jefe/admin y lecturas propias OK, `testadmin` jefe y admin real pasan); `materias/listar.php`, `programaciones/index.php` y `pccf/listar*.php` OK; todos los scripts de `index.html` en 200; `php -l` limpio en todo el backend y `node --check` limpio en el frontend.
+- ⚠️ **Datos de prueba**: la clave de `testadmin` en `profesores` se normalizó a `MD5('admin1234')` (el valor previo en BD no coincidía con la contraseña documentada «admin1234» de esta sección); durante las verificaciones se cambió temporalmente `config.admin` y se restauró a `a6bdc78a74e71c67512990822c183d09` (el valor documentado). BD sin restos de prueba.
 
 ### Corrección de errores de la auditoría en vivo (B-1…B-6 + hueco de permisos)
 - **B-1** `programaciones_contenidos_defecto/guardar.php`: `admin` → `jefeDepartamento || admin` (fiel a v3).
@@ -369,6 +378,13 @@ Las decisiones importantes de diseño e implementación se documentan aquí.
 - **Decisión**: rehacer la 2.1 para ser fiel a v3. Se retiran crear/guardar/eliminar y la tabla ficticia.
 - **Consecuencia**: la edición real de los apartados/contenidos se hace en las fases 2.2–2.5 (CRUD de esos módulos); la 2.1 da visibilidad fiel al estado y conserva el Importar existente.
 - **Verificación**: `php -l` limpio; `listar` y `obtener` devuelven datos reales del curso en marcha.
+
+#### D-2026: Unificación de chequeos de sesión y permisos (v4.4.1)
+- **Decidido por**: Usuario («simplificar sin perder legibilidad»).
+- **Contexto**: 20+ endpoints repetían a mano los mismos bloques de `@session_start()` + 401 y de chequeo de rol (admin/jefe/solo-admin), con tres formas distintas de escribirlo.
+- **Decisión**: todos esos puntos usan los helpers existentes de `config.php`: `checkSession()` (401 «No hay sesión activa»), `checkPermission(array(…))` (403 «No tiene permisos para realizar esta acción») y el nuevo `esUsuarioSuper($rol)` para la distinción admin/jefe de v3.
+- **Consecuencia**: el acceso **anónimo** a esos endpoints devuelve ahora **401** (antes 403, porque el rol vacío no era admin); el usuario logueado con rol insuficiente sigue recibiendo 403. Comportamiento verificable en la matriz de roles de la auditoría en vivo.
+- **Verificación**: matriz de roles en vivo (anónimo 401 / `testprofe` 403 / jefe y admin OK); `php -l` limpio.
 
 ---
 

@@ -14,12 +14,7 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
 
-@session_start();
-if (empty($_SESSION['idUsuario'])) {
-    sendJSONError('No hay sesión activa', 401);
-}
-
-$session = $_SESSION;
+$session = checkSession();
 $permisos = in_array($session['rol'], array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 if (!$permisos) {
     sendJSONError('No tiene permisos para realizar esta acción', 403);
