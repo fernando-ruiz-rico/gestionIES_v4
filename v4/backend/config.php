@@ -113,7 +113,7 @@ function getMenus($rol, $departamentoUsuario = 0) {
     $menus = array(
         array("id" => 1, "submenu" => false, "texto" => "Profesores y Departamentos", "roles" => array(ROLE_ADMIN), "icono" => "bi-person-badge", "link" => null),
         array("id" => 1, "submenu" => true, "texto" => "Departamentos", "roles" => array(ROLE_ADMIN), "icono" => "bi-archive", "link" => "departamentos"),
-        array("id" => 1, "submenu" => true, "texto" => "Especialidades", "roles" => array(ROLE_ADMIN), "icono" => "bi-diagram-3", "link" => "especialidades"),
+        array("id" => 1, "submenu" => true, "texto" => "Especialidades", "roles" => array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO), "icono" => "bi-diagram-3", "link" => "especialidades"),
         array("id" => 1, "submenu" => true, "texto" => "Profesores", "roles" => array(ROLE_ADMIN), "icono" => "bi-person-badge", "link" => "profesores"),
         
         array("id" => 2, "submenu" => false, "texto" => "Cursos y Materias", "roles" => array(ROLE_ADMIN), "icono" => "bi-tree", "link" => null),

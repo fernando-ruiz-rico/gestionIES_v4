@@ -10,10 +10,12 @@ const EspecialidadesAPI = {
                 method: 'GET',
                 credentials: 'include'
             });
-            return await response.json();
+            const data = await response.json();
+            // Mismo formato de respuesta que el resto de clientes de la app
+            return { success: true, data: Array.isArray(data) ? data : [] };
         } catch (error) {
             console.error('Error al listar especialidades:', error);
-            return [];
+            return { success: false, error: 'Error de conexión', data: [] };
         }
     },
 
@@ -58,7 +60,7 @@ const EspecialidadesAPI = {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ idEspecialidad })
+                body: JSON.stringify({ id: idEspecialidad })
             });
             return await response.json();
         } catch (error) {
