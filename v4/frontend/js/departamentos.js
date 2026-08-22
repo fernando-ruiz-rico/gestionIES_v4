@@ -53,7 +53,7 @@ function cargarDepartamentoModal(id) {
     .then(response => response.json())
     .then(data => {
         if (data.error) {
-            mostrarMensaje('Error al cargar el departamento: ' + data.error, 0);
+            Avisos.error('Error al cargar el departamento: ' + data.error);
             return;
         }
         
@@ -66,7 +66,7 @@ function cargarDepartamentoModal(id) {
     })
     .catch(error => {
         console.error('Error al cargar departamento:', error);
-        mostrarMensaje('Error al cargar el departamento', 0);
+        Avisos.error('Error al cargar el departamento');
     });
 }
 
@@ -79,16 +79,16 @@ function nuevoDepartamento() {
 
 // Borra el departamento con el ID indicado, previa confirmación
 function borrarDepartamento(id, nombre) {
-    Swal.fire({
-        title: '¿Confirmar borrado?',
-        text: "¿Estás seguro de eliminar el departamento '" + nombre + "'? Sólo se podrá eliminar si no tiene profesores u otros recursos asociados.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: '<i class="bi bi-trash me-2"></i>Sí, eliminar',
-        cancelButtonText: '<i class="bi bi-x-lg me-2"></i>Cancelar'
-    }).then((result) => {
+    Avisos.confirmar(
+        '¿Confirmar borrado?',
+        "¿Estás seguro de eliminar el departamento '" + nombre + "'? Sólo se podrá eliminar si no tiene profesores u otros recursos asociados.",
+        {
+            boton: '<i class="bi bi-trash me-2"></i>Sí, eliminar',
+            cancelButtonText: '<i class="bi bi-x-lg me-2"></i>Cancelar',
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d'
+        }
+    ).then((result) => {
         if (result.isConfirmed) {
             const formData = new FormData();
             formData.append('id', id);
@@ -101,15 +101,15 @@ function borrarDepartamento(id, nombre) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    mostrarMensaje('Departamento eliminado correctamente', 1);
+                    Avisos.exito('¡Éxito!', 'Departamento eliminado correctamente');
                     cargarDepartamentos();
                 } else {
-                    mostrarMensaje(data.mensaje || 'Error al eliminar el departamento', 0);
+                    Avisos.error(data.mensaje || 'Error al eliminar el departamento');
                 }
             })
             .catch(error => {
                 console.error('Error al eliminar departamento:', error);
-                mostrarMensaje('Error al eliminar el departamento', 0);
+                Avisos.error('Error al eliminar el departamento');
             });
         }
     });
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    mostrarMensaje(data.mensaje || 'Departamento guardado correctamente', 1);
+                    Avisos.exito('¡Éxito!', data.mensaje || 'Departamento guardado correctamente');
                     limpiarFormularioDepartamentos();
                     
                     // Ocultar modal
@@ -149,12 +149,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Recargar lista
                     cargarDepartamentos();
                 } else {
-                    mostrarMensaje(data.error || 'Error al guardar el departamento', 0);
+                    Avisos.error(data.error || 'Error al guardar el departamento');
                 }
             })
             .catch(error => {
                 console.error('Error al guardar departamento:', error);
-                mostrarMensaje('Error al guardar el departamento', 0);
+                Avisos.error('Error al guardar el departamento');
             });
         });
     }
@@ -165,22 +165,4 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-// Función auxiliar para mostrar mensajes con SweetAlert2
-function mostrarMensaje(mensaje, tipo) {
-    // tipo: 0 = error, 1 = éxito
-    const icono = tipo === 1 ? 'success' : 'error';
-    const titulo = tipo === 1 ? '¡Éxito!' : 'Error';
-    
-    Swal.fire({
-        icon: icono,
-        title: titulo,
-        text: mensaje,
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-    });
 }

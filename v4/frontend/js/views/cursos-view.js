@@ -146,50 +146,25 @@ const CursosView = {
             const result = await CursosAPI.guardar(this.form);
 
             if (result.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Éxito',
-                    text: result.message,
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                Avisos.exito('Éxito', result.message);
 
                 this.modal.hide();
                 this.cargar();
             } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: result.error
-                });
+                Avisos.error(result.error);
             }
         },
 
         eliminar(curso) {
-            Swal.fire({
-                title: '¿Eliminar curso?',
-                text: curso.nombre,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }).then(async (res) => {
+            Avisos.confirmar('¿Eliminar curso?', curso.nombre).then(async (res) => {
                 if (res.isConfirmed) {
                     const result = await CursosAPI.eliminar(curso.id);
 
                     if (result.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
+                        Avisos.exito();
                         this.cargar();
                     } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: result.error
-                        });
+                        Avisos.error(result.error);
                     }
                 }
             });

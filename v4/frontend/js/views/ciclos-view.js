@@ -246,37 +246,24 @@ const CiclosView = {
             const result = await CiclosAPI.guardar(this.form);
 
             if (result.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Éxito',
-                    text: result.message,
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                Avisos.exito('Éxito', result.message);
                 this.modal.hide();
                 this.cargar();
             } else {
-                Swal.fire({ icon: 'error', title: 'Error', text: result.error });
+                Avisos.error(result.error);
             }
         },
 
         eliminar(ciclo) {
-            Swal.fire({
-                title: '¿Eliminar ciclo?',
-                text: ciclo.nombre,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }).then(async (res) => {
+            Avisos.confirmar('¿Eliminar ciclo?', ciclo.nombre).then(async (res) => {
                 if (res.isConfirmed) {
                     const result = await CiclosAPI.eliminar(ciclo.id);
 
                     if (result.success) {
-                        Swal.fire({ icon: 'success', timer: 1500, showConfirmButton: false });
+                        Avisos.exito();
                         this.cargar();
                     } else {
-                        Swal.fire({ icon: 'error', title: 'Error', text: result.error });
+                        Avisos.error(result.error);
                     }
                 }
             });
@@ -296,7 +283,7 @@ const CiclosView = {
                 this.ordenNuevoCurso = ordenes.length ? Math.max(...ordenes) + 1 : 1;
                 this.modalCursos.show();
             } else {
-                Swal.fire({ icon: 'error', title: 'Error', text: result.error });
+                Avisos.error(result.error);
             }
         },
 
@@ -307,7 +294,7 @@ const CiclosView = {
                 orden: this.ordenNuevoCurso
             });
             if (!result.success) {
-                Swal.fire({ icon: 'error', title: 'Error', text: result.error });
+                Avisos.error(result.error);
                 return;
             }
             this.cursoNuevo = 0;
@@ -321,14 +308,14 @@ const CiclosView = {
                 orden: asociacion.orden
             });
             if (!result.success) {
-                Swal.fire({ icon: 'error', title: 'Error', text: result.error });
+                Avisos.error(result.error);
             }
         },
 
         async borrarCurso(asociacion) {
             const result = await CiclosAPI.borrarAsociacionCurso(this.cicloActual.id, asociacion.idCurso);
             if (!result.success) {
-                Swal.fire({ icon: 'error', title: 'Error', text: result.error });
+                Avisos.error(result.error);
             }
             this.cargarAsociacionesCursos();
         },
@@ -350,14 +337,14 @@ const CiclosView = {
                 this.unidadesAsociadas = result.data;
                 this.modalUnidades.show();
             } else {
-                Swal.fire({ icon: 'error', title: 'Error', text: result.error });
+                Avisos.error(result.error);
             }
         },
 
         async anadirUnidad() {
             const result = await CiclosAPI.guardarAsociacionUnidad(this.cicloActual.id, this.unidadNueva);
             if (!result.success) {
-                Swal.fire({ icon: 'error', title: 'Error', text: result.error });
+                Avisos.error(result.error);
                 return;
             }
             this.unidadNueva = '';
@@ -367,7 +354,7 @@ const CiclosView = {
         async borrarUnidad(unidad) {
             const result = await CiclosAPI.borrarAsociacionUnidad(this.cicloActual.id, unidad.codigo);
             if (!result.success) {
-                Swal.fire({ icon: 'error', title: 'Error', text: result.error });
+                Avisos.error(result.error);
             }
             this.cargarAsociacionesUnidades();
         },

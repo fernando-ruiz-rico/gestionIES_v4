@@ -115,50 +115,25 @@ const MateriasView = {
             const result = await MateriasAPI.guardar(this.form);
 
             if (result.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Éxito',
-                    text: result.message,
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                Avisos.exito('Éxito', result.message);
 
                 this.modal.hide();
                 this.cargar();
             } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: result.error
-                });
+                Avisos.error(result.error);
             }
         },
 
         eliminar(materia) {
-            Swal.fire({
-                title: '¿Eliminar materia?',
-                text: materia.nombre,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }).then(async (res) => {
+            Avisos.confirmar('¿Eliminar materia?', materia.nombre).then(async (res) => {
                 if (res.isConfirmed) {
                     const result = await MateriasAPI.eliminar(materia.idMateria);
 
                     if (result.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
+                        Avisos.exito();
                         this.cargar();
                     } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: result.error
-                        });
+                        Avisos.error(result.error);
                     }
                 }
             });

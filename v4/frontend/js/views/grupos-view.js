@@ -115,50 +115,25 @@ const GruposView = {
             const result = await GruposAPI.guardar(this.form);
 
             if (result.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Éxito',
-                    text: result.message,
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                Avisos.exito('Éxito', result.message);
 
                 this.modal.hide();
                 this.cargar();
             } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: result.error
-                });
+                Avisos.error(result.error);
             }
         },
 
         eliminar(grupo) {
-            Swal.fire({
-                title: '¿Eliminar grupo?',
-                text: grupo.nombre,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }).then(async (res) => {
+            Avisos.confirmar('¿Eliminar grupo?', grupo.nombre).then(async (res) => {
                 if (res.isConfirmed) {
                     const result = await GruposAPI.eliminar(grupo.idGrupo);
 
                     if (result.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
+                        Avisos.exito();
                         this.cargar();
                     } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: result.error
-                        });
+                        Avisos.error(result.error);
                     }
                 }
             });

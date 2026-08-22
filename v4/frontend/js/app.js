@@ -45,24 +45,11 @@ const app = createApp({
             this.loadMenus();
             
             // Mostrar mensaje de bienvenida
-            Swal.fire({
-                icon: 'success',
-                title: '¡Bienvenido!',
-                text: `Hola ${userData.nombre}`,
-                timer: 2000,
-                showConfirmButton: false
-            });
+            Avisos.exito('¡Bienvenido!', `Hola ${userData.nombre}`);
         },
         
         async handleLogout() {
-            const confirmed = await Swal.fire({
-                title: '¿Cerrar sesión?',
-                text: 'Se cerrará la sesión actual',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, cerrar',
-                cancelButtonText: 'Cancelar'
-            });
+            const confirmed = await Avisos.confirmar('¿Cerrar sesión?', 'Se cerrará la sesión actual', { boton: 'Sí, cerrar', icono: 'question' });
             
             if (confirmed.isConfirmed) {
                 await AuthAPI.logout();
@@ -70,12 +57,7 @@ const app = createApp({
                 this.usuario = null;
                 this.menus = [];
                 
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Sesión cerrada',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                Avisos.exito('Sesión cerrada');
             }
         }
     }

@@ -121,50 +121,25 @@ const EspecialidadesView = {
             const result = await EspecialidadesAPI.guardar(this.form);
 
             if (result.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Éxito',
-                    text: result.message,
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                Avisos.exito('Éxito', result.message);
 
                 this.modal.hide();
                 this.cargar();
             } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: result.error
-                });
+                Avisos.error(result.error);
             }
         },
 
         eliminar(especialidad) {
-            Swal.fire({
-                title: '¿Eliminar especialidad?',
-                text: especialidad.nombre,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            }).then(async (res) => {
+            Avisos.confirmar('¿Eliminar especialidad?', especialidad.nombre).then(async (res) => {
                 if (res.isConfirmed) {
                     const result = await EspecialidadesAPI.eliminar(especialidad.idEspecialidad);
 
                     if (result.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
+                        Avisos.exito();
                         this.cargar();
                     } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: result.error
-                        });
+                        Avisos.error(result.error);
                     }
                 }
             });
