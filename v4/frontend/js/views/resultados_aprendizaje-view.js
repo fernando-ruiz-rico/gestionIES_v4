@@ -209,7 +209,7 @@ const ResultadosArendizajeView = {
                     this.resultados = [];
                 }
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.cargando = false;
             }
@@ -222,7 +222,7 @@ const ResultadosArendizajeView = {
                 horas: this.horasEmpresa
             });
             if (result.success) {
-                Swal.fire({ icon: 'success', title: 'Actualizado', timer: 1500, showConfirmButton: false });
+                Avisos.exito('Actualizado');
             }
         },
 
@@ -247,11 +247,11 @@ const ResultadosArendizajeView = {
                 porcentaje_empresa: this.form.porcentaje_empresa
             });
             if (result.success) {
-                Swal.fire({ icon: 'success', title: 'Guardado', timer: 1500, showConfirmButton: false });
+                Avisos.exito('Guardado');
                 this.modalRA.hide();
                 this.cargar();
             } else {
-                Swal.fire('Error', result.error, 'error');
+                Avisos.error(result.error);
             }
         },
 
@@ -263,7 +263,7 @@ const ResultadosArendizajeView = {
         actualizarEvaluar() {
             const result = ResultadosArendizajeAPI.actualizar_evaluacion(this.evalForm);
             if (result.success) {
-                Swal.fire({ icon: 'success', title: 'Evaluación actualizada', timer: 1500, showConfirmButton: false });
+                Avisos.exito('Evaluación actualizada');
             }
         },
 
@@ -279,18 +279,11 @@ const ResultadosArendizajeView = {
         },
 
         async eliminar(r) {
-            const conf = await Swal.fire({
-                title: '¿Eliminar resultado?',
-                text: r.texto,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            });
+            const conf = await Avisos.confirmar('¿Eliminar resultado?', r.texto);
             if (conf.isConfirmed) {
                 const result = ResultadosArendizajeAPI.eliminar(r.id);
                 if (result.success) {
-                    Swal.fire({ icon: 'success', title: 'Eliminado', timer: 1500, showConfirmButton: false });
+                    Avisos.exito('Eliminado');
                     this.cargar();
                 }
             }
@@ -303,7 +296,7 @@ const ResultadosArendizajeView = {
                 texto: this.nuevoCriterio.texto
             });
             if (result.success) {
-                Swal.fire({ icon: 'success', title: 'Criterio guardado', timer: 1500, showConfirmButton: false });
+                Avisos.exito('Criterio guardado');
                 this.cargarCriterios();
             }
         },
@@ -316,7 +309,7 @@ const ResultadosArendizajeView = {
                 nuevoTexto: c.texto
             });
             if (result.success) {
-                Swal.fire({ icon: 'success', title: 'Criterio actualizado', timer: 1500, showConfirmButton: false });
+                Avisos.exito('Criterio actualizado');
                 this.cargarCriterios();
             }
         },
@@ -327,7 +320,7 @@ const ResultadosArendizajeView = {
                 codigo: c.codigo
             });
             if (result.success) {
-                Swal.fire({ icon: 'success', title: 'Criterio eliminado', timer: 1500, showConfirmButton: false });
+                Avisos.exito('Criterio eliminado');
                 this.cargarCriterios();
             }
         }

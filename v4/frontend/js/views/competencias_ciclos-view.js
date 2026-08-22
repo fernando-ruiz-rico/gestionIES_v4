@@ -112,7 +112,7 @@ const CompetenciasCiclosView = {
                 const res = await CompetenciasCiclosAPI.listar(this.idCicloSeleccionado);
                 if (res.success) this.competencias = res.data;
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.cargando = false;
             }
@@ -144,27 +144,20 @@ const CompetenciasCiclosView = {
                 idCiclo: this.form.idCiclo || this.idCicloSeleccionado
             });
             if (res.success) {
-                Swal.fire({ icon: 'success', title: 'Guardado', timer: 1500, showConfirmButton: false });
+                Avisos.exito('Guardado');
                 this.modal.hide();
                 this.cargar();
             } else {
-                Swal.fire('Error', res.error, 'error');
+                Avisos.error(res.error);
             }
         },
 
         async eliminar(c) {
-            const conf = await Swal.fire({
-                title: '¿Eliminar competencia?',
-                text: c.texto,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            });
+            const conf = await Avisos.confirmar('¿Eliminar competencia?', c.texto);
             if (conf.isConfirmed) {
                 const res = await CompetenciasCiclosAPI.eliminar(c.id);
                 if (res.success) {
-                    Swal.fire({ icon: 'success', title: 'Eliminada', timer: 1500, showConfirmButton: false });
+                    Avisos.exito('Eliminada');
                     this.cargar();
                 }
             }

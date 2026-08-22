@@ -180,7 +180,7 @@ const PCCFView = {
             try {
                 this.apartados = await PCCFApartadosAPI.listar();
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -197,7 +197,7 @@ const PCCFView = {
                 const data = await PCCFAPI.listar(this.idCiclo, this.idApartado);
                 this.contenido = data.texto || '';
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.cargando = false;
             }
@@ -215,9 +215,9 @@ const PCCFView = {
             this.guardando = true;
             try {
                 await PCCFAPI.guardar(this.idCiclo, this.idApartado, this.contenido);
-                Swal.fire('Éxito', 'Contenido guardado correctamente', 'success');
+                Avisos.exito('Éxito', 'Contenido guardado correctamente');
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.guardando = false;
             }
@@ -226,7 +226,7 @@ const PCCFView = {
         // Genera el PDF completo del PCCF del ciclo (sin apartado)
         generarPDF() {
             if (!this.idCiclo) {
-                Swal.fire('Error', 'Deves seleccionar un ciclo', 'warning');
+                Avisos.aviso('Deves seleccionar un ciclo');
                 return;
             }
             window.open(
@@ -238,7 +238,7 @@ const PCCFView = {
         // Genera el PDF de un ciclo y apartado concretos
         generarPDFApartado() {
             if (!this.idCiclo || !this.idApartado) {
-                Swal.fire('Error', 'Deves seleccionar un ciclo y un apartado', 'warning');
+                Avisos.aviso('Deves seleccionar un ciclo y un apartado');
                 return;
             }
             window.open(

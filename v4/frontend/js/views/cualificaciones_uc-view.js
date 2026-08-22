@@ -215,7 +215,7 @@ const CualificacionesUCView = {
             });
             if (res.success) {
                 this.unidadNueva = '';
-                Swal.fire({ icon: 'success', title: 'Asociada', timer: 1000, showConfirmButton: false });
+                Avisos.exito('Asociada');
             }
         },
 
@@ -225,7 +225,7 @@ const CualificacionesUCView = {
                 codigoUnidad: a.codigoUnidad
             });
             if (res.success) {
-                Swal.fire({ icon: 'success', title: 'Desasociada', timer: 1000, showConfirmButton: false });
+                Avisos.exito('Desasociada');
             }
         },
 
@@ -239,11 +239,11 @@ const CualificacionesUCView = {
         async guardarCualificacion() {
             const res = await CualificacionesUCAPI.guardar_cualificacion(this.nuevaCualificacion);
             if (res.success) {
-                Swal.fire({ icon: 'success', title: 'Guardada', timer: 1000, showConfirmButton: false });
+                Avisos.exito('Guardada');
                 this.nuevaCualificacion = { codigo: '', texto: '' };
                 this.cargar();
             } else {
-                Swal.fire('Error', res.error, 'error');
+                Avisos.error(res.error);
             }
         },
 
@@ -253,26 +253,19 @@ const CualificacionesUCView = {
                 this.modalCualificacion.hide();
                 this.cargar();
             } else {
-                Swal.fire('Error', res.error, 'error');
+                Avisos.error(res.error);
             }
         },
 
         async eliminarCualificacion(q) {
-            const conf = await Swal.fire({
-                title: '¿Eliminar cualificación?',
-                text: q.texto,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            });
+            const conf = await Avisos.confirmar('¿Eliminar cualificación?', q.texto);
             if (conf.isConfirmed) {
                 const res = await CualificacionesUCAPI.eliminar_cualificacion(q.codigo);
                 if (res.success) {
-                    Swal.fire({ icon: 'success', title: 'Eliminada', timer: 1000, showConfirmButton: false });
+                    Avisos.exito('Eliminada');
                     this.cargar();
                 } else {
-                    Swal.fire('Error', res.error, 'error');
+                    Avisos.error(res.error);
                 }
             }
         },
@@ -287,11 +280,11 @@ const CualificacionesUCView = {
         guardarUnidad() {
             const res = CualificacionesUCAPI.guardar_unidad(this.nuevaUnidad);
             if (res.success) {
-                Swal.fire({ icon: 'success', title: 'Guardada', timer: 1000, showConfirmButton: false });
+                Avisos.exito('Guardada');
                 this.nuevaUnidad = { codigo: '', texto: '' };
                 this.cargar();
             } else {
-                Swal.fire('Error', res.error, 'error');
+                Avisos.error(res.error);
             }
         },
 
@@ -301,26 +294,19 @@ const CualificacionesUCView = {
                 this.modalUnidad.hide();
                 this.cargar();
             } else {
-                Swal.fire('Error', res.error, 'error');
+                Avisos.error(res.error);
             }
         },
 
         async eliminarUnidad(u) {
-            const conf = await Swal.fire({
-                title: '¿Eliminar unidad?',
-                text: u.texto,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            });
+            const conf = await Avisos.confirmar('¿Eliminar unidad?', u.texto);
             if (conf.isConfirmed) {
                 const res = await CualificacionesUCAPI.eliminar_unidad(u.codigo);
                 if (res.success) {
-                    Swal.fire({ icon: 'success', title: 'Eliminada', timer: 1000, showConfirmButton: false });
+                    Avisos.exito('Eliminada');
                     this.cargar();
                 } else {
-                    Swal.fire('Error', res.error, 'error');
+                    Avisos.error(res.error);
                 }
             }
         }

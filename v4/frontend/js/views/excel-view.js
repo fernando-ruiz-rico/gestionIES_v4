@@ -118,7 +118,7 @@ const ExcelView = {
                 const json = await res.json();
                 if (json.success) this.datos = json.data;
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.cargando = false;
             }

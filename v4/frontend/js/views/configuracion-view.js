@@ -91,7 +91,7 @@ const ConfiguracionView = {
 
         guardarPassword() {
             if (this.passwordForm.nuevaPassword !== this.passwordForm.passwordConfirmacion) {
-                Swal.fire('Error', 'Las contraseñas no coinciden', 'error');
+                Avisos.error('Las contraseñas no coinciden');
                 return;
             }
             const res = ConfiguracionAPI.actualizar_password({
@@ -101,10 +101,10 @@ const ConfiguracionView = {
             });
             res.then(r => {
                 if (r && r.success) {
-                    Swal.fire({ icon: 'success', title: 'Contraseña actualizada', timer: 1500, showConfirmButton: false });
+                    Avisos.exito('Contraseña actualizada');
                     this.passwordForm = { passwordActual: '', nuevaPassword: '', passwordConfirmacion: '' };
                 } else {
-                    Swal.fire('Error', r.error, 'error');
+                    Avisos.error(r.error);
                 }
             });
         },
@@ -112,7 +112,7 @@ const ConfiguracionView = {
         toggle(clave, valor) {
             ConfiguracionAPI.actualizar_activacion(clave, valor).then(r => {
                 if (r && r.success) {
-                    Swal.fire({ icon: 'success', title: 'Ajuste actualizado', timer: 1000, showConfirmButton: false });
+                    Avisos.exito('Ajuste actualizado');
                 }
             });
         }
