@@ -283,7 +283,7 @@ const ProfesoresView = {
             if (result.success) {
                 this.profesores = result.data;
             } else {
-                Swal.fire('Error', result.error, 'error');
+                Avisos.error(result.error);
             }
         },
         
@@ -328,7 +328,7 @@ const ProfesoresView = {
                 
                 this.modalInstance.show();
             } else {
-                Swal.fire('Error', result.error, 'error');
+                Avisos.error(result.error);
             }
         },
         
@@ -393,22 +393,15 @@ const ProfesoresView = {
             
             if (result.success) {
                 this.modalInstance.hide();
-                Swal.fire('Éxito', result.data.mensaje, 'success');
+                Avisos.exito('Éxito', result.data.mensaje);
                 await this.cargarProfesores();
             } else {
-                Swal.fire('Error', result.error, 'error');
+                Avisos.error(result.error);
             }
         },
         
         async borrarProfesor(id, nombre) {
-            const confirmed = await Swal.fire({
-                title: '¿Borrar profesor?',
-                text: 'Se eliminará al profesor "' + nombre + '" y todos sus vínculos (selección de materias, preferencias de horario...)',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, borrar',
-                cancelButtonText: 'Cancelar'
-            });
+            const confirmed = await Avisos.confirmar('¿Borrar profesor?', 'Se eliminará al profesor "' + nombre + '" y todos sus vínculos (selección de materias, preferencias de horario...)', { boton: 'Sí, borrar' });
             
             if (confirmed.isConfirmed) {
                 const result = await ProfesoresAPI.eliminar(id);
@@ -417,7 +410,7 @@ const ProfesoresView = {
                     Swal.fire('Eliminado', result.data.mensaje, 'success');
                     await this.cargarProfesores();
                 } else {
-                    Swal.fire('Error', result.error, 'error');
+                    Avisos.error(result.error);
                 }
             }
         },
@@ -434,7 +427,7 @@ const ProfesoresView = {
                 });
                 await this.cargarProfesores();
             } else {
-                Swal.fire('Error', result.error, 'error');
+                Avisos.error(result.error);
             }
         },
         
@@ -450,7 +443,7 @@ const ProfesoresView = {
                 });
                 await this.cargarProfesores();
             } else {
-                Swal.fire('Error', result.error, 'error');
+                Avisos.error(result.error);
             }
         }
     },
