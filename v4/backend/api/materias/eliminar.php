@@ -21,15 +21,29 @@ if ($id <= 0) {
     exit;
 }
 
+// Compruebo que existe antes de borrar (fiel a v3)
+$stmt = mysqli_prepare($db, "SELECT id FROM materias WHERE id = ?");
+mysqli_stmt_bind_param($stmt, "i", $id);
+mysqli_stmt_execute($stmt);
+$res = mysqli_stmt_get_result($stmt);
+if (mysqli_num_rows($res) === 0) {
+    mysqli_stmt_close($stmt);
+    http_response_code(404);
+    echo json_encode(['error' => 'No encontrado']);
+    mysqli_close($db);
+    exit;
+}
+mysqli_stmt_close($stmt);
+
+// Borrado en cascada (fiel a v3/borrar_materia.php): las tablas que la huérfanan
+// antes que la propia materia, para no dejar filas huérfanas (ver B-6).
+mysqli_query($db, "DELETE FROM seleccion WHERE idMateria = " . intval($id));
+mysqli_query($db, "DELETE FROM materias_grupos WHERE idMateria = " . intval($id));
+mysqli_query($db, "DELETE FROM contenidos_programaciones WHERE idMateria = " . intval($id));
+
 $stmt = mysqli_prepare($db, "DELETE FROM materias WHERE id = ?");
 mysqli_stmt_bind_param($stmt, "i", $id);
 mysqli_stmt_execute($stmt);
-
-if (mysqli_stmt_affected_rows($stmt) === 0) {
-    http_response_code(404);
-    echo json_encode(['error' => 'No encontrado']);
-    exit;
-}
 
 echo json_encode(['success' => true, 'message' => 'Eliminado correctamente']);
 

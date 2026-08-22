@@ -3,9 +3,11 @@
 const MateriasAPI = {
     baseUrl: '../backend/api/materias/',
 
-    async listar() {
+    // `idCurso` (opcional): filtra las materias del curso; sin él, todas (fiel a v3)
+    async listar(idCurso) {
         try {
-            const response = await fetch(this.baseUrl + 'listar.php', { credentials: 'include' });
+            const url = this.baseUrl + 'listar.php' + ((idCurso > 0) ? `?idCurso=${idCurso}` : '');
+            const response = await fetch(url, { credentials: 'include' });
             const data = await response.json();
             return { success: true, data: Array.isArray(data) ? data : [] };
         } catch (e) {
@@ -44,7 +46,78 @@ const MateriasAPI = {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idMateria: id })
+                body: JSON.stringify({ id: id })
+            });
+            return await response.json();
+        } catch (e) {
+            return { success: false, error: 'Error de conexión' };
+        }
+    },
+
+    // Datos de una materia por grupo (fiel a v3: cargar_forms_materias_grupos.php)
+    async listar_materias_grupos(idMateria, idCurso) {
+        try {
+            const url = this.baseUrl + `listar_materias_grupos.php?idMateria=${idMateria}&idCurso=${idCurso}`;
+            const response = await fetch(url, { credentials: 'include' });
+            const data = await response.json();
+            return { success: true, data: data };
+        } catch (e) {
+            console.error(e);
+            return { success: false, error: 'Error de conexión', data: null };
+        }
+    },
+
+    // Inserta/modifica los datos de una materia para un grupo (fiel a v3)
+    async insertar_materia_grupo(datos) {
+        try {
+            const response = await fetch(this.baseUrl + 'insertar_materia_grupo.php', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+            return await response.json();
+        } catch (e) {
+            return { success: false, error: 'Error de conexión' };
+        }
+    },
+
+    // Lista de competencias asociadas a una materia + opciones del ciclo
+    async competencias_listar(idMateria) {
+        try {
+            const url = this.baseUrl + `competencias_listar.php?idMateria=${idMateria}`;
+            const response = await fetch(url, { credentials: 'include' });
+            const data = await response.json();
+            return { success: true, data: data };
+        } catch (e) {
+            console.error(e);
+            return { success: false, error: 'Error de conexión', data: null };
+        }
+    },
+
+    // Asocia una competencia a una materia (solo admin, fiel a v3)
+    async competencias_asociar(idMateria, idCompetencia) {
+        try {
+            const response = await fetch(this.baseUrl + 'competencias_asociar.php', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idMateria: idMateria, idCompetencia: idCompetencia })
+            });
+            return await response.json();
+        } catch (e) {
+            return { success: false, error: 'Error de conexión' };
+        }
+    },
+
+    // Desasocia una competencia de una materia (solo admin, fiel a v3)
+    async competencias_borrar(idMateria, idCompetencia) {
+        try {
+            const response = await fetch(this.baseUrl + 'competencias_borrar.php', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idMateria: idMateria, idCompetencia: idCompetencia })
             });
             return await response.json();
         } catch (e) {
