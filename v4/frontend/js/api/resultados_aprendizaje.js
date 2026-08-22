@@ -1,11 +1,15 @@
 // API client para el módulo de Resultados de Aprendizaje (Fase 4.1)
 
-const ResultadosAprendizajeAPI = {
+const ResultadosArendizajeAPI = {
     baseUrl: '../backend/api/resultados_aprendizaje.php',
 
-    async listar_materias() {
+    // Lista las materias del selector. El departamento del admin se pasa
+    // como parámetro; el jefe y el profesor usan el de su sesión (como en v3).
+    async listar_materias(idDepartamento) {
         try {
-            const response = await fetch(this.baseUrl + '?action=listar_materias', { credentials: 'include' });
+            const url = this.baseUrl + '?action=listar_materias' +
+                (idDepartamento ? '&idDepartamento=' + idDepartamento : '');
+            const response = await fetch(url, { credentials: 'include' });
             const data = await response.json();
             return data;
         } catch (e) {

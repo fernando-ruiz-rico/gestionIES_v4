@@ -56,6 +56,7 @@ v4/
 │       ├── configuracion.php           # Fase 7.3
 │       └── excel.php                   # Fase 7.4
 │   ├── pdf_acta.php                  # Fase 8 (PDF del acta, TCPDF)
+│   ├── pdf_resultados_aprendizaje.php # Fase 8 (PDFs de RA/CE empresa, TCPDF)
 │   ├── pdf_seleccion.php             # Fase 8 (PDF de la selección, TCPDF)
 │   └── lib/php/tcpdf/                # Fase 8 (TCPDF, copiado desde v3)
 │
@@ -174,7 +175,7 @@ v4/
 | 7.3 Configuración | ✅ | ✅ | Completado |
 | 7.4 Exportación a Excel | ✅ | ✅ | Completado |
 | 7.5 Ayuda | ❌ | ❌ | Pendiente (página estática de ayuda) |
-| **Fase 8 – PDFs** | ✅ | N/A | Completado (TCPDF: actas y selección) |
+| **Fase 8 – PDFs** | ✅ | N/A | Completado (TCPDF: actas, selección y RA/CE empresa) |
 | **Fase 9 – Características Avanzadas** | | | |
 | Edición de temas con accordion RA/CE | ✅ | ✅ | Completado (Fase 2.6) |
 | Modales reutilizables globales | — | — | Retirados en v4.4.1 (ninguna vista los usaba; los modales de cada módulo son inline en sus vistas) |
@@ -280,6 +281,14 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 ## Historial de cambios
 
 > Registro cronológico (más reciente primero) de las entregas por versión.
+
+### Resultados de aprendizaje — selector de materias arreglado (fiel a v3) + PDFs de empresa (Fase 4.1)
+- 🐞 **«La opción no funciona correctamente» — causa raíz**: la vista `resultados_aprendizaje-view.js` se referenciaba al cliente como `ResultadosArendizajeAPI` (23 caracteres, sin la `p`), pero el cliente `js/api/resultados_aprendizaje.js` lo declaraba como `ResultadosAprendizajeAPI` (24, **con** la `p`) → `ReferenceError` en cada llamada; el `try/catch` de `cargarMaterias()` lo tragaba en silencio y el desplegable de materias quedaba **siempre vacío** (el de departamentos sí cargaba, por eso la opción parecía a medias). Corrección: renombrado del `const` a `ResultadosArendizajeAPI`, que es el nombre que usan las 11 referencias de la vista y la convención del módulo (`ResultadosArendizajeView` en la vista y `app.js`).
+- 🧩 **Comportamiento fiel a v3** (la opción, en `v3/formacion_empresa.php`): el **departamento** lo elige solo el **admin** (desplegable; al cambiar se limpian materias/RA); **jefe de departamento y profesor** lo tienen **fijo al suyo** (desplegable deshabilitado con su valor, fiel a v3). El desplegable de **materias** por rol: el **profesor** solo ve **las suyas** (`seleccion` del profesor + escenario actual + `tiene_programacion`), y el **jefe/admin** ve **todas las del departamento con programación activa** — mismo criterio de v3 (`listar_materias`: el admin pasa `idDepartamento` por parámetro, jefe/profesor lo resuelve el backend de su sesión).
+- 🧩 **Los 3 botones de PDF de v3** («Ver resumen general», «RAs empresa», «CEs empresa»): `backend/pdf_resultados_aprendizaje.php` (nuevo, TCPDF del patrón v4 `class MiPDF extends TCPDF`, cabecera «I.E.S. San Vicente» y pie de página) con los 3 modos `?modo=resumen|ra|ce`, que replican las 3 páginas HTML de v3: resúmenes de empresa por ciclo (totales de horas empresa y % medio con el umbral 10-20 % y asterisco), detalle de RAs empresa (ciclos de la familia Informática, materias con `horas_empresa>0` y acrónimos fieles al `obtenerAcronimo` de v3, reimplementado para PHP 5 sin `mbstring`) y CEs empresa (CRs con % empresa y su tema vinculado). La vista los abre con `window.open` directo al endpoint (patrón v4), sin impresión por el navegador.
+- 🔧 **Backend** `resultados_aprendizaje.php`: `listar_materias` reescrito por rol (admin con `idDepartamento` requerido, jefe/profesor con el departamento de sesión) y todas las acciones de escritura acotadas a departamento (`guardar`, `actualizar_horas` + `tienePermisoEdicion`, `eliminar`, criterios `guardar/actualizar/eliminar_criterio`); `actualizar_evaluacion` conserva solo la comprobación de departamento, fiel al endpoint de v3 (sin comprobación de rol). Cliente `api/resultados_aprendizaje.js`: `listar_materias(idDepartamento)` solo adjunta `&idDepartamento=` cuando hay departamento (caso admin).
+- ✅ **Verificado en navegador real** (Chromium headless contra Laragon, app real): **jefe** (`testadmin`) — departamento fijo «1» deshabilitado, 98 materias del departamento y los 3 botones de PDF; **profesor** (`testprofe`) — departamento fijo, **solo las suyas** (con una asignatura temporal, borrada después: «Programación (1º DAM)», 2 opciones) y 3 botones; **admin** (credenciales reales vía intercambio temporal de `config.admin`, restaurado y verificado) — elige departamento → aparecen las 98 materias; los 3 PDFs devuelven `200 application/pdf` con cabecera `%PDF` en los 3 modos; sin errores de consola. `php -l` / `node --check` limpios.
+- ⚠️ Frontend (vista + cliente), `backend/api/resultados_aprendizaje.php` y `backend/pdf_resultados_aprendizaje.php` (nuevo). Sin cambios de esquema de BD ni de endpoints. PHP 5 (sin `??`, `call_user_func_array` para `mysqli_stmt_bind_param`, `mb_substr` con `function_exists`). `?v=2` en los 2 scripts del módulo de `index.html`.
 
 ### TinyMCE 7 — re-inicialización del editor «la segunda vez» (PCCF, Unidades, Cont. defecto unidades)
 - 🐞 **Causa raíz de «funciona la primera vez, pero la segunda entrada no sale bien» (cambio de apartado del PCCF, reabrir un tema, o entrar a otra opción)**: en esta build de TinyMCE 7.9.1, `tinymce.remove('id')` (con id como string) **no hace nada** — el teardown real es `editor.destroy()`. Al re-inicializar un id cuya instancia anterior sigue viva, el `init` nuevo compite con la instancia pendiente y el editor queda fantasma: registrado pero **sin adjunto al DOM y sin iframe**, con contenido vacío o antiguo; además `guardar()` lee `tinymce.get(id)` en un estado inconsistente (cambios perdidos en silencio). El caso más visible: los ids `contexto` / `recursos` / `metodologia` / `adaptaciones` se reutilizan en **«Unidades»** y **«Cont. defecto unidades»**, y el editor del PCCF se re-inicializa al cambiar de apartado sin salir de la vista.

@@ -50,6 +50,40 @@ function puedeTrabajarSobreDepartamento($idDepartamento)
     return false;
 }
 
+// Devuelve el departamento del que depende la materia indicada (0 si no existe)
+function idDepartamentoDeMateria($db, $idMateria)
+{
+    $stmt = mysqli_prepare($db, "SELECT idDepartamento FROM materias WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $idMateria);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $fila = mysqli_fetch_assoc($result);
+    mysqli_stmt_close($stmt);
+    return ($fila && $fila['idDepartamento'] !== null) ? intval($fila['idDepartamento']) : 0;
+}
+
+// Devuelve el departamento de la materia a la que pertenece un resultado
+function idDepartamentoDeRA($db, $idResultado)
+{
+    $stmt = mysqli_prepare($db, "SELECT idMateria FROM resultados_aprendizaje WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $idResultado);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $fila = mysqli_fetch_assoc($result);
+    mysqli_stmt_close($stmt);
+    return ($fila) ? idDepartamentoDeMateria($db, intval($fila['idMateria'])) : 0;
+}
+
+// Comprueba que el usuario puede editar datos de una materia/departamento:
+// los jefes de departamento solo sobre la materia de su propio departamento
+// (el admin puede sobre cualquiera), como en la vista de v3.
+function comprobarDepartamento($idDepartamento)
+{
+    if (!$idDepartamento || !puedeTrabajarSobreDepartamento($idDepartamento)) {
+        throw new Exception('No tiene permisos para realizar esta acción');
+    }
+}
+
 $db = getDBConnection();
 if (!$db) {
     sendJSONError('Error de conexión a la base de datos');
@@ -57,24 +91,59 @@ if (!$db) {
 
 try {
     switch ($action) {
-        // Lista las materias con los datos necesarios para el selector de la vista
+        // Lista las materias del selector, fiel a v3 (includes/cargar_materias_programaciones.php):
+        //   - admin : todas las materias del departamento elegido en la vista
+        //   - jefe  : todas las materias de su departamento
+        //   - profe : solo las materias que imparte en los escenarios actuales
+        // En los tres casos, únicamente las materias con programación activa.
         case 'listar_materias':
-            $sql = "SELECT m.id AS idMateria, m.nombre AS nombre,
-                           c.nombre AS curso, c.abreviatura AS abrevCurso,
-                           m.horas AS horas, m.horas_empresa AS horas_empresa,
-                           m.asignada_directiva AS asignada_directiva, m.tipo AS tipo
-                    FROM materias m
-                    LEFT JOIN cursos c ON c.id = m.idCurso
-                    ORDER BY c.orden, c.nombre, m.nombre";
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
+            $rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
+            if ($rol == 'admin' || $rol == 'jefeDepartamento') {
+                if ($rol == 'admin') {
+                    $idDepartamento = isset($_REQUEST['idDepartamento']) ? intval($_REQUEST['idDepartamento']) : 0;
+                    if ($idDepartamento <= 0) {
+                        throw new Exception('Departamento inválido');
+                    }
+                } else {
+                    $idDepartamento = intval($_SESSION['departamentoUsuario']);
+                }
+                $stmt = mysqli_prepare($db,
+                    "SELECT m.id AS idMateria, m.nombre AS nombre,
+                            c.nombre AS curso, c.abreviatura AS abrevCurso,
+                            m.horas AS horas, m.horas_empresa AS horas_empresa,
+                            m.asignada_directiva AS asignada_directiva, m.tipo AS tipo
+                     FROM materias m
+                     LEFT JOIN cursos c ON c.id = m.idCurso
+                     WHERE m.tiene_programacion = TRUE AND m.idDepartamento = ?
+                     ORDER BY c.orden, c.nombre, m.nombre");
+                mysqli_stmt_bind_param($stmt, "i", $idDepartamento);
+            } else {
+                // Profesor: solo las materias que imparte en los escenarios actuales
+                $idProfesor = intval($_SESSION['idUsuario']);
+                $stmt = mysqli_prepare($db,
+                    "SELECT DISTINCT m.id AS idMateria, m.nombre AS nombre,
+                            c.nombre AS curso, c.abreviatura AS abrevCurso,
+                            m.horas AS horas, m.horas_empresa AS horas_empresa,
+                            m.asignada_directiva AS asignada_directiva, m.tipo AS tipo
+                     FROM materias m
+                     LEFT JOIN cursos c ON c.id = m.idCurso
+                     LEFT JOIN seleccion s ON s.idMateria = m.id
+                     LEFT JOIN escenarios_desideratas e ON e.id = s.idEscenario
+                     WHERE m.tiene_programacion = TRUE
+                       AND e.actual = TRUE
+                       AND s.idProfesor = ?
+                     ORDER BY m.nombre");
+                mysqli_stmt_bind_param($stmt, "i", $idProfesor);
+            }
+            if (!mysqli_stmt_execute($stmt)) {
                 throw new Exception(mysqli_error($db));
             }
+            $resultadoMaterias = mysqli_stmt_get_result($stmt);
             $materias = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
+            while ($fila = mysqli_fetch_assoc($resultadoMaterias)) {
                 $materias[] = $fila;
             }
-            mysqli_free_result($result);
+            mysqli_stmt_close($stmt);
             closeDBConnection($db);
             sendJSONSuccess($materias);
             break;
@@ -123,6 +192,8 @@ try {
             if ($idMateria <= 0 || empty($texto)) {
                 throw new Exception('Datos incompletos para guardar el resultado');
             }
+            $idDepartamento = ($id > 0) ? idDepartamentoDeRA($db, $id) : idDepartamentoDeMateria($db, $idMateria);
+            comprobarDepartamento($idDepartamento);
             if ($id > 0) {
                 $texto = mysqli_real_escape_string($db, $texto);
                 $query = "UPDATE resultados_aprendizaje SET texto='$texto', orden=$orden, porcentaje_empresa=$porcentajeEmpresa WHERE id=$id";
@@ -140,11 +211,15 @@ try {
 
         // Actualiza las horas de docencia en empresa de la materia
         case 'actualizar_horas':
+            if (!tienePermisoEdicion()) {
+                throw new Exception('No tiene permisos para realizar esta acción');
+            }
             $idMateria = intval($datos['idMateria']);
             $horas = intval($datos['horas']);
             if ($idMateria <= 0) {
                 throw new Exception('ID de materia inválido');
             }
+            comprobarDepartamento(idDepartamentoDeMateria($db, $idMateria));
             $query = "UPDATE materias SET horas_empresa=$horas WHERE id=$idMateria";
             if (!mysqli_query($db, $query)) {
                 throw new Exception(mysqli_error($db));
@@ -161,6 +236,7 @@ try {
             if ($idResultado <= 0) {
                 throw new Exception('ID de resultado inválido');
             }
+            comprobarDepartamento(idDepartamentoDeRA($db, $idResultado));
             $query = "UPDATE resultados_aprendizaje SET porcentaje_evaluacion=$porcentajeEvaluacion, es_clave=$esClave WHERE id=$idResultado";
             if (!mysqli_query($db, $query)) {
                 throw new Exception(mysqli_error($db));
@@ -178,6 +254,7 @@ try {
             if ($id <= 0) {
                 throw new Exception('ID de resultado inválido');
             }
+            comprobarDepartamento(idDepartamentoDeRA($db, $id));
             if (!mysqli_query($db, "DELETE FROM criterios_evaluacion WHERE idRA=$id") ||
                 !mysqli_query($db, "DELETE FROM resultados_aprendizaje WHERE id=$id")) {
                 throw new Exception(mysqli_error($db));
@@ -212,6 +289,7 @@ try {
             if ($idResultado <= 0 || empty($codigo)) {
                 throw new Exception('Datos incompletos para guardar el criterio');
             }
+            comprobarDepartamento(idDepartamentoDeRA($db, $idResultado));
             $codigo = mysqli_real_escape_string($db, $codigo);
             $texto = empty($texto) ? '' : mysqli_real_escape_string($db, $texto);
             $query = "INSERT INTO criterios_evaluacion (idRA, codigo, texto) VALUES ($idResultado, '$codigo', '$texto')";
@@ -235,6 +313,7 @@ try {
             if ($idResultado <= 0 || empty($codigoAntiguo)) {
                 throw new Exception('Datos incompletos para actualizar el criterio');
             }
+            comprobarDepartamento(idDepartamentoDeRA($db, $idResultado));
             $query = "UPDATE criterios_evaluacion SET codigo='$nuevoCodigo', texto='$nuevoTexto' WHERE idRA=$idResultado AND codigo='$codigoAntiguo'";
             if (!mysqli_query($db, $query)) {
                 throw new Exception(mysqli_error($db));
@@ -253,6 +332,7 @@ try {
             if ($idResultado <= 0 || empty($codigo)) {
                 throw new Exception('Datos incompletos para eliminar el criterio');
             }
+            comprobarDepartamento(idDepartamentoDeRA($db, $idResultado));
             if (!mysqli_query($db, "DELETE FROM criterios_evaluacion WHERE idRA=$idResultado AND codigo='$codigo'")) {
                 throw new Exception(mysqli_error($db));
             }

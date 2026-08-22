@@ -1,6 +1,17 @@
-// Fase 4.1 — Resultados de Aprendizaje (RA) por materia
-// Los RA se asocian a cada materia, con % de atención en empresa y % de evaluación,
-// y pueden llevar asociados criterios de evaluación (CE).
+// Fase 4.1 — Resultados de Aprendizaje (RA) por materia, fiel a v3
+// Los RA se asocian a cada materia, con % de atención en empresa y % de
+// evaluación, y pueden llevar asociados criterios de evaluación (CE).
+//
+// Flujo fiel a v3 (resultados_aprendizaje.php):
+//   - El admin elige el departamento con el que trabajar; el jefe de
+//     departamento y el profesor tienen el suyo asignado (no eligen).
+//   - Luego se elige materia de las disponibles: el profesor solo ve las
+//     suyas (en los escenarios actuales) y el jefe/admin, todas las del
+//     departamento, siempre con programación activa.
+//   - Botones de PDF fieles a las vistas de solo lectura de v3:
+//       "resumen" : resumen general (resultados_aprendizaje_vista_previa.php)
+//       "ra"      : RAs empresa (resultados_aprendizaje_vista_previa_empresa.php)
+//       "ce"      : CEs empresa (criterios_evaluacion_vista_previa_empresa.php)
 const ResultadosArendizajeView = {
     template: `
         <div class="container-fluid py-4">
@@ -8,77 +19,110 @@ const ResultadosArendizajeView = {
                 <div class="col-12">
                     <h2><i class="bi bi-book me-2"></i>Resultados de Aprendizaje</h2>
                     <p class="text-muted">
-                        <em>Selecciona una materia. Haz clic en el lápiz para editar cada resultado, en el icono de árbol para asociar criterios de evaluación, y en el icono de medalla para fijar qué resultados son clave y qué porcentaje de evaluación tienen.</em>
+                        <em>Haz clic en el icono del lápiz para editar los datos de cada resultado, en el de árbol para asociar criterios de evaluación, y en el de medalla para fijar qué resultados son clave y qué porcentaje de evaluación tienen.</em>
                     </p>
                 </div>
             </div>
 
-            <!-- Selector de materias -->
+            <!-- Departamento: el admin elige; el jefe/profesor, el suyo asignado -->
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <label class="form-label">Materia</label>
-                    <select class="form-select" v-model="idMateriaSeleccionada" @change="cargar">
-                        <option value="">-- Selecciona una materia --</option>
-                        <option v-for="m in materias" :key="m.idMateria" :value="m.idMateria">
-                            {{ m.nombre }} ({{ m.curso }})
-                        </option>
+                    <label class="form-label">Departamento</label>
+                    <select class="form-select" v-model="idDepartamento" :disabled="!esAdmin" @change="cambiarDepartamento">
+                        <option v-if="esAdmin" value="">-- Selecciona un departamento --</option>
+                        <option v-for="d in departamentos" :key="d.id" :value="d.id">{{ d.nombre }}</option>
                     </select>
-                </div>
-                <div class="col-md-8" v-if="permisos">
-                    <div class="form-inline">
-                        <label class="form-label me-2">Horas a impartir en empresa:</label>
-                        <input type="number" class="form-control" style="width:100px" v-model="horasEmpresa">
-                        <button class="btn btn-outline-primary ms-2" @click="actualizarHoras">Actualizar</button>
-                    </div>
                 </div>
             </div>
 
-            <!-- Listado de RA -->
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div v-if="!idMateriaSeleccionada" class="text-center text-muted py-4">
-                        Selecciona una materia para ver sus resultados de aprendizaje.
+            <!-- Sin departamento elegido aún (admin) -->
+            <div v-if="!listo" class="text-center text-muted py-4">
+                Selecciona un departamento para empezar.
+            </div>
+
+            <template v-else>
+                <!-- Botones de PDF (fieles a las vistas de solo lectura de v3) -->
+                <div class="row mb-3">
+                    <div class="col-12 d-flex flex-wrap gap-2">
+                        <button class="btn btn-outline-secondary" @click="abrirPDF('resumen')" title="Resumen general con % de empresa y totales de horas">
+                            <i class="bi bi-file-earmark-text me-1"></i>Ver resumen general
+                        </button>
+                        <button class="btn btn-outline-secondary" @click="abrirPDF('ra')" title="RAs con formación en empresa">
+                            <i class="bi bi-file-earmark-text me-1"></i>RAs empresa
+                        </button>
+                        <button class="btn btn-outline-secondary" @click="abrirPDF('ce')" title="CE de RA con formación en empresa">
+                            <i class="bi bi-file-earmark-text me-1"></i>CEs empresa
+                        </button>
                     </div>
-                    <div v-else-if="cargando" class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status"></div>
+                </div>
+
+                <!-- Selector de materias -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Materia</label>
+                        <select class="form-select" v-model="idMateriaSeleccionada" @change="cargar">
+                            <option value="">-- Selecciona una materia --</option>
+                            <option v-for="m in materias" :key="m.idMateria" :value="m.idMateria">
+                                {{ m.nombre }} ({{ m.curso }})
+                            </option>
+                        </select>
                     </div>
-                    <div v-else-if="resultados.length === 0" class="text-center text-muted py-4">
-                        esta materia no tiene resultados de aprendizaje.
+                    <div class="col-md-8" v-if="idMateriaSeleccionada">
+                        <div class="form-inline">
+                            <label class="form-label me-2">Horas a impartir en empresa:</label>
+                            <input type="number" class="form-control" style="width:100px" v-model="horasEmpresa" :disabled="!permisos">
+                            <button class="btn btn-outline-primary ms-2" v-if="permisos" @click="actualizarHoras">Actualizar</button>
+                        </div>
                     </div>
-                    <div v-else>
-                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-2 mb-2" v-for="r in resultados" :key="r.id">
-                            <div class="flex-grow-1">
-                                {{ r.orden }}. {{ r.texto }}
-                                <em v-if="r.porcentaje_empresa"> ({{ r.porcentaje_empresa }}% empresa)</em>
-                                <span v-if="r.es_clave" class="badge bg-success ms-2" title="RA clave">
-                                    <i class="bi bi-star-fill"></i>
-                                </span>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-sm btn-outline-secondary" @click="abrirEvaluar(r)" title="Asociar criterios de evaluación">
-                                    <i class="bi bi-tree"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-secondary" @click="abrirModal(r)" title="Editar resultado">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-secondary" @click="abrirCriterios(r)" title="Ver criterios de evaluación">
-                                    <i class="bi bi-list-ul"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" v-if="permisos" @click="eliminar(r)" title="Eliminar resultado">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+                </div>
+
+                <!-- Listado de RA -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div v-if="!idMateriaSeleccionada" class="text-center text-muted py-4">
+                            Selecciona una materia para ver sus resultados de aprendizaje.
+                        </div>
+                        <div v-else-if="cargando" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+                        <div v-else-if="resultados.length === 0" class="text-center text-muted py-4">
+                            esta materia no tiene resultados de aprendizaje.
+                        </div>
+                        <div v-else>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-2 mb-2" v-for="r in resultados" :key="r.id">
+                                <div class="flex-grow-1">
+                                    {{ r.orden }}. {{ r.texto }}
+                                    <em v-if="r.porcentaje_empresa"> ({{ r.porcentaje_empresa }}% empresa)</em>
+                                    <span v-if="r.es_clave" class="badge bg-success ms-2" title="RA clave">
+                                        <i class="bi bi-star-fill"></i>
+                                    </span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-secondary" @click="abrirEvaluar(r)" title="Fijar % de evaluación y RA clave">
+                                        <i class="bi bi-medal"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" @click="abrirModal(r)" title="Editar resultado">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" @click="abrirCriterios(r)" title="Ver criterios de evaluación">
+                                        <i class="bi bi-list-ul"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" v-if="permisos" @click="eliminar(r)" title="Eliminar resultado">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Botón para añadir RA (solo admins/jefes) -->
-            <div class="text-center mt-3" v-if="permisos && idMateriaSeleccionada">
-                <button class="btn btn-outline-primary" @click="abrirNuevo">
-                    <i class="bi bi-plus-lg"></i>Nuevo resultado
-                </button>
-            </div>
+                <!-- Botón para añadir RA (solo admins/jefes) -->
+                <div class="text-center mt-3" v-if="permisos && idMateriaSeleccionada">
+                    <button class="btn btn-outline-primary" @click="abrirNuevo">
+                        <i class="bi bi-plus-lg"></i>Nuevo resultado
+                    </button>
+                </div>
+            </template>
 
             <!-- Modal para editar/crear un RA -->
             <div class="modal fade" id="modalRA" tabindex="-1">
@@ -98,8 +142,11 @@ const ResultadosArendizajeView = {
                                 <input type="number" class="form-control" v-model="form.orden">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">% a impartir en empresa</label>
-                                <input type="number" class="form-control" v-model="form.porcentaje_empresa">
+                                <label class="form-label">Porcentaje de docencia asignado a la empresa</label>
+                                <select class="form-select" v-model.number="form.porcentaje_empresa">
+                                    <option :value="0">0%</option>
+                                    <option v-for="p in pasosPorcentaje" :key="p" :value="p">{{ p }} %</option>
+                                </select>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -170,8 +217,17 @@ const ResultadosArendizajeView = {
         </div>
     `,
 
+    props: {
+        usuario: {
+            type: Object,
+            required: true
+        }
+    },
+
     data() {
         return {
+            departamentos: [],
+            idDepartamento: '',
             materias: [],
             resultados: [],
             idMateriaSeleccionada: '',
@@ -187,19 +243,77 @@ const ResultadosArendizajeView = {
         };
     },
 
-    mounted() {
+    computed: {
+        esAdmin() {
+            return this.usuario.rol === 'admin';
+        },
+        // El departamento está listo: elegido (admin) o asignado (jefe/profesor)
+        listo() {
+            return !!this.idDepartamento;
+        },
+        // Porcentajes del desplegable de % de empresa (como el select de v3)
+        pasosPorcentaje() {
+            const pasos = [];
+            for (let i = 5; i <= 100; i += 5) pasos.push(i);
+            return pasos;
+        }
+    },
+
+    async mounted() {
         this.modalRA = new bootstrap.Modal(document.getElementById('modalRA'));
         this.modalEvaluar = new bootstrap.Modal(document.getElementById('modalEvaluar'));
         this.modalCriterios = new bootstrap.Modal(document.getElementById('modalCriterios'));
+        await this.cargarDepartamentos();
+        if (this.esAdmin) {
+            // El admin elige el departamento; nadie más lo hace
+            return;
+        }
+        // Jefe de departamento o profesor: el departamento es el asignado
+        // (se guarda como texto para que el <option :value> coincida)
+        this.idDepartamento = String(this.usuario.idDepartamento);
+        await this.cargarMaterias();
     },
 
     methods: {
+        async cargarDepartamentos() {
+            try {
+                const response = await fetch('../backend/api/departamentos/listar.php', { credentials: 'same-origin' });
+                const data = await response.json();
+                this.departamentos = data;
+            } catch (e) {
+                this.departamentos = [];
+            }
+        },
+
+        // El admin elige el departamento: se limpian las materias y RAs
+        cambiarDepartamento() {
+            this.idMateriaSeleccionada = '';
+            this.resultados = [];
+            this.permisos = false;
+            this.cargarMaterias();
+        },
+
+        // Materias disponibles, fiel a v3:
+        //   - jefe/admin: todas las del departamento con programación activa
+        //   - profesor: solo las suyas en los escenarios actuales
+        async cargarMaterias() {
+            if (!this.idDepartamento) return;
+            this.idMateriaSeleccionada = '';
+            this.resultados = [];
+            this.permisos = false;
+            try {
+                const res = await ResultadosArendizajeAPI.listar_materias(this.idDepartamento);
+                if (res.success) this.materias = res.data;
+                else this.materias = [];
+            } catch (e) {
+                this.materias = [];
+            }
+        },
+
         async cargar() {
             if (!this.idMateriaSeleccionada) return;
             this.cargando = true;
             try {
-                const res = await ResultadosArendizajeAPI.listar_materias();
-                if (res.success) this.materias = res.data;
                 const data = await ResultadosArendizajeAPI.cargar(this.idMateriaSeleccionada);
                 if (data.success) {
                     this.resultados = data.data.resultados;
@@ -215,19 +329,31 @@ const ResultadosArendizajeView = {
             }
         },
 
-        actualizarHoras() {
+        // Abre el PDF generado en el backend (misma petición directa que v3)
+        abrirPDF(modo) {
+            window.open('../backend/pdf_resultados_aprendizaje.php?modo=' + modo, '_blank');
+        },
+
+        async actualizarHoras() {
             if (!this.idMateriaSeleccionada) return;
-            const result = ResultadosArendizajeAPI.actualizar_horas({
+            const result = await ResultadosArendizajeAPI.actualizar_horas({
                 idMateria: this.idMateriaSeleccionada,
                 horas: this.horasEmpresa
             });
             if (result.success) {
-                Avisos.exito('Actualizado');
+                Avisos.exito('Horas de empresa actualizadas');
+            } else {
+                Avisos.error(result.error);
             }
         },
 
         abrirModal(r) {
-            this.form = { ...r };
+            this.form = {
+                id: r.id,
+                texto: r.texto,
+                orden: r.orden,
+                porcentaje_empresa: r.porcentaje_empresa
+            };
             this.esEdicion = true;
             this.modalRA.show();
         },
@@ -238,8 +364,8 @@ const ResultadosArendizajeView = {
             this.modalRA.show();
         },
 
-        guardar() {
-            const result = ResultadosArendizajeAPI.guardar({
+        async guardar() {
+            const result = await ResultadosArendizajeAPI.guardar({
                 id: this.form.id,
                 idMateria: this.idMateriaSeleccionada,
                 texto: this.form.texto,
@@ -256,20 +382,29 @@ const ResultadosArendizajeView = {
         },
 
         abrirEvaluar(r) {
-            this.evalForm = { idResultado: r.id, porcentaje_evaluacion: r.porcentaje_evaluacion, es_clave: r.es_clave };
+            this.evalForm = {
+                idResultado: r.id,
+                porcentaje_evaluacion: r.porcentaje_evaluacion,
+                es_clave: r.es_clave == 1
+            };
             this.modalEvaluar.show();
         },
 
-        actualizarEvaluar() {
-            const result = ResultadosArendizajeAPI.actualizar_evaluacion(this.evalForm);
+        async actualizarEvaluar() {
+            const result = await ResultadosArendizajeAPI.actualizar_evaluacion(this.evalForm);
             if (result.success) {
                 Avisos.exito('Evaluación actualizada');
+                this.modalEvaluar.hide();
+                this.cargar();
+            } else {
+                Avisos.error(result.error);
             }
         },
 
         async abrirCriterios(r) {
             this.idRAActual = r.id;
             await this.cargarCriterios();
+            this.nuevoCriterio = { codigo: '', texto: '' };
             this.modalCriterios.show();
         },
 
@@ -281,10 +416,12 @@ const ResultadosArendizajeView = {
         async eliminar(r) {
             const conf = await Avisos.confirmar('¿Eliminar resultado?', r.texto);
             if (conf.isConfirmed) {
-                const result = ResultadosArendizajeAPI.eliminar(r.id);
+                const result = await ResultadosArendizajeAPI.eliminar(r.id);
                 if (result.success) {
                     Avisos.exito('Eliminado');
                     this.cargar();
+                } else {
+                    Avisos.error(result.error);
                 }
             }
         },
@@ -297,12 +434,15 @@ const ResultadosArendizajeView = {
             });
             if (result.success) {
                 Avisos.exito('Criterio guardado');
+                this.nuevoCriterio = { codigo: '', texto: '' };
                 this.cargarCriterios();
+            } else {
+                Avisos.error(result.error);
             }
         },
 
         async actualizarCriterio(c) {
-            const result = ResultadosArendizajeAPI.actualizar_criterio({
+            const result = await ResultadosArendizajeAPI.actualizar_criterio({
                 idResultado: c.idRA,
                 codigo: c.codigo,
                 nuevoCodigo: c.codigo,
@@ -311,17 +451,21 @@ const ResultadosArendizajeView = {
             if (result.success) {
                 Avisos.exito('Criterio actualizado');
                 this.cargarCriterios();
+            } else {
+                Avisos.error(result.error);
             }
         },
 
         async eliminarCriterio(c) {
-            const result = ResultadosArendizajeAPI.eliminar_criterio({
+            const result = await ResultadosArendizajeAPI.eliminar_criterio({
                 idResultado: c.idRA,
                 codigo: c.codigo
             });
             if (result.success) {
                 Avisos.exito('Criterio eliminado');
                 this.cargarCriterios();
+            } else {
+                Avisos.error(result.error);
             }
         }
     }
