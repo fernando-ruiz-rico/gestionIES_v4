@@ -12,6 +12,71 @@ if (!$db) {
     exit;
 }
 
+// ---------------------------------------------------------------------------
+// FASE 2.1 — Edición de apartados (fiel a v3/programaciones.php + ajax/programaciones).
+//
+// La programación de una materia vive en `apartados_programaciones` (la
+// definición) + `contenidos_programaciones` (el texto por materia). Un apartado
+// con `tipo = 0` es EDITABLE (se rellena a mano, TinyMCE en v3); el resto se
+// rellena automáticamente a partir de otros apartados (Unidades, RA/CE, FE...)
+// y solo se editan en sus propias secciones.
+//
+// Funciones auxiliares PHP 5 (sin "..." / sin list() de varios parámetros).
+// ---------------------------------------------------------------------------
+
+// ¿La materia pertenece a un ciclo? → 'FP'; si no, 'ESO/BACH' (criterio v3).
+function programacionesCategoria($db, $idMateria)
+{
+    $idMateria = (int)$idMateria;
+    $stmt = mysqli_prepare($db,
+        "SELECT c.id FROM ciclos c
+            JOIN cursos_ciclos cc ON cc.idCiclo = c.id
+            JOIN cursos cu ON cu.id = cc.idCurso
+            JOIN materias m ON m.idCurso = cu.id
+          WHERE m.id = $idMateria
+          LIMIT 1");
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $fila = mysqli_fetch_assoc($res);
+    mysqli_stmt_close($stmt);
+    return $fila ? 'FP' : 'ESO/BACH';
+}
+
+// Listado de apartados de una materia (con numeración "1." / "1.1."), criterio v3.
+function programacionesCargarApartados($db, $idMateria)
+{
+    $idMateria = (int)$idMateria;
+    $categoria = programacionesCategoria($db, $idMateria);
+    $catEsc = mysqli_real_escape_string($db, $categoria);
+    $result = mysqli_query($db,
+        "SELECT id, titulo, tipo, subapartado FROM apartados_programaciones
+          WHERE categoria = 'TODOS' OR categoria = '$catEsc'
+          ORDER BY orden");
+    if (!$result) {
+        throw new Exception('Error consultando apartados: ' . mysqli_error($db));
+    }
+    $apartados = [];
+    $principal = 0;
+    $secundario = 0;
+    while ($fila = mysqli_fetch_assoc($result)) {
+        if (!(bool)$fila['subapartado']) {
+            $principal++;
+            $secundario = 0;
+        } else {
+            $secundario++;
+        }
+        $apartados[] = [
+            'id'        => (int)$fila['id'],
+            'tipo'      => (int)$fila['tipo'],
+            'nombre'    => ($fila['subapartado']
+                                ? "$principal.$secundario. "
+                                : "$principal. ") . $fila['titulo']
+        ];
+    }
+    mysqli_free_result($result);
+    return $apartados;
+}
+
 try {
     switch ($method) {
         case 'GET':
@@ -88,6 +153,79 @@ try {
                 } else {
                     echo json_encode(['success' => true, 'data' => $apartados]);
                 }
+            } elseif ($action === 'cargar_materias') {
+                // FASE 2.1 — Desplegable de materias (fiel a v3/cargar_materias_programaciones.php).
+                // Por rol: el profesor solo ve las suyas; el jefe, las de su departamento;
+                // el admin, todas (v4 no tiene la selección de departamento de v3).
+                $session = checkSession();
+                $rol = $session['rol'];
+
+                if ($rol === ROLE_PROFESOR) {
+                    $idProfesor = (int)$session['idUsuario'];
+                    $stmt = mysqli_prepare($db,
+                        "SELECT DISTINCT m.id AS id, m.nombre AS nomMateria, cu.nombre AS nomCurso
+                           FROM materias m
+                           JOIN cursos cu ON cu.id = m.idCurso
+                           JOIN seleccion s ON s.idMateria = m.id
+                           JOIN escenarios_desideratas e ON e.id = s.idEscenario
+                          WHERE s.idProfesor = $idProfesor
+                            AND m.tiene_programacion = 1
+                            AND e.actual = 1
+                          ORDER BY m.nombre");
+                    mysqli_stmt_execute($stmt);
+                    $result = mysqli_stmt_get_result($stmt);
+                    $materias = [];
+                    while ($fila = mysqli_fetch_assoc($result)) {
+                        $materias[] = [
+                            'id'       => (int)$fila['id'],
+                            'nombre'   => $fila['nomMateria'] . ' (' . $fila['nomCurso'] . ')'
+                        ];
+                    }
+                    mysqli_stmt_close($stmt);
+                } elseif (esUsuarioSuper($rol)) {
+                    // Fiel a v3: el jefe ve las del departamento; el admin (sin
+                    // selector de departamento en v4) ve todas.
+                    $idDepartamento = !empty($session['idDepartamento']) ? (int)$session['idDepartamento'] : 0;
+                    $sql = "SELECT DISTINCT m.id AS id, m.nombre AS nombre, c.orden AS ordenCurso
+                              FROM materias m
+                              JOIN cursos c ON c.id = m.idCurso
+                              WHERE m.tiene_programacion = 1";
+                    if ($idDepartamento > 0) {
+                        $sql .= " AND m.idDepartamento = $idDepartamento";
+                    }
+                    $sql .= " ORDER BY c.orden, m.nombre";
+                    $result = mysqli_query($db, $sql);
+                    $materias = [];
+                    while ($fila = mysqli_fetch_assoc($result)) {
+                        $materias[] = ['id' => (int)$fila['id'], 'nombre' => $fila['nombre']];
+                    }
+                    mysqli_free_result($result);
+                } else {
+                    throw new Exception('Rol no reconocido');
+                }
+
+                echo json_encode(['success' => true, 'data' => $materias]);
+            } elseif ($action === 'cargar_apartados') {
+                // FASE 2.1 — Apartados de una materia (fiel a v3/cargar_apartados.php).
+                $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
+                if ($idMateria <= 0) {
+                    throw new Exception('ID de materia inválido');
+                }
+                echo json_encode(['success' => true, 'data' => programacionesCargarApartados($db, $idMateria)]);
+            } elseif ($action === 'cargar_contenido') {
+                // FASE 2.1 — Texto de un apartado de una materia (v3/cargar_contenido_programacion).
+                $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
+                $idApartado = isset($_GET['idApartado']) ? intval($_GET['idApartado']) : 0;
+                if ($idMateria <= 0 || $idApartado <= 0) {
+                    throw new Exception('ID de materia o apartado inválido');
+                }
+                $stmt = mysqli_prepare($db,
+                    "SELECT texto FROM contenidos_programaciones WHERE idMateria = $idMateria AND idApartado = $idApartado");
+                mysqli_stmt_execute($stmt);
+                $res = mysqli_stmt_get_result($stmt);
+                $fila = mysqli_fetch_assoc($res);
+                mysqli_stmt_close($stmt);
+                echo json_encode(['success' => true, 'data' => ['texto' => $fila ? $fila['texto'] : '']]);
             } else {
                 throw new Exception('Acción no válida');
             }
@@ -173,10 +311,56 @@ try {
                     mysqli_rollback($db);
                     throw $e;
                 }
+            } elseif ($action === 'guardar_contenido') {
+                // FASE 2.1 — Guardar el texto de un apartado editable (v3/insertar_contenido_programacion).
+                // Permiso: sesión válida (v3 lo permite a cualquier usuario con sesión, y la
+                // visibilidad del editor ya la controla la vista según rol/activación).
+                checkSession();
+                $input = json_decode(file_get_contents('php://input'), true);
+                if (!is_array($input)) {
+                    throw new Exception('Datos de entrada no válidos');
+                }
+                $idMateria = isset($input['idMateria']) ? intval($input['idMateria']) : 0;
+                $idApartado = isset($input['idApartado']) ? intval($input['idApartado']) : 0;
+                if ($idMateria <= 0 || $idApartado <= 0) {
+                    throw new Exception('ID de materia o apartado inválido');
+                }
+                $texto = isset($input['texto']) ? $input['texto'] : '';
+
+                $stmt = mysqli_prepare($db,
+                    "SELECT id FROM contenidos_programaciones WHERE idMateria = $idMateria AND idApartado = $idApartado");
+                mysqli_stmt_execute($stmt);
+                $res = mysqli_stmt_get_result($stmt);
+                $fila = mysqli_fetch_assoc($res);
+                mysqli_stmt_close($stmt);
+
+                // Fiel a v3/insertar_contenido_programacion.php: si el texto es
+                // idéntico al ya guardado, MySQL no modifica filas → "sin cambios".
+                $existia = (bool)$fila;
+                if ($existia) {
+                    $stmt = mysqli_prepare($db,
+                        "UPDATE contenidos_programaciones SET texto = ? WHERE idMateria = $idMateria AND idApartado = $idApartado");
+                    mysqli_stmt_bind_param($stmt, "s", $texto);
+                } else {
+                    $stmt = mysqli_prepare($db,
+                        "INSERT INTO contenidos_programaciones (idMateria, idApartado, texto) VALUES ($idMateria, $idApartado, ?)");
+                    mysqli_stmt_bind_param($stmt, "s", $texto);
+                }
+                if (!mysqli_stmt_execute($stmt)) {
+                    throw new Exception('Error guardando el contenido: ' . mysqli_error($db));
+                }
+                $modificadas = mysqli_stmt_affected_rows($stmt);
+                mysqli_stmt_close($stmt);
+
+                $sinCambios = !$existia ? false : ($modificadas == 0);
+                echo json_encode([
+                    'success'      => true,
+                    'sin_cambios' => (bool)$sinCambios,
+                    'message'     => $sinCambios ? 'El contenido ya estaba guardado así' : 'Contenido guardado correctamente'
+                ]);
             } else {
-                // FASE 2.1 — No hay fila única de programación que guardar/actualizar a este nivel.
-                // En v3 los datos se editan en apartados (2.2) y contenidos (2.4), no aquí.
-                throw new Exception('Las programaciones se gestionan por apartados y contenidos (fase 2.2+). En la fase 2.1 solo es posible listar, ver e importar.');
+                // FASE 2.1 — No hay fila única de programación que eliminar a este nivel.
+                throw new Exception('Las programaciones se gestionan por apartados y contenidos; aquí solo se puede listar, ver, importar y guardar el contenido de un apartado.');
             }
             break;
 

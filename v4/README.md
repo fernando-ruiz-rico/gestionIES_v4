@@ -58,7 +58,10 @@ v4/
 │   ├── pdf_acta.php                  # Fase 8 (PDF del acta, TCPDF)
 │   ├── pdf_resultados_aprendizaje.php # Fase 8 (PDFs de RA/CE empresa, TCPDF)
 │   ├── pdf_seleccion.php             # Fase 8 (PDF de la selección, TCPDF)
-│   └── lib/php/tcpdf/                # Fase 8 (TCPDF, copiado desde v3)
+│   ├── pdf_programaciones.php        # Fase 2.1 (PDF completo de la programación, TCPDF)
+│   ├── pdf_programaciones_apartado.php # Fase 2.1 (PDF de un apartado, TCPDF)
+│   ├── pdf_unidades_programacion.php # Fase 2.1 (PDF de unidades/temas, TCPDF)
+│   └── lib/                          # lib/php/tcpdf (TCPDF, desde v3) + lib/programaciones_pdf.php
 │
 └── frontend/          # Aplicación Vue 3 (desde CDN, sin compilación)
     ├── index.html     # Punto de entrada (acceder directamente)
@@ -265,8 +268,11 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 - `backend/pdf_acta.php` — PDF del acta de departamento (`?idActa=X`), fiel a `v3/pdf_acta.php`. ✅ Verificado en vivo (≈27 KB, el de v3 hace 27 KB).
 - `backend/pdf_seleccion.php` — PDF de la selección de materias de un profesor (`?idProfesor=X&idEscenario=Y`), reimplantación funcional de `v3/pdf_desiderata.php`. ✅ Verificado en vivo (≈7,5 KB).
 - `backend/api/pccf/generar.php` — PDF del PCCF (`modo=completo` / `modo=apartado`). ⚠️ Con MySQL 8 (`ONLY_FULL_GROUP_BY`) el modo `completo` genera siempre un PDF de una página con el error SQL 3087 (ver bug **B-3**); en `modo=apartado` funcionan los tipos 0/7/12 y falla el tipo 4.
+- `backend/pdf_programaciones.php` — **PDF completo** de la programación de una materia (`?idMateria=X`), Fase 2.1, fiel a `v3/pdf_programaciones.php` (portada + índice con TOC + apartados con `Bookmark`, FE en página propia, temas en su página). ✅ Verificado en vivo.
+- `backend/pdf_programaciones_apartado.php` — **PDF de un apartado** (`?idMateria=X&idApartado=Y`), el apartado pedido + sus subapartados hasta el siguiente principal, fiel a v3. ✅ Verificado en vivo.
+- `backend/pdf_unidades_programacion.php` — **PDF de unidades/temas** (`?idMateria=X`, una página por tema), fiel a `v3/pdf_unidades_programacion.php`. El «PDF de Apartado» de la vista enruta aquí si el apartado es de temas (`tipo = 13`), igual que v3. ✅ Verificado en vivo.
 
-> Los botones PDF de `programaciones-aula` y `programaciones-seguimiento` siguen siendo stubs informativos (igual que en la entrega 2.4/2.5); los PDFs de la Fase 2 se abren desde sus vistas.
+> Los botones PDF de `programaciones-aula` y `programaciones-seguimiento` siguen siendo stubs informativos (igual que en la entrega 2.4/2.5); los PDFs de la Fase 2 se abren desde sus vistas (los de «Programaciones» ahora son los 3 de arriba, y el de «Resultados de aprendizaje» el de la empresa).
 
 ### Fase 9: Características Avanzadas (Parcial)
 
@@ -281,6 +287,16 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 ## Historial de cambios
 
 > Registro cronológico (más reciente primero) de las entregas por versión.
+
+### Programaciones — edición de apartados (fiel a v3) + PDFs completo / por apartado / de unidades (Fase 2.1, completada de verdad)
+- 🧩 **Edición de apartados integrada en la vista «Programaciones»** (antes solo había listado + modal «Ver» + importar; ahora reproduce `v3/programaciones.php` + `js/programaciones.js`): desplegable de **materias** (el profesor, las suyas del escenario actual con `tiene_programacion`; el jefe, las de su departamento; el admin, todas — fiel a `cargar_materias_programaciones.php`) → desplegable de **apartados** con su numeración v3 (`1.`/`1.1.`; `categoria TODOS o FP/ESO-BACH` según si la materia tiene ciclo) → si el apartado es **editable** (`tipo = 0`) carga su texto y sale el editor **TinyMCE** (`editorProgramacion`, misma configuración que el resto de la app) con botón «Guardar»; si no, el **mensaje de v3** («el contenido se rellena automáticamente a partir de otros apartados (Unidades, RA/CE, FE…); edita en la opción correspondiente»).
+- 🔧 **Backend** `backend/api/programaciones/index.php`: `cargar_materias` (por rol, fiel a v3), `cargar_apartados` (numeración + `categoria`), `cargar_contenido` (leer) y `guardar_contenido` (INSERT/UPDATE por `idMateria`+`idApartado`; `affected_rows == 0` → flag `sin_cambios` que la vista avisa con SweetAlert2 «El contenido ya estaba guardado así (no se han realizado cambios)», fiel al `'si'` de v3). `listar`/`obtener`/`importar` se conservan.
+- 🧩 **Los 3 PDFs de v3** (`backend/` raíz, scripts GET autocontenidos **sin sesión**, `window.open` desde la vista — patrón v4): `pdf_programaciones.php` («PDF Completo», toda la materia: portada + índice TOC + apartados con `Bookmark`, FE en página propia y cada tema en su página), `pdf_programaciones_apartado.php` («PDF de Apartado», el apartado pedido + sus subapartados hasta el siguiente principal) y `pdf_unidades_programacion.php` («PDF de Unidades», una página por tema: tabla horas/trimestre/peso, campos y RA/CE). La lógica de contenido se factoriza en **`backend/lib/programaciones_pdf.php`** (generadores fieles a `v3/includes/generar_apartado_*.php`; PHP 5 sin `…`). El «PDF de Apartado» enruta a `pdf_unidades_programacion.php` si el apartado es de temas (`tipo = 13`), igual que v3.
+- 🧩 **Botón «Unidades»**: navega a la opción existente de Temas/Unidades de programación (`temas.php`) — enlaza con las unidades como en v3; el «PDF de Unidades» también abre `pdf_unidades_programacion.php?idMateria=X`.
+- 🔒 **Comportamiento por rol fiel a v3**: el editor y los 3 PDFs son visibles para todo rol (la activación `config.programaciones` está en ON); el botón **«Cont. defecto Unidades»** (→ `temas_contenidos_defecto.php`) y **«Importar»** solo los ve el rol `admin` (el `esAdmin` de la vista es `rol === 'admin'`, igual que los `$permisos` de v3 → el jefe `testadmin` no los ve, como en v3). «Importar» conserva la transacción sobre las tablas reales v3 (borra y reinserta `contenidos_programaciones`/`competencias_temas`/`criterios_temas`/`temas` de la materia destino) y la confirmación «¡Esta acción no se puede deshacer!».
+- ⚠️ **Backend PHP 5** (suelo efectivo 5.4: literales `[]` OK, sin `…`/`??`): `lib/programaciones_pdf.php` reutiliza `call_user_func_array('mysqli_stmt_bind_param', …)` para el bind y el curso académico lo resuelve del escenario actual (igual que v3). Sin cambios de esquema de BD.
+- ✅ **Verificado en vivo** (Laragon, `testadmin`/`testprofe`): `cargar_materias` por rol, `cargar_apartados` con numeración FP/ESO-BACH correcta, `cargar_contenido`/`guardar_contenido` round-trip con la señal `sin_cambios` (sin cambio → `true`; con cambio → `false`); los 3 PDFs devuelven `200 application/pdf` con cabecera `%PDF` (completo 53/424, apartado 53/424, unidades 53/424); `php -l` limpio en `lib/programaciones_pdf.php` + los 3 `pdf_*.php` + `index.php` y `node --check` limpio en `programaciones-view.js` + `api/programaciones.js`.
+- 📦 **Frontend**: `js/views/programaciones-view.js` reescrito (deshace el listado+modal «Ver» de la entrega inicial) y `js/api/programaciones.js` (nuevos `cargarMaterias`/`cargarApartados`/`cargarContenido`/`guardarContenido`); `?v=2` en los 2 scripts de `index.html`.
 
 ### Competencias por Ciclo — el desplegable de ciclos no se poblaba («la opción no funciona»)
 - 🐞 **«La opción de competencias no funciona correctamente» — causa raíz**: en `competencias_ciclos-view.js`, `mounted()` solo instanciaba el modal y **nunca llamaba a `cargarCiclos()`** → el array `ciclos` quedaba vacío para siempre, el desplegable solo mostraba «-- Selecciona un ciclo --» (sin opciones), no se podía elegir ciclo y `cargar()` nunca se disparaba → **no aparecía ninguna competencia**. La API no fallaba (`listar_ciclos` y `listar` devuelven bien), así que el fallo era solo del cliente. Corrección: `mounted()` ahora llama a `this.cargarCiclos()` (mismo patrón que el resto de vistas, p. ej. `ciclos-view`).

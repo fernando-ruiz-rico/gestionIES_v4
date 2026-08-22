@@ -1,110 +1,116 @@
-// FASE 2.1 — Programaciones Didácticas (modelo fiel a v3)
-// No existe una "fila de programación": cada materia guarda su programación como
-// apartados + contenidos. Aquí solo se listan las materias con programación activa,
-// se ve su estado real y se permite importarla. La edición está en las fases 2.2-2.5.
+// FASE 2.1 — Programaciones Didácticas (edición fiel a v3/programaciones.php)
+//
+// Cada materia guarda su programación como apartados + contenidos. Aquí se
+// elige materia y apartado:
+//   - Si el apartado es editable (tipo 0) se muestra el editor TinyMCE y se
+//     carga/guarda su texto (v3: cargar_contenido/insertar_contenido).
+//   - Si es de tipo automático se muestra el aviso (se genera a partir de
+//     otras secciones: unidades, RA/CE...).
+//
+// Botones (igual que v3):
+//   - Cont. defecto Unidades  → navegación a la opción de contenidos por defecto
+//   - Unidades                → navegación a la opción de Temas/Unidades
+//   - PDF de Unidades         → pdf_unidades_programacion.php
+//   - PDF de Apartado         → pdf_programaciones_apartado.php (o de unidades si
+//                                el apartado es de tipo TEMAS, 13)
+//   - PDF Completo            → pdf_programaciones.php
+//   - Importar                → modal (solo admin)
 const ProgramacionesView = {
     template: `
         <div class="container-fluid py-4">
             <div class="row mb-3">
                 <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h2><i class="bi bi-journal-bookmark me-2"></i>Programaciones Didácticas</h2>
-                        <button class="btn btn-outline-primary" @click="mostrarImportar">
-                            <i class="bi bi-download me-1"></i>Importar Programación
-                        </button>
-                    </div>
+                    <h2><i class="bi bi-journal-bookmark me-2"></i>Edición de Programaciones</h2>
                 </div>
             </div>
 
-            <!-- Filtro por materia -->
+            <!-- Selectores de materia y apartado -->
             <div class="row mb-3">
-                <div class="col-md-4">
-                    <label class="form-label">Filtrar por Materia</label>
-                    <select class="form-select" v-model="filtroMateria" @change="cargar">
-                        <option value="">Todas</option>
+                <div class="col-md-6">
+                    <label class="form-label">Materia</label>
+                    <select class="form-select" v-model="idMateria" @change="cambiarMateria">
+                        <option :value="0">--Selecciona una materia--</option>
                         <option v-for="m in materias" :key="m.id" :value="m.id">{{ m.nombre }}</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Apartado</label>
+                    <select class="form-select" v-model="idApartado" @change="cambiarApartado" :disabled="idMateria <= 0">
+                        <option :value="0">--Selecciona un apartado--</option>
+                        <option v-for="a in apartados" :key="a.id" :value="a.id">{{ a.nombre }}</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Tabla de programaciones (estado real por materia) -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Materia</th>
-                                            <th>Curso</th>
-                                            <th class="text-center">Horas</th>
-                                            <th class="text-center">Apartados</th>
-                                            <th class="text-end">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-if="cargando">
-                                            <td colspan="5" class="text-center py-4">
-                                                <div class="spinner-border text-primary" role="status">
-                                                    <span class="visually-hidden">Cargando...</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr v-else-if="programaciones.length === 0">
-                                            <td colspan="5" class="text-center py-4 text-muted">
-                                                No hay materias con programación activa
-                                            </td>
-                                        </tr>
-                                        <tr v-else v-for="prog in programaciones" :key="prog.id">
-                                            <td>{{ prog.materia }}</td>
-                                            <td>{{ prog.curso || '—' }}</td>
-                                            <td class="text-center">{{ horasFormateadas(prog) }}</td>
-                                            <td class="text-center">
-                                                <span v-if="prog.num_apartados > 0" class="badge text-bg-success">
-                                                    {{ prog.num_apartados }}
-                                                </span>
-                                                <span v-else class="text-muted">Sin apartados</span>
-                                            </td>
-                                            <td class="text-end">
-                                                <button class="btn btn-sm btn-outline-primary" @click="ver(prog)" title="Ver programación">
-                                                    <i class="bi bi-eye me-1"></i>Ver
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+            <!-- Botones (misma barra que v3) -->
+            <div class="row g-2 mb-3">
+                <div class="col-md" v-if="esAdmin">
+                    <button class="btn btn-light w-100" :disabled="idMateria <= 0" @click="irAContenidosDefecto" title="Contenidos por defecto de las unidades">
+                        <i class="bi bi-database me-1"></i>Cont. defecto Unidades
+                    </button>
+                </div>
+
+                <div class="col-md">
+                    <button class="btn btn-light w-100" :disabled="idMateria <= 0" @click="irAUnidades" title="Gestionar las Unidades de Programación">
+                        <i class="bi bi-list-ul me-1"></i>Unidades
+                    </button>
+                </div>
+
+                <div class="col-md">
+                    <button class="btn btn-light w-100" :disabled="idMateria <= 0" @click="generarPDFUnidades" title="PDF con todas las unidades de la materia">
+                        <i class="bi bi-filetype-pdf me-1"></i>PDF de Unidades
+                    </button>
+                </div>
+
+                <div class="col-md">
+                    <button class="btn btn-light w-100" :disabled="idApartado <= 0" @click="generarPDFApartado" title="PDF del apartado seleccionado">
+                        <i class="bi bi-filetype-pdf me-1"></i>PDF de Apartado
+                    </button>
+                </div>
+
+                <div class="col-md">
+                    <button class="btn btn-light w-100" :disabled="idMateria <= 0" @click="generarPDFCompleto" title="PDF completo de la programación">
+                        <i class="bi bi-filetype-pdf me-1"></i>PDF Completo
+                    </button>
+                </div>
+
+                <div class="col-md" v-if="esAdmin">
+                    <button class="btn btn-primary w-100" :disabled="idMateria <= 0" @click="mostrarImportar" title="Importar una programación desde otra materia">
+                        <i class="bi bi-download me-1"></i>Importar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Editor (apartado editable) -->
+            <div v-if="esEditable" class="mt-3">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Editar apartado</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea id="editorProgramacion"></textarea>
+                        <div class="text-center mt-3">
+                            <button class="btn btn-primary" :disabled="guardando" @click="guardar">
+                                <i class="bi bi-save me-1"></i>
+                                {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Modal Ver programación (solo lectura) -->
-            <div class="modal fade" id="modalVer" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
-                            <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Programación — {{ verData.materia }}</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p v-if="verData.apartados.length === 0" class="text-muted mb-0">
-                                Esta materia no tiene apartados ni contenidos cargados.
-                            </p>
-                            <div v-else v-for="(ap, i) in verData.apartados" :key="i" class="border rounded p-3 mb-2">
-                                <h6 class="mb-1"><i class="bi bi-list-ol me-1"></i>{{ ap.titulo }}</h6>
-                                <div v-html="ap.texto"></div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        </div>
-                    </div>
+            <!-- Aviso (apartado automático) -->
+            <div v-if="idMateria > 0 && idApartado > 0 && !esEditable">
+                <div class="alert alert-info">
+                    <em>El apartado seleccionado se genera automáticamente a partir de la información
+                    introducida en secciones como las Unidades de Programación o los Resultados de
+                    Aprendizaje. Para modificarlo, realiza los cambios en esas secciones. Puedes
+                    visualizarlo haciendo clic en el botón "PDF de Apartado".</em>
                 </div>
             </div>
 
-            <!-- Modal Importar Programación -->
+            <!-- Importar programación -->
             <div class="modal fade" id="modalImportar" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -113,28 +119,27 @@ const ProgramacionesView = {
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form @submit.prevent="ejecutarImportar">
-                                <div class="mb-3">
-                                    <label class="form-label">Materia Origen *</label>
-                                    <select class="form-select" v-model="importarForm.idMateriaOrigen" required>
-                                        <option value="">--Selecciona una materia origen--</option>
-                                        <option v-for="m in materias" :key="m.id" :value="m.id">{{ m.nombre }}</option>
-                                    </select>
-                                    <div class="form-text">Los datos de esta programación se copiarán a la materia destino.</div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Materia Destino *</label>
-                                    <select class="form-select" v-model="importarForm.idMateriaDestino" required>
-                                        <option value="">--Selecciona una materia destino--</option>
-                                        <option v-for="m in materias" :key="m.id" :value="m.id">{{ m.nombre }}</option>
-                                    </select>
-                                    <div class="form-text">Esta materia recibirá los datos de la programación origen. ¡Se borrarán sus datos actuales!</div>
-                                </div>
-                                <div class="alert alert-warning" role="alert">
-                                    <i class="bi bi-exclamation-triangle me-2"></i>
-                                    <strong>Atención:</strong> Esta acción borrará todos los contenidos, temas y criterios de evaluación de la materia destino antes de importar los nuevos datos.
-                                </div>
-                            </form>
+                            <div class="mb-3">
+                                <label class="form-label">Materia Origen *</label>
+                                <select class="form-select" v-model="importarForm.idMateriaOrigen">
+                                    <option value="">--Selecciona una materia origen--</option>
+                                    <option v-for="m in materias" :key="m.id" :value="m.id">{{ m.nombre }}</option>
+                                </select>
+                                <div class="form-text">Los datos de esta programación se copiarán a la materia destino.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Materia Destino *</label>
+                                <select class="form-select" v-model="importarForm.idMateriaDestino">
+                                    <option value="">--Selecciona una materia destino--</option>
+                                    <option v-for="m in materias" :key="m.id" :value="m.id">{{ m.nombre }}</option>
+                                </select>
+                                <div class="form-text">Esta materia recibirá los datos de la programación origen. ¡Se borrarán sus datos actuales!</div>
+                            </div>
+                            <div class="alert alert-warning" role="alert">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <strong>Atención:</strong> Esta acción borrará todos los contenidos, temas y
+                                criterios de evaluación de la materia destino antes de importar los nuevos datos.
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -148,68 +153,190 @@ const ProgramacionesView = {
         </div>
     `,
 
+    props: {
+        usuario: {
+            type: Object,
+            required: true
+        }
+    },
+
     data() {
         return {
-            programaciones: [],
             materias: [],
-            cargando: false,
-            filtroMateria: '',
-            importarForm: { idMateriaOrigen: '', idMateriaDestino: '' },
-            verData: { materia: '', apartados: [] },
-            modalVer: null,
-            modalImportar: null
+            idMateria: 0,
+            apartados: [],
+            idApartado: 0,
+            tipoApartado: -1,
+            contenido: '',
+            guardando: false,
+            modalImportar: null,
+            importarForm: { idMateriaOrigen: '', idMateriaDestino: '' }
         };
     },
 
+    computed: {
+        esAdmin() {
+            // Fiel a v3: $permisos = rol admin (controla Importar y Cont. defecto)
+            return this.usuario.rol === 'admin';
+        },
+        esEditable() {
+            return this.idMateria > 0 && this.idApartado > 0 && this.tipoApartado === 0;
+        }
+    },
+
     async mounted() {
-        await this.cargar();
-        await this.cargarCatalogos();
-        this.modalVer = new bootstrap.Modal(document.getElementById('modalVer'));
         this.modalImportar = new bootstrap.Modal(document.getElementById('modalImportar'));
+        await this.cargarMaterias();
+    },
+
+    beforeUnmount() {
+        this.borrarEditor();
     },
 
     methods: {
-        horasFormateadas(prog) {
-            return (prog.horas !== null && prog.horas !== undefined && prog.horas !== '') ? prog.horas : '—';
+        // --- TinyMCE (misma configuración que v3 / programaciones-aula) ---
+        async inicializarEditor(texto) {
+            if (!TinyMCEUtils.disponible()) {
+                console.warn('TinyMCE no disponible — se muestra el textarea plano');
+                return;
+            }
+            const ids = ['editorProgramacion'];
+            await TinyMCEUtils.quitar(ids);
+            const area = document.querySelector('textarea#editorProgramacion');
+            if (!area) return;
+            area.value = texto || '';
+            await TinyMCEUtils.iniciar({
+                selector: 'textarea#editorProgramacion',
+                height: 400,
+                resize: true,
+                plugins: 'autolink lists advlist code fullscreen wordcount',
+                toolbar: 'undo redo | styles | bold italic underline removeformat | alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | code fullscreen',
+                statusbar: true,
+                menubar: false,
+                branding: false,
+                content_css: 'css/estilos_tiny.css',
+                setup: (editor) => {
+                    editor.on('change', () => {
+                        this.contenido = editor.getContent();
+                    });
+                }
+            }, ids);
         },
 
-        async cargar() {
-            this.cargando = true;
+        borrarEditor() {
+            return TinyMCEUtils.quitar(['editorProgramacion']);
+        },
+
+        // --- Carga ---
+        async cargarMaterias() {
             try {
-                this.programaciones = await programacionesAPI.listar(this.filtroMateria || null);
+                this.materias = await programacionesAPI.cargarMaterias() || [];
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            }
+        },
+
+        async cambiarMateria() {
+            await this.borrarEditor();
+            this.idApartado = 0;
+            this.tipoApartado = -1;
+            this.apartados = [];
+            if (this.idMateria <= 0) return;
+
+            try {
+                this.apartados = await programacionesAPI.cargarApartados(this.idMateria) || [];
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            }
+        },
+
+        async cambiarApartado() {
+            await this.borrarEditor();
+            this.contenido = '';
+
+            if (this.idApartado <= 0) {
+                this.tipoApartado = -1;
+                return;
+            }
+
+            const apartado = this.apartados.find(a => a.id === this.idApartado);
+            this.tipoApartado = apartado ? apartado.tipo : -1;
+
+            if (this.tipoApartado === 0) {
+                try {
+                    const data = await programacionesAPI.cargarContenido(this.idMateria, this.idApartado);
+                    this.contenido = (data && data.texto) || '';
+                    this.$nextTick(() => {
+                        this.inicializarEditor(this.contenido);
+                    });
+                } catch (error) {
+                    Swal.fire('Error', error.message, 'error');
+                }
+            }
+        },
+
+        // --- Guardar ---
+        async guardar() {
+            if (!this.esEditable) return;
+
+            let texto = this.contenido;
+            const editor = window.tinymce ? tinymce.get('editorProgramacion') : null;
+            if (editor) {
+                editor.save();
+                texto = editor.getContent();
+            }
+
+            this.guardando = true;
+            try {
+                const res = await programacionesAPI.guardarContenido(this.idMateria, this.idApartado, texto);
+                if (res && res.sin_cambios) {
+                    // Fiel a v3: si no hubo cambios, se avisa sin marcar error
+                    Swal.fire('Atención', 'El contenido ya estaba guardado así (no se han realizado cambios).', 'warning');
+                } else {
+                    Swal.fire('Éxito', 'Contenido guardado correctamente', 'success');
+                }
             } catch (error) {
                 Swal.fire('Error', error.message, 'error');
             } finally {
-                this.cargando = false;
+                this.guardando = false;
             }
         },
 
-        async cargarCatalogos() {
-            try {
-                // listar.php devuelve el array de materias directamente
-                const res = await fetch('../backend/api/materias/listar.php').then(r => r.json());
-                if (Array.isArray(res)) this.materias = res;
-            } catch (error) {
-                console.error('Error al cargar catálogos:', error);
+        // --- Navegación a otras opciones (misma SPA) ---
+        irAUnidades() {
+            if (this.idMateria <= 0) return;
+            this.$emit('navigate', 'temas.php');
+        },
+
+        irAContenidosDefecto() {
+            if (this.idMateria <= 0) return;
+            this.$emit('navigate', 'temas_contenidos_defecto.php');
+        },
+
+        // --- PDFs (endpoints autocontenidos, sin sesión) ---
+        generarPDFCompleto() {
+            if (this.idMateria <= 0) return;
+            window.open('../backend/pdf_programaciones.php?idMateria=' + this.idMateria, '_blank');
+        },
+
+        generarPDFApartado() {
+            if (this.idApartado <= 0) return;
+            // Si el apartado es de tipo TEMAS (13), el PDF "por apartado" es el de unidades
+            if (this.tipoApartado === 13) {
+                window.open('../backend/pdf_unidades_programacion.php?idMateria=' + this.idMateria, '_blank');
+            } else {
+                window.open('../backend/pdf_programaciones_apartado.php?idMateria=' + this.idMateria + '&idApartado=' + this.idApartado, '_blank');
             }
         },
 
-        async ver(prog) {
-            try {
-                const data = await programacionesAPI.obtener(prog.id);
-                this.verData = { materia: prog.materia, apartados: data || [] };
-                this.modalVer.show();
-            } catch (error) {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Programación vacía',
-                    text: 'Esta materia aún no tiene apartados ni contenidos cargados. Se editan en las fases 2.2 y 2.4.'
-                });
-            }
+        generarPDFUnidades() {
+            if (this.idMateria <= 0) return;
+            window.open('../backend/pdf_unidades_programacion.php?idMateria=' + this.idMateria, '_blank');
         },
 
+        // --- Importar ---
         mostrarImportar() {
-            this.importarForm = { idMateriaOrigen: '', idMateriaDestino: '' };
+            this.importarForm = { idMateriaOrigen: '', idMateriaDestino: this.idMateria || '' };
             this.modalImportar.show();
         },
 
@@ -241,7 +368,6 @@ const ProgramacionesView = {
                     );
                     Swal.fire('Éxito', 'Programación importada correctamente', 'success');
                     this.modalImportar.hide();
-                    await this.cargar();
                 } catch (error) {
                     Swal.fire('Error', error.message, 'error');
                 }
