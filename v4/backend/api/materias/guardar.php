@@ -2,13 +2,6 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión']);
-    exit;
-}
-
 // Permiso fiel a v3 (insertar_materia.php): jefe de departamento o admin
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
@@ -60,40 +53,38 @@ if (empty($nombre)) {
     exit;
 }
 
-if ($id > 0) {
-    // UPDATE (fiel a v3: no se toca idCurso al editar)
-    $stmt = mysqli_prepare($db, "UPDATE materias SET nombre=?, cantidad=?, horas=?, horas_complementarias=?, idDepartamento=?, idEspecialidad=?, computables_horas_grupo=?, asignada_directiva=?, min_num_profesores=?, max_grupos_profesor=?, tiene_programacion=?, divisible=?, tipo=?, codigo_oficial=?, nombre_oficial=?, creditos_ects=?, horas_anuales=? WHERE id=?");
-    mysqli_stmt_bind_param($stmt, "siiiisiiiiiisssiii", $nombre, $cantidad, $horas, $horasComplementarias, $idDepartamento, $idEspecialidad, $computables, $asignadaDirectiva, $minNumProfesores, $maxGruposProfesor, $tieneProgramacion, $divisible, $tipo, $codigoOficial, $nombreOficial, $creditosECTS, $horasAnuales, $id);
-    $ok = mysqli_stmt_execute($stmt);
-    $nuevoId = $id;
-    mysqli_stmt_close($stmt);
-} else {
-    // CREATE: la columna "grupo" es NOT NULL sin default; se guarda vacía
-    $stmt = mysqli_prepare($db, "INSERT INTO materias (nombre, idCurso, cantidad, horas, horas_complementarias, idDepartamento, idEspecialidad, computables_horas_grupo, asignada_directiva, min_num_profesores, max_grupos_profesor, tiene_programacion, divisible, tipo, codigo_oficial, nombre_oficial, creditos_ects, horas_anuales, grupo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '')");
-    mysqli_stmt_bind_param($stmt, "siiiiisiiiiiisssii", $nombre, $idCurso, $cantidad, $horas, $horasComplementarias, $idDepartamento, $idEspecialidad, $computables, $asignadaDirectiva, $minNumProfesores, $maxGruposProfesor, $tieneProgramacion, $divisible, $tipo, $codigoOficial, $nombreOficial, $creditosECTS, $horasAnuales);
-    $ok = mysqli_stmt_execute($stmt);
-    $nuevoId = mysqli_insert_id($db);
+try {
+    $db = Db::open();
+    if ($id > 0) {
+        // UPDATE (fiel a v3: no se toca idCurso al editar)
+        $db->execute("UPDATE materias SET nombre=?, cantidad=?, horas=?, horas_complementarias=?, idDepartamento=?, idEspecialidad=?, computables_horas_grupo=?, asignada_directiva=?, min_num_profesores=?, max_grupos_profesor=?, tiene_programacion=?, divisible=?, tipo=?, codigo_oficial=?, nombre_oficial=?, creditos_ects=?, horas_anuales=? WHERE id=?",
+            $nombre, $cantidad, $horas, $horasComplementarias, $idDepartamento, $idEspecialidad, $computables, $asignadaDirectiva, $minNumProfesores, $maxGruposProfesor, $tieneProgramacion, $divisible, $tipo, $codigoOficial, $nombreOficial, $creditosECTS, $horasAnuales, $id);
+        $nuevoId = $id;
+    } else {
+        // CREATE: la columna "grupo" es NOT NULL sin default; se guarda vacía
+        $db->execute("INSERT INTO materias (nombre, idCurso, cantidad, horas, horas_complementarias, idDepartamento, idEspecialidad, computables_horas_grupo, asignada_directiva, min_num_profesores, max_grupos_profesor, tiene_programacion, divisible, tipo, codigo_oficial, nombre_oficial, creditos_ects, horas_anuales, grupo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '')",
+            $nombre, $idCurso, $cantidad, $horas, $horasComplementarias, $idDepartamento, $idEspecialidad, $computables, $asignadaDirectiva, $minNumProfesores, $maxGruposProfesor, $tieneProgramacion, $divisible, $tipo, $codigoOficial, $nombreOficial, $creditosECTS, $horasAnuales);
+        $nuevoId = $db->insertId();
 
-    // Fiel a v3: al crear, se puebla la configuración por defecto (materias_grupos)
-    // para todos los grupos del curso, con los datos de referencia de la materia.
-    if ($ok && $idCurso > 0) {
-        $resG = mysqli_query($db, "SELECT id FROM grupos WHERE idCurso = " . intval($idCurso));
-        while ($filaG = mysqli_fetch_assoc($resG)) {
-            $idGrupoTmp = intval($filaG['id']);
-            $stmtG = mysqli_prepare($db, "INSERT INTO materias_grupos (idMateria, idGrupo, cantidad, horas, horas_complementarias, min_num_profesores, max_grupos_profesor) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            mysqli_stmt_bind_param($stmtG, "iiiiiii", $nuevoId, $idGrupoTmp, $cantidad, $horas, $horasComplementarias, $minNumProfesores, $maxGruposProfesor);
-            mysqli_stmt_execute($stmtG);
-            mysqli_stmt_close($stmtG);
+        // Fiel a v3: al crear, se puebla la configuración por defecto (materias_grupos)
+        // para todos los grupos del curso, con los datos de referencia de la materia.
+        if ($idCurso > 0) {
+            $grupos = $db->fetchAll("SELECT id FROM grupos WHERE idCurso = ?", $idCurso);
+            foreach ($grupos as $filaG) {
+                $db->execute("INSERT INTO materias_grupos (idMateria, idGrupo, cantidad, horas, horas_complementarias, min_num_profesores, max_grupos_profesor) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    $nuevoId, intval($filaG['id']), $cantidad, $horas, $horasComplementarias, $minNumProfesores, $maxGruposProfesor);
+            }
         }
-        mysqli_free_result($resG);
     }
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
+    exit;
 }
 
 echo json_encode([
-    'success' => (bool) $ok,
-    'message' => $ok ? 'Materia guardada correctamente' : 'Error al guardar la materia',
-    'id' => (int) $nuevoId
+    'success' => true,
+    'message' => 'Materia guardada correctamente',
+    'id' => (int)$nuevoId
 ]);
-
-mysqli_close($db);
 ?>

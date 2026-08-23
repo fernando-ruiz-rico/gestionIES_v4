@@ -2,13 +2,6 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión']);
-    exit;
-}
-
 // Permiso fiel a v3: solo admin
 checkPermission(array(ROLE_ADMIN));
 
@@ -37,30 +30,25 @@ if (empty($descripcion)) {
     exit;
 }
 
-// Verificar si existe para actualizar o insertar
-$stmt = mysqli_prepare($db, "SELECT id FROM especialidades WHERE id = ?");
-mysqli_stmt_bind_param($stmt, "s", $id);
-mysqli_stmt_execute($stmt);
-$res = mysqli_stmt_get_result($stmt);
-$existe = mysqli_fetch_assoc($res);
-mysqli_free_result($res);
-mysqli_stmt_close($stmt);
+try {
+    $db = Db::open();
 
-if ($existe) {
-    $stmt = mysqli_prepare($db, "UPDATE especialidades SET descripcion=?, idDepartamento=?, horasTutoria=?, horasIngles=? WHERE id=?");
-    mysqli_stmt_bind_param($stmt, "siiss", $descripcion, $idDepartamento, $horasTutoria, $horasIngles, $id);
-} else {
-    $stmt = mysqli_prepare($db, "INSERT INTO especialidades (id, descripcion, idDepartamento, horasTutoria, horasIngles) VALUES (?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "ssiis", $id, $descripcion, $idDepartamento, $horasTutoria, $horasIngles);
+    // Verificar si existe para actualizar o insertar
+    $existe = $db->fetchOne("SELECT id FROM especialidades WHERE id = ?", $id);
+
+    if ($existe) {
+        $db->execute("UPDATE especialidades SET descripcion=?, idDepartamento=?, horasTutoria=?, horasIngles=? WHERE id=?", $descripcion, $idDepartamento, $horasTutoria, $horasIngles, $id);
+    } else {
+        $db->execute("INSERT INTO especialidades (id, descripcion, idDepartamento, horasTutoria, horasIngles) VALUES (?, ?, ?, ?, ?)", $id, $descripcion, $idDepartamento, $horasTutoria, $horasIngles);
+    }
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
+    exit;
 }
 
-$ok = mysqli_stmt_execute($stmt);
-
 echo json_encode([
-    'success' => $ok,
-    'message' => $ok ? 'Guardado correctamente' : 'Error al guardar'
+    'success' => true,
+    'message' => 'Guardado correctamente'
 ]);
-
-mysqli_stmt_close($stmt);
-mysqli_close($db);
 ?>

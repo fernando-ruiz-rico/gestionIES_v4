@@ -44,6 +44,10 @@ function closeDBConnection($conn) {
     }
 }
 
+// Capa fina sobre mysqli (clases Db y DbException). Los endpoints que usen
+// Db::open() ya la tienen cargada por este require.
+require_once __DIR__ . '/lib/db.php';
+
 // Función para escapar strings (prevención SQL injection básica)
 function escapeString($str, $conn) {
     return mysqli_real_escape_string($conn, $str);

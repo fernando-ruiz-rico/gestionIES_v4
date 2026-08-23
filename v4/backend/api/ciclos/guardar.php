@@ -4,14 +4,7 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión']);
-    exit;
-}
-
-// Permiso fiel a v3: solo admin
+// Solo admin
 checkPermission(array(ROLE_ADMIN));
 
 $datos = json_decode(file_get_contents('php://input'), true);
@@ -23,8 +16,8 @@ if (!$datos) {
 
 $nombre   = isset($datos['nombre']) ? trim($datos['nombre']) : '';
 $familia  = isset($datos['familia']) ? trim($datos['familia']) : '';
-$nivel    = isset($datos['nivel']) ? trim($datos['nivel']) : '';
-$idCiclo  = isset($datos['id']) ? intval($datos['id']) : 0;
+$nivel   = isset($datos['nivel']) ? trim($datos['nivel']) : '';
+$idCiclo = isset($datos['id']) ? intval($datos['id']) : 0;
 
 if ($nombre === '' || $familia === '' || $nivel === '') {
     http_response_code(400);
@@ -32,24 +25,26 @@ if ($nombre === '' || $familia === '' || $nivel === '') {
     exit;
 }
 
-if ($idCiclo > 0) {
-    $stmt = mysqli_prepare($db, "UPDATE ciclos SET nombre = ?, familia = ?, nivel = ? WHERE id = ?");
-    mysqli_stmt_bind_param($stmt, "sssi", $nombre, $familia, $nivel, $idCiclo);
-} else {
-    // La columna "horas" es NOT NULL sin valor por defecto en la tabla;
-    // v3 no la pide en el formulario, así que se guarda 0
-    $stmt = mysqli_prepare($db, "INSERT INTO ciclos (nombre, familia, nivel, horas) VALUES (?, ?, ?, 0)");
-    mysqli_stmt_bind_param($stmt, "sss", $nombre, $familia, $nivel);
+try {
+    $db = Db::open();
+    if ($idCiclo > 0) {
+        $db->execute("UPDATE ciclos SET nombre = ?, familia = ?, nivel = ? WHERE id = ?", $nombre, $familia, $nivel, $idCiclo);
+        $nuevoId = $idCiclo;
+    } else {
+        // La columna "horas" es NOT NULL sin valor por defecto en la tabla;
+        // v3 no la pide en el formulario, así que se guarda 0
+        $db->execute("INSERT INTO ciclos (nombre, familia, nivel, horas) VALUES (?, ?, ?, 0)", $nombre, $familia, $nivel);
+        $nuevoId = $db->insertId();
+    }
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
+    exit;
 }
 
-$exito = mysqli_stmt_execute($stmt);
-$nuevoId = ($idCiclo > 0) ? $idCiclo : mysqli_insert_id($db);
-mysqli_stmt_close($stmt);
-mysqli_close($db);
-
 echo json_encode([
-    'success' => (bool) $exito,
-    'message' => $exito ? 'Ciclo guardado correctamente' : 'Error al guardar el ciclo',
-    'id' => (int) $nuevoId
+    'success' => true,
+    'message' => 'Ciclo guardado correctamente',
+    'id' => (int)$nuevoId
 ]);
 ?>

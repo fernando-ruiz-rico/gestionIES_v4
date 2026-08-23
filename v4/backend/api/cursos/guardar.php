@@ -4,13 +4,6 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión']);
-    exit;
-}
-
 // Solo admin
 checkPermission(array(ROLE_ADMIN));
 
@@ -28,22 +21,24 @@ if ($nombre === '' || $abreviatura === '') {
 }
 
 // En v3 el campo "horas semanales" puede llegar vacío; en ese caso se guarda 0
-if ($id > 0) {
-    $stmt = mysqli_prepare($db, "UPDATE cursos SET nombre = ?, abreviatura = ?, horas_semana = ?, categoria = ? WHERE id = ?");
-    mysqli_stmt_bind_param($stmt, "ssssi", $nombre, $abreviatura, $horas, $categoria, $id);
-} else {
-    $stmt = mysqli_prepare($db, "INSERT INTO cursos (nombre, abreviatura, horas_semana, categoria) VALUES (?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "ssss", $nombre, $abreviatura, $horas, $categoria);
+try {
+    $db = Db::open();
+    if ($id > 0) {
+        $db->execute("UPDATE cursos SET nombre = ?, abreviatura = ?, horas_semana = ?, categoria = ? WHERE id = ?", $nombre, $abreviatura, $horas, $categoria, $id);
+        $nuevoId = $id;
+    } else {
+        $db->execute("INSERT INTO cursos (nombre, abreviatura, horas_semana, categoria) VALUES (?, ?, ?, ?)", $nombre, $abreviatura, $horas, $categoria);
+        $nuevoId = $db->insertId();
+    }
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
+    exit;
 }
 
-$exito = mysqli_stmt_execute($stmt);
-$nuevoId = ($id > 0) ? $id : mysqli_insert_id($db);
-mysqli_stmt_close($stmt);
-mysqli_close($db);
-
 echo json_encode([
-    'success' => (bool) $exito,
-    'message' => $exito ? 'Curso guardado correctamente' : 'Error al guardar el curso',
-    'id' => (int) $nuevoId
+    'success' => true,
+    'message' => 'Curso guardado correctamente',
+    'id' => (int)$nuevoId
 ]);
 ?>

@@ -3,13 +3,6 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión']);
-    exit;
-}
-
 // Permiso fiel a v3: jefe de departamento o admin
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
@@ -21,14 +14,16 @@ if ($id <= 0) {
     exit;
 }
 
-$stmt = mysqli_prepare($db, "DELETE FROM escenarios_desideratas WHERE id = ?");
-mysqli_stmt_bind_param($stmt, "i", $id);
-mysqli_stmt_execute($stmt);
-$afectados = mysqli_stmt_affected_rows($stmt);
-mysqli_stmt_close($stmt);
-mysqli_close($db);
+try {
+    $db = Db::open();
+    $afectadas = $db->execute("DELETE FROM escenarios_desideratas WHERE id = ?", $id);
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
+    exit;
+}
 
-if ($afectados === 0) {
+if ($afectadas === 0) {
     http_response_code(404);
     echo json_encode(['error' => 'No encontrado']);
     exit;

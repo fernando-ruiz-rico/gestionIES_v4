@@ -12,32 +12,21 @@ if (empty($_GET['id'])) {
 }
 
 $id = intval($_GET['id']);
-$db = getDBConnection();
 
-if (!$db) {
+try {
+    $db = Db::open();
+    $departamento = $db->fetchOne("SELECT * FROM departamentos WHERE id = ?", $id);
+} catch (DbException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión a la base de datos']);
+    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
     exit;
 }
-
-$result = mysqli_query($db, "SELECT * FROM departamentos WHERE id = $id");
-
-if (!$result) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error al consultar la base de datos: ' . mysqli_error($db)]);
-    exit;
-}
-
-$departamento = mysqli_fetch_assoc($result);
 
 if (!$departamento) {
     http_response_code(404);
     echo json_encode(['error' => 'Departamento no encontrado']);
     exit;
 }
-
-mysqli_free_result($result);
-mysqli_close($db);
 
 echo json_encode($departamento);
 ?>

@@ -2,13 +2,6 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión']);
-    exit;
-}
-
 $id = trim(isset($_GET['id']) ? $_GET['id'] : '');
 if (empty($id)) {
     http_response_code(400);
@@ -16,19 +9,20 @@ if (empty($id)) {
     exit;
 }
 
-$stmt = mysqli_prepare($db, "SELECT e.*, d.nombre as departamento FROM especialidades e LEFT JOIN departamentos d ON e.idDepartamento = d.id WHERE e.id = ?");
-mysqli_stmt_bind_param($stmt, "s", $id);
-mysqli_stmt_execute($stmt);
-$res = mysqli_stmt_get_result($stmt);
-$row = mysqli_fetch_assoc($res);
+try {
+    $db = Db::open();
+    $especialidad = $db->fetchOne("SELECT e.*, d.nombre as departamento FROM especialidades e LEFT JOIN departamentos d ON e.idDepartamento = d.id WHERE e.id = ?", $id);
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
+    exit;
+}
 
-if (!$row) {
+if (!$especialidad) {
     http_response_code(404);
     echo json_encode(['error' => 'No encontrado']);
     exit;
 }
 
-echo json_encode($row);
-mysqli_free_result($res);
-mysqli_close($db);
+echo json_encode($especialidad);
 ?>

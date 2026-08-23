@@ -2,13 +2,6 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión']);
-    exit;
-}
-
 // Permiso fiel a v3: solo admin
 checkPermission(array(ROLE_ADMIN));
 
@@ -32,50 +25,34 @@ if (empty($nombre)) {
     exit;
 }
 
-if ($id > 0) {
-    // Fiel a v3: al modificar solo se actualizan nombre, abreviatura, mostrar y
-    // horas_complementarias_dual (ni idCurso ni orden se tocan aquí: el orden se
-    // gestiona en el endpoint de reordenación y el curso no cambia al editar).
-    $stmt = mysqli_prepare($db, "UPDATE grupos SET nombre=?, abreviatura=?, mostrar=?, horas_complementarias_dual=? WHERE id=?");
-    mysqli_stmt_bind_param($stmt, "ssiii", $nombre, $abreviatura, $mostrar, $horas_complementarias_dual, $id);
-    $ok = mysqli_stmt_execute($stmt);
-} else {
-    // Fiel a v3: al crear no se fija orden (queda NULL) y se copia la
-    // configuración de las materias del curso a materias_grupos para el grupo nuevo.
-    $stmt = mysqli_prepare($db, "INSERT INTO grupos (nombre, abreviatura, idCurso, mostrar, horas_complementarias_dual) VALUES (?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "ssiii", $nombre, $abreviatura, $idCurso, $mostrar, $horas_complementarias_dual);
-    $ok = mysqli_stmt_execute($stmt);
+try {
+    $db = Db::open();
+    if ($id > 0) {
+        // Fiel a v3: al modificar solo se actualizan nombre, abreviatura, mostrar y
+        // horas_complementarias_dual (ni idCurso ni orden se tocan aquí: el orden se
+        // gestiona en el endpoint de reordenación y el curso no cambia al editar).
+        $db->execute("UPDATE grupos SET nombre=?, abreviatura=?, mostrar=?, horas_complementarias_dual=? WHERE id=?", $nombre, $abreviatura, $mostrar, $horas_complementarias_dual, $id);
+    } else {
+        // Fiel a v3: al crear no se fija orden (queda NULL) y se copia la
+        // configuración de las materias del curso a materias_grupos para el grupo nuevo.
+        $db->execute("INSERT INTO grupos (nombre, abreviatura, idCurso, mostrar, horas_complementarias_dual) VALUES (?, ?, ?, ?, ?)", $nombre, $abreviatura, $idCurso, $mostrar, $horas_complementarias_dual);
+        $id = $db->insertId();
 
-    if ($ok) {
-        $idNuevo = mysqli_insert_id($db);
-        $id = $idNuevo;
-        $res = mysqli_query($db, "SELECT id, cantidad, horas, horas_complementarias, min_num_profesores, max_grupos_profesor FROM materias WHERE idCurso = " . $idCurso);
-        if ($res) {
-            while ($m = mysqli_fetch_assoc($res)) {
-                $stmtMg = mysqli_prepare($db, "INSERT INTO materias_grupos (idMateria, idGrupo, cantidad, horas, horas_complementarias, min_num_profesores, max_grupos_profesor) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                $idMateria = intval($m['id']);
-                $cantidad = intval($m['cantidad']);
-                $horas = intval($m['horas']);
-                $horasCom = intval($m['horas_complementarias']);
-                $minProf = intval($m['min_num_profesores']);
-                $maxGrp = intval($m['max_grupos_profesor']);
-                mysqli_stmt_bind_param($stmtMg, "iiiiiii", $idMateria, $idNuevo, $cantidad, $horas, $horasCom, $minProf, $maxGrp);
-                mysqli_stmt_execute($stmtMg);
-                mysqli_stmt_close($stmtMg);
-            }
-            mysqli_free_result($res);
+        $materias = $db->fetchAll("SELECT id, cantidad, horas, horas_complementarias, min_num_profesores, max_grupos_profesor FROM materias WHERE idCurso = ?", $idCurso);
+        foreach ($materias as $m) {
+            $db->execute("INSERT INTO materias_grupos (idMateria, idGrupo, cantidad, horas, horas_complementarias, min_num_profesores, max_grupos_profesor) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                intval($m['id']), $id, intval($m['cantidad']), intval($m['horas']), intval($m['horas_complementarias']), intval($m['min_num_profesores']), intval($m['max_grupos_profesor']));
         }
     }
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
+    exit;
 }
 
 echo json_encode([
-    'success' => $ok,
-    'message' => $ok ? 'Guardado correctamente' : 'Error al guardar',
+    'success' => true,
+    'message' => 'Guardado correctamente',
     'id' => $id
 ]);
-
-if (isset($stmt)) {
-    mysqli_stmt_close($stmt);
-}
-mysqli_close($db);
 ?>

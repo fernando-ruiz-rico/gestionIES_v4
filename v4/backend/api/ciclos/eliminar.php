@@ -5,13 +5,6 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión']);
-    exit;
-}
-
 // Solo admin
 checkPermission(array(ROLE_ADMIN));
 
@@ -23,26 +16,32 @@ if ($idCiclo <= 0) {
     exit;
 }
 
-// Si el ciclo tiene cursos asociados no se puede borrar
-$result = mysqli_query($db, "SELECT COUNT(*) AS total FROM cursos_ciclos WHERE idCiclo = $idCiclo");
-$fila = mysqli_fetch_assoc($result);
-mysqli_free_result($result);
-if ($fila['total'] > 0) {
-    http_response_code(409);
-    echo json_encode(['error' => 'El ciclo tiene cursos asociados. Elimina primero esas asociaciones.']);
+try {
+    $db = Db::open();
+
+    // Si el ciclo tiene cursos asociados no se puede borrar
+    $asociados = $db->fetchOne("SELECT COUNT(*) AS total FROM cursos_ciclos WHERE idCiclo = ?", $idCiclo);
+
+    if ($asociados['total'] > 0) {
+        http_response_code(409);
+        echo json_encode(['error' => 'El ciclo tiene cursos asociados. Elimina primero esas asociaciones.']);
+        exit;
+    }
+
+    // Borramos las unidades de competencia asociadas al ciclo
+    $db->execute("DELETE FROM unidades_ciclos WHERE idCiclo = ?", $idCiclo);
+    $afectadas = $db->execute("DELETE FROM ciclos WHERE id = ?", $idCiclo);
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
     exit;
 }
 
-// Borramos las unidades de competencia asociadas al ciclo
-mysqli_query($db, "DELETE FROM unidades_ciclos WHERE idCiclo = $idCiclo");
-mysqli_query($db, "DELETE FROM ciclos WHERE id = $idCiclo");
-
-if (mysqli_affected_rows($db) == 0) {
+if ($afectadas == 0) {
     http_response_code(404);
     echo json_encode(['error' => 'No se ha eliminado nada']);
     exit;
 }
 
-closeDBConnection($db);
 echo json_encode(['success' => true, 'message' => 'Ciclo eliminado']);
 ?>

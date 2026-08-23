@@ -2,13 +2,6 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión']);
-    exit;
-}
-
 // Permiso fiel a v3: jefe de departamento o admin
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
@@ -26,15 +19,18 @@ if (empty($nombre)) {
 }
 
 // La tabla real para escenarios es 'escenarios_desideratas'
-if ($id > 0) {
-    $stmt = mysqli_prepare($db, "UPDATE escenarios_desideratas SET nombre=?, actual=?, activo_desideratas=?, modo_rueda=? WHERE id=?");
-    mysqli_stmt_bind_param($stmt, "siiii", $nombre, $actual, $activo_desideratas, $modo_rueda, $id);
-} else {
-    $stmt = mysqli_prepare($db, "INSERT INTO escenarios_desideratas (nombre, actual, activo_desideratas, modo_rueda) VALUES (?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "siii", $nombre, $actual, $activo_desideratas, $modo_rueda);
+try {
+    $db = Db::open();
+    if ($id > 0) {
+        $db->execute("UPDATE escenarios_desideratas SET nombre=?, actual=?, activo_desideratas=?, modo_rueda=? WHERE id=?", $nombre, $actual, $activo_desideratas, $modo_rueda, $id);
+    } else {
+        $db->execute("INSERT INTO escenarios_desideratas (nombre, actual, activo_desideratas, modo_rueda) VALUES (?, ?, ?, ?)", $nombre, $actual, $activo_desideratas, $modo_rueda);
+    }
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
+    exit;
 }
 
-$ok = mysqli_stmt_execute($stmt);
-echo json_encode(['success' => $ok, 'message' => $ok ? 'Guardado' : 'Error']);
-mysqli_close($db);
+echo json_encode(['success' => true, 'message' => 'Guardado']);
 ?>
