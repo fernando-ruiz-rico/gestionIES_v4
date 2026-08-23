@@ -82,20 +82,29 @@ const PCCFContenidosDefectoView = {
     },
 
     computed: {
+        // Recorremos todos los apartados para mantener la numeración original,
+        // pero sólo mostramos en la lista los que admitan contenido por defecto
+        // y sean editables (tipo == 0): los de otro tipo se rellenan
+        // automáticamente a partir de la base de datos y no se editan en esta
+        // opción (fiel a v3, pccf_contenidos_defecto.php).
         apartadosFiltrados() {
             let cont = 0;
             let cont2 = 0;
             const resultado = [];
             for (const apto of this.apartados) {
-                if (!Number(apto.subapartado)) {
+                const sub = Number(apto.subapartado);
+                if (!sub) {
                     cont++;
                     cont2 = 0;
-                    apto.rule = `${cont}. ${apto.titulo}`;
                 } else {
                     cont2++;
-                    apto.rule = `${cont}.${cont2}. ${apto.titulo}`;
                 }
-                resultado.push(apto);
+                if (apto.contenido_defecto && apto.tipo == 0) {
+                    apto.rule = sub
+                        ? `${cont}.${cont2}. ${apto.titulo}`
+                        : `${cont}. ${apto.titulo}`;
+                    resultado.push(apto);
+                }
             }
             return resultado;
         }

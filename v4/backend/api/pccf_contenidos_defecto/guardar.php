@@ -26,6 +26,21 @@ if (!$db) {
 }
 
 try {
+    // Fiel a v3: sólo se editan aquí los apartados que admiten contenido por
+    // defecto y son editables (tipo == 0). Los de otro tipo se rellenan
+    // automáticamente a partir de la base de datos y no se guardan, así que
+    // rechazamos cualquier apartado no editable aunque llegue directamente.
+    $stmtApto = mysqli_prepare($db, "SELECT tipo FROM apartados_pccf WHERE id = ?");
+    mysqli_stmt_bind_param($stmtApto, "i", $idApartado);
+    mysqli_stmt_execute($stmtApto);
+    $resApto = mysqli_stmt_get_result($stmtApto);
+    $filaApto = mysqli_fetch_assoc($resApto);
+    mysqli_free_result($resApto);
+    mysqli_stmt_close($stmtApto);
+    if (!$filaApto || intval($filaApto['tipo']) != 0) {
+        sendJSONError('El apartado seleccionado no es editable: se rellena automáticamente a partir de la base de datos', 400);
+    }
+
     $texto = trim($texto);
 
     // Sin texto: eliminamos la fila por defecto.
