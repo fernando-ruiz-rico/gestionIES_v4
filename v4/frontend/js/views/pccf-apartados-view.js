@@ -16,8 +16,9 @@ const PCCFApartadosView = {
                 <div class="col-12">
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle me-2"></i>
-                        Arrastra cada apartado para ordenarlo. Haz clic en el lápiz para editar. Cada apartado puede
-                        contener contenido para cada ciclo y contenido por defecto para cada departamento.
+                        Arrastra cada apartado para ordenarlo respecto al resto. Haz clic en el icono del lápiz
+                        para editar los datos de cada apartado, y en el de la papelera para borrarlo. Cada apartado
+                        puede contener contenido para cada ciclo y contenido por defecto para cada departamento.
                     </div>
                 </div>
             </div>
@@ -36,11 +37,21 @@ const PCCFApartadosView = {
                      class="list-group-item d-flex justify-content-between align-items-center"
                      draggable="true"
                      @dragstart="dragStart(index)"
-                     @click="cargarApartadoEditar(apartado)">
-                    <span>
-                        <i class="bi bi-grabme me-2"></i>{{ rule(apartado) }}
+                     @dragover.prevent
+                     @drop.prevent="drop(index)">
+                    <span class="me-2 text-truncate" style="min-width: 0; max-width: 78%;">
+                        <i class="bi bi-grip-vertical me-2 text-muted"></i>
+                        <strong>{{ rule(apartado) }}</strong>
+                        {{ apartado.titulo }}{{ opcionalText(apartado) }}
                     </span>
-                    <i class="bi bi-pencil-square" style="cursor: pointer;"></i>
+                    <div class="d-flex gap-2 text-nowrap">
+                        <button class="btn btn-light" type="button" title="Borrar el apartado" @click="borrarApartado(apartado)">
+                            <i class="bi bi-trash text-danger"></i>
+                        </button>
+                        <button class="btn btn-light" type="button" title="Editar el apartado" @click="cargarApartadoEditar(apartado)">
+                            <i class="bi bi-pencil text-primary"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -116,18 +127,26 @@ const PCCFApartadosView = {
     methods: {
         rule(apartado) {
             // Numeración de apartados idéntica a v3 (cont++ / cont2++)
+            // Los campos llegan como cadenas ("0"/"1") desde la API: hay que
+            // compararlos numéricamente, no con un simple "!" (en JS "0" es
+            // "truthy", al contrario que en PHP).
             let cont = 0;
             let cont2 = 0;
             for (let i = 0; i <= this.apartados.indexOf(apartado); i++) {
                 const a = this.apartados[i];
-                if (!a.subapartado) {
+                if (Number(a.subapartado) === 0) {
                     cont++;
                     cont2 = 0;
                 } else {
                     cont2++;
                 }
             }
-            return !apartado.subapartado ? `${cont}.` : `${cont}.${cont2}.`;
+            return Number(apartado.subapartado) === 0 ? `${cont}.` : `${cont}.${cont2}.`;
+        },
+
+        opcionalText(apartado) {
+            // Igual que v3: los no requeridos se señalan como "(opcional)"
+            return Number(apartado.requerido) === 1 ? '' : ' (opcional)';
         },
 
         async cargar() {
@@ -157,12 +176,36 @@ const PCCFApartadosView = {
             this.formulario = {
                 id: apartado.id,
                 titulo: apartado.titulo,
-                subapartado: !!apartado.subapartado,
-                requerido: !!apartado.requerido,
-                contenido_defecto: !!apartado.contenido_defecto,
-                tipo: apartado.tipo
+                subapartado: Number(apartado.subapartado) === 1,
+                requerido: Number(apartado.requerido) === 1,
+                contenido_defecto: Number(apartado.contenido_defecto) === 1,
+                tipo: Number(apartado.tipo)
             };
             this.modal.show();
+        },
+
+        // Borra un apartado, previa confirmación (fiel a v3)
+        async borrarApartado(apartado) {
+            const result = await Swal.fire({
+                title: '¿Borrar este apartado?',
+                text: `Se eliminará el apartado "${apartado.titulo}" y todos sus contenidos.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, borrar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#d81b60',
+                reverseButtons: true
+            });
+            if (!result.isConfirmed) {
+                return;
+            }
+            try {
+                await PCCFApartadosAPI.eliminar(apartado.id);
+                Swal.fire('Éxito', 'Apartado eliminado correctamente', 'success');
+                await this.cargar();
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            }
         },
 
         cerrarModal() {
@@ -184,8 +227,36 @@ const PCCFApartadosView = {
             }
         },
 
+        // --- Reordenación por arrastre (fiel al "sortable" de v3) ---
         dragStart(index) {
             this.draggedIndex = index;
+        },
+
+        drop(index) {
+            const from = this.draggedIndex;
+            this.draggedIndex = null;
+            if (from === null || from === index) {
+                return;
+            }
+            // Mueve el apartado arrastrado a la posición del destino
+            // (misma sensación que el "sortable" de v3).
+            const items = this.apartados;
+            const [movido] = items.splice(from, 1);
+            items.splice(index, 0, movido);
+            this.guardarOrden();
+        },
+
+        async guardarOrden() {
+            // Los ids de las filas llevan el prefijo "ap" (p. ej. ap1, ap12);
+            // el endpoint los entiende con o sin el prefijo.
+            const orden = this.apartados.map(a => 'ap' + a.id).join(',');
+            try {
+                await PCCFApartadosAPI.ordenar(orden);
+                await this.cargar();
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+                await this.cargar();
+            }
         }
     }
 };
