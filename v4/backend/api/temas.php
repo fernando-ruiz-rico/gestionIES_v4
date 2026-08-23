@@ -142,11 +142,32 @@ try {
         // Listar materias con programación activa (para el selector)
         // ------------------------------------------------------------------
         if ($action === 'listar_materias') {
-            $stmt = mysqli_prepare($db, "SELECT m.id AS id, m.nombre AS materia, c.nombre AS curso, m.horas_anuales
-                        FROM materias m
-                        LEFT JOIN cursos c ON c.id = m.idCurso
-                        WHERE m.tiene_programacion = 1
-                        ORDER BY c.orden, c.nombre, m.nombre");
+            // Fiel a v3 (cargar_materias_programaciones.php): el profesor solo ve
+            // las materias que imparte en los escenarios actuales; el jefe, las de
+            // su departamento; el admin, todas (v4 no tiene el selector de v3).
+            $rol = isset($session['rol']) ? $session['rol'] : '';
+            if ($rol === ROLE_PROFESOR) {
+                $idProfesor = (int)$session['idUsuario'];
+                $stmt = mysqli_prepare($db,
+                    "SELECT DISTINCT m.id AS id, m.nombre AS materia, c.nombre AS curso, m.horas_anuales
+                      FROM materias m
+                      LEFT JOIN cursos c ON c.id = m.idCurso
+                      LEFT JOIN seleccion s ON s.idMateria = m.id
+                      LEFT JOIN escenarios_desideratas e ON e.id = s.idEscenario
+                      WHERE m.tiene_programacion = 1 AND e.actual = 1 AND s.idProfesor = $idProfesor
+                      ORDER BY m.nombre");
+            } else {
+                $idDepartamento = !empty($session['idDepartamento']) ? (int)$session['idDepartamento'] : 0;
+                $sql = "SELECT m.id AS id, m.nombre AS materia, c.nombre AS curso, m.horas_anuales
+                         FROM materias m
+                         LEFT JOIN cursos c ON c.id = m.idCurso
+                         WHERE m.tiene_programacion = 1";
+                if ($idDepartamento > 0) {
+                    $sql .= " AND m.idDepartamento = $idDepartamento";
+                }
+                $sql .= " ORDER BY c.orden, c.nombre, m.nombre";
+                $stmt = mysqli_prepare($db, $sql);
+            }
             mysqli_stmt_execute($stmt);
             $r = mysqli_stmt_get_result($stmt);
             $materias = [];

@@ -305,7 +305,8 @@ const ProgramacionesView = {
         // --- Navegación a otras opciones (misma SPA) ---
         irAUnidades() {
             if (this.idMateria <= 0) return;
-            this.$emit('navigate', 'temas.php');
+            // Enlaza a las unidades de la materia elegida (fiel a v3: temas.php?idMateria=X)
+            this.$emit('navigate', 'temas.php', { idMateria: this.idMateria });
         },
 
         irAContenidosDefecto() {

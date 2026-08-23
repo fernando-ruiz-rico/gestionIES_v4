@@ -346,6 +346,11 @@ const TemasView = {
         usuario: {
             type: Object,
             required: true
+        },
+        // Parámetros de la navegación (p. ej. idMateria al llegar desde «Programaciones»)
+        params: {
+            type: Object,
+            default: () => ({})
         }
     },
 
@@ -397,6 +402,15 @@ const TemasView = {
         this.modalNueva = new bootstrap.Modal(document.getElementById('formnuevotema'));
         this.modalRA = new bootstrap.Modal(document.getElementById('formresultado_ra'));
         await this.cargarMaterias();
+        // Si llegó desde «Programaciones» (botón «Unidades») con una materia ya
+        // elegida, precargar sus unidades (fiel a v3: temas.php?idMateria=X).
+        if (this.params && this.params.idMateria) {
+            const elegida = this.materias.find(m => m.id === this.params.idMateria);
+            if (elegida) {
+                this.idMateria = elegida.id;
+                await this.cambiarMateria();
+            }
+        }
     },
 
     beforeUnmount() {

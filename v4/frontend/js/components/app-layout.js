@@ -10,7 +10,7 @@ const AppLayout = {
             
             <!-- Contenido principal -->
             <div id="page-content-wrapper" class="container-fluid">
-                <component :is="vistaActual" :usuario="usuario" @navigate="handleNavigate"></component>
+                <component :is="vistaActual" :usuario="usuario" :params="params" @navigate="handleNavigate"></component>
             </div>
         </div>
     `,
@@ -29,7 +29,10 @@ const AppLayout = {
     data() {
         return {
             vistaActual: 'home-view',
-            linkActual: ''
+            linkActual: '',
+            // Parámetros de la navegación (p. ej. la materia elegida al saltar
+            // de «Programaciones» a «Unidades»). Vacío al navegar desde el menú.
+            params: {}
         };
     },
 
@@ -43,9 +46,11 @@ const AppLayout = {
             document.getElementById('wrapper').classList.remove('toggled');
         },
 
-        handleNavigate(link) {
+        handleNavigate(link, params) {
             // Recordar el enlace activo para resaltar el elemento del menú
             this.linkActual = link || '';
+            // Parámetros de la navegación (o ninguno si viene del menú lateral)
+            this.params = (params && typeof params === 'object') ? params : {};
 
             // Mapear links a vistas
             const vistaMap = {
