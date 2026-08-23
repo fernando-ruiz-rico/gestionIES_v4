@@ -1,5 +1,7 @@
 <?php
 // API: Listar materias con programación activa para un profesor (seguimiento de programaciones)
+// Solo las del CURSO ACTUAL: la asignación (seleccion) ha de apuntar a un
+// escenario de "desideratas" actual (e.actual = 1), fiel a v3.
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
@@ -22,11 +24,18 @@ if (!$db) {
     exit;
 }
 
+// Fiel a v3 (includes/cargar_materias_programaciones.php, rama del profesor):
+// solo las materias que imparte en los escenarios ACTUALES (curso actual);
+// mismo criterio que programaciones/cargar_materias, temas, resultados_aprendizaje
+// y grupos.php de esta misma sección (e.actual = 1).
 $stmt = mysqli_prepare($db, "SELECT DISTINCT m.id AS id, m.nombre AS nombreMateria, c.nombre AS nomCurso, m.horas AS horas
                                 FROM materias m
                                 JOIN cursos c ON c.id = m.idCurso
+                                JOIN seleccion s ON s.idMateria = m.id
+                                JOIN escenarios_desideratas e ON e.id = s.idEscenario
                                 WHERE m.tiene_programacion = 1
-                                  AND m.id IN (SELECT seleccion.idMateria FROM seleccion WHERE seleccion.idProfesor = ?)
+                                  AND s.idProfesor = ?
+                                  AND e.actual = 1
                                 ORDER BY m.nombre");
 mysqli_stmt_bind_param($stmt, "i", $idProfesor);
 
