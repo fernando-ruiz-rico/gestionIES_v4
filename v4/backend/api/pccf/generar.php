@@ -4,7 +4,7 @@
 // ============================================================================
 //
 // Endpoint autocontenido que replica la generación de PDF de v3
-// (pdf_pccf.php), adaptado a la arquitectura de v4 (mysqli + config.php).
+// (pdf_pccf.php), adaptado a la arquitectura de v4 (wrapper Db + config.php).
 // Es una solicitud de navegador directa, sin dependencias de sesión.
 //
 // Modo de operación (parámetro `modo`):
@@ -24,71 +24,35 @@ require_once __DIR__ . '/../../lib/php/tcpdf/examples/tcpdf_include.php';
 require_once __DIR__ . '/../../lib/php/tcpdf/tcpdf.php';
 
 // ============================================================================
-// Consultas a la base de datos (patrón mysqli de v4)
-// ============================================================================
-function consultar($db, $sql, $params = [], $types = 'i')
-{
-    $stmt = mysqli_prepare($db, $sql);
-    if ($stmt === false) {
-        throw new Exception('Error preparando la consulta: ' . mysqli_error($db));
-    }
-    if (!empty($params)) {
-        // Compatible con PHP 5: sin "..." (PHP 5.6+); se pasan los valores por copia,
-        // que es suficiente porque se ejecuta la sentencia enseguida con los mismos.
-        $args = array($stmt, $types);
-        foreach ($params as $p) {
-            $args[] = $p;
-        }
-        call_user_func_array('mysqli_stmt_bind_param', $args);
-    }
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $rows = [];
-    while ($row = mysqli_fetch_assoc($result)) {
-        $rows[] = $row;
-    }
-    mysqli_stmt_close($stmt);
-    return $rows;
-}
-
-function consultarUna($db, $sql, $params = [], $types = 'i')
-{
-    $res = consultar($db, $sql, $params, $types);
-    return !empty($res) ? $res[0] : null;
-}
-
-// ============================================================================
 // Datos de consulta
 // ============================================================================
 function obtenerDatosCiclo($db, $idCiclo)
 {
-    return consultarUna($db, "SELECT * FROM ciclos WHERE id = ?", [$idCiclo], 'i');
+    return $db->fetchOne("SELECT * FROM ciclos WHERE id = ?", $idCiclo);
 }
 
 function obtenerIdDepartamentoDeCiclo($db, $idCiclo)
 {
-    $res = consultarUna($db,
+    $res = $db->fetchOne(
         "SELECT m.idDepartamento FROM materias m
-         JOIN cursos c ON m.idCurso = c.id
-         JOIN cursos_ciclos cc ON c.id = cc.idCurso
-         WHERE cc.idCiclo = ? AND m.idDepartamento IS NOT NULL LIMIT 1",
-        [$idCiclo], 'i');
+          JOIN cursos c ON m.idCurso = c.id
+          JOIN cursos_ciclos cc ON c.id = cc.idCurso
+          WHERE cc.idCiclo = ? AND m.idDepartamento IS NOT NULL LIMIT 1",
+        $idCiclo);
     return $res ? (int)$res['idDepartamento'] : 0;
 }
 
 function obtenerContenidoApartadoPccf($db, $idApartado, $idCiclo, $idDepartamento = 0)
 {
     // Contenido personalizado
-    $row = consultarUna($db,
-        "SELECT texto FROM contenidos_pccf WHERE idApartado = ? AND idCiclo = ?",
-        [$idApartado, $idCiclo], 'ii');
+    $row = $db->fetchOne("SELECT texto FROM contenidos_pccf WHERE idApartado = ? AND idCiclo = ?",
+        $idApartado, $idCiclo);
     if ($row && trim($row['texto']) !== '') {
         return $row['texto'];
     }
     // Contenido por defecto del departamento
-    $row = consultarUna($db,
-        "SELECT texto FROM contenidos_defecto_pccf WHERE idApartado = ? AND idDepartamento = ?",
-        [$idApartado, $idDepartamento], 'ii');
+    $row = $db->fetchOne("SELECT texto FROM contenidos_defecto_pccf WHERE idApartado = ? AND idDepartamento = ?",
+        $idApartado, $idDepartamento);
     if ($row && trim($row['texto']) !== '') {
         return $row['texto'];
     }
@@ -97,38 +61,36 @@ function obtenerContenidoApartadoPccf($db, $idApartado, $idCiclo, $idDepartament
 
 function obtenerApartados($db)
 {
-    return consultar($db, "SELECT * FROM apartados_pccf ORDER BY orden");
+    return $db->fetchAll("SELECT * FROM apartados_pccf ORDER BY orden");
 }
 
 function obtenerCompetenciasProfesionalesPccf($db, $idCiclo)
 {
-    return consultar($db,
-        "SELECT DISTINCT codigo, texto, orden FROM competencias_ciclos WHERE idCiclo = ? AND tipo = 1 ORDER BY orden",
-        [$idCiclo], 'i');
+    return $db->fetchAll("SELECT DISTINCT codigo, texto, orden FROM competencias_ciclos WHERE idCiclo = ? AND tipo = 1 ORDER BY orden",
+        $idCiclo);
 }
 
 function obtenerCompetenciasEmpleabilidad($db, $idCiclo)
 {
-    return consultar($db,
-        "SELECT codigo, texto FROM competencias_ciclos WHERE idCiclo = ? AND tipo = '2' ORDER BY orden",
-        [$idCiclo], 'i');
+    return $db->fetchAll("SELECT codigo, texto FROM competencias_ciclos WHERE idCiclo = ? AND tipo = '2' ORDER BY orden",
+        $idCiclo);
 }
 
 function obtenerMateriasCiclo($db, $idCiclo)
 {
-    return consultar($db,
+    return $db->fetchAll(
         "SELECT m.id, m.nombre_oficial, m.horas_empresa, m.codigo_oficial, m.tipo
-         FROM materias m
-         INNER JOIN cursos c ON m.idCurso = c.id
-         INNER JOIN cursos_ciclos cc ON c.id = cc.idCurso
-         WHERE cc.idCiclo = ? AND m.tipo != 'TUTORIA'
-         ORDER BY cc.orden, m.tipo",
-        [$idCiclo], 'i');
+          FROM materias m
+          INNER JOIN cursos c ON m.idCurso = c.id
+          INNER JOIN cursos_ciclos cc ON c.id = cc.idCurso
+          WHERE cc.idCiclo = ? AND m.tipo != 'TUTORIA'
+          ORDER BY cc.orden, m.tipo",
+        $idCiclo);
 }
 
 function obtenerResultadosAprendizaje($db, $idMateria)
 {
-    return consultar($db, "SELECT * FROM resultados_aprendizaje WHERE idMateria = ?", [$idMateria], 'i');
+    return $db->fetchAll("SELECT * FROM resultados_aprendizaje WHERE idMateria = ?", $idMateria);
 }
 
 // ============================================================================
@@ -168,7 +130,7 @@ function generarApartadoCompetenciasModulos($db, $idCiclo, $tipo)
     $sqlComp = $tipo === 1
         ? "SELECT codigo, texto FROM competencias_ciclos WHERE idCiclo = ? AND tipo = 1 GROUP BY codigo, texto ORDER BY MIN(orden)"
         : "SELECT codigo, texto FROM competencias_ciclos WHERE idCiclo = ? AND tipo = '2' ORDER BY orden";
-    $competencias = consultar($db, $sqlComp, [$idCiclo], 'i');
+    $competencias = $db->fetchAll($sqlComp, $idCiclo);
 
     $html = '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
     $html .= '<thead><tr><th>Módulo</th><th>Competencias</th></tr></thead><tbody>';
@@ -184,10 +146,10 @@ function generarApartadoCompetenciasModulos($db, $idCiclo, $tipo)
     return $html;
 }
 
-function generarApartadoDistribicionModulos($db, $idCiclo)
+function generarApartadoDistribucionModulos($db, $idCiclo)
 {
-    $html = '<table border="1" cellpadding="5" cellspacing="0" width="100%">'
-        . '<thead><tr><th>Módulo</th><th>Código oficial</th></tr></thead><tbody>';
+    $html = '<table border="1" cellpadding="5" cellspacing="0" width="100%">
+            <thead><tr><th>Módulo</th><th>Código oficial</th></tr></thead><tbody>';
     foreach (obtenerMateriasCiclo($db, $idCiclo) as $m) {
         if (empty($m['nombre_oficial'])) {
             continue;
@@ -233,7 +195,7 @@ function generarApartadoPredefinido($db, $tipo, $idCiclo, $ciclo)
         case 5: // Competencias de empleabilidad
             return generarApartadoCompetenciasModulos($db, $idCiclo, 2);
         case 7: // Distribución de módulos
-            return generarApartadoDistribicionModulos($db, $idCiclo);
+            return generarApartadoDistribucionModulos($db, $idCiclo);
         case 101: // RA de formación en empresa
             return generarContenidoResultadosAprendizajeEmpresa($db, $idCiclo);
         default:
@@ -357,7 +319,7 @@ function generarPDFPccf($db, $idCiclo)
 function generarPDFPccfApartado($db, $idCiclo, $idApartado)
 {
     $datosCiclo = obtenerDatosCiclo($db, $idCiclo);
-    $apartado = consultarUna($db, "SELECT * FROM apartados_pccf WHERE id = ?", [$idApartado], 'i');
+    $apartado = $db->fetchOne("SELECT * FROM apartados_pccf WHERE id = ?", $idApartado);
     if (!$apartado) {
         throw new Exception('Apartado no encontrado');
     }
@@ -389,10 +351,11 @@ function generarPDFPccfApartado($db, $idCiclo, $idApartado)
 // Punto de entrada principal
 // ============================================================================
 try {
-    $db = getDBConnection();
-    if (!$db) {
+    $conn = getDBConnection();
+    if (!$conn) {
         throw new Exception('Error de conexión a la base de datos');
     }
+    $db = new Db($conn);
 
     $modo = isset($_GET['modo']) && $_GET['modo'] === 'apartado' ? 'apartado' : 'completo';
     $idCiclo = isset($_GET['idCiclo']) ? intval($_GET['idCiclo']) : 0;

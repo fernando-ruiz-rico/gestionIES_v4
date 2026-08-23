@@ -24,24 +24,28 @@ switch ($action) {
 
 function handleLogin() {
     $conn = getDBConnection();
-    
+
     if (!$conn) {
         sendJSONError('Error de conexión a la base de datos');
     }
-    
+    $db = new Db($conn);
+
     $username = isset($_POST['username']) ? $_POST['username'] : '';
     $password = isset($_POST['password']) ? $_POST['password'] : '';
-    
+
     if (empty($username) || empty($password)) {
-        closeDBConnection($conn);
         sendJSONError('Usuario y contraseña son requeridos');
     }
-    
+
     // Primero miramos si el login es del administrador de la aplicación
     // (tabla config, clave 'admin'), como en v3/login.php
     $md5pass = md5($password);
-    $queryAdm = mysqli_query($conn, "SELECT valor FROM config WHERE clave='admin' AND valor = '" . $md5pass . "'");
-    if ($queryAdm && mysqli_num_rows($queryAdm) > 0) {
+    try {
+        $rowAdm = $db->fetchOne("SELECT valor FROM config WHERE clave='admin' AND valor = ?", $md5pass);
+    } catch (DbException $e) {
+        sendJSONError('Error de base de datos: ' . $e->getMessage());
+    }
+    if ($rowAdm) {
         @session_start();
         session_destroy();
         @session_start();
@@ -50,7 +54,6 @@ function handleLogin() {
         $_SESSION['loginUsuario'] = 'admin';
         $_SESSION['nombre'] = 'Administrador';
 
-        closeDBConnection($conn);
         sendJSONSuccess(array(
             'idUsuario' => 'admin',
             'loginUsuario' => 'admin',
@@ -60,27 +63,21 @@ function handleLogin() {
         ), 'Login correcto');
         return;
     }
-    
+
     // Si no, permitimos entrar a profesores con credenciales correctas y actualmente activos
-    $username = escapeString($username, $conn);
-    $query = "SELECT id, nombre, usuario, clave, idDepartamento, jefe_departamento, activo 
-              FROM profesores 
-              WHERE usuario = '$username' AND clave = '" . $md5pass . "' AND activo = 1";
-    
-    $result = mysqli_query($conn, $query);
-    
-    if (!$result) {
-        closeDBConnection($conn);
-        sendJSONError('Error en la consulta');
+    try {
+        $user = $db->fetchOne("SELECT id, nombre, usuario, clave, idDepartamento, jefe_departamento, activo
+                          FROM profesores
+                          WHERE usuario = ? AND clave = ? AND activo = 1",
+            $username, $md5pass);
+    } catch (DbException $e) {
+        sendJSONError('Error de base de datos: ' . $e->getMessage());
     }
-    
-    if (mysqli_num_rows($result) == 0) {
-        closeDBConnection($conn);
+
+    if (!$user) {
         sendJSONError('Usuario o contraseña incorrectos');
     }
-    
-    $user = mysqli_fetch_assoc($result);
-    
+
     // Iniciar sesión y guardar datos del usuario (misma lógica de roles que v3/login.php)
     @session_start();
     $_SESSION['idUsuario'] = $user['id'];
@@ -100,8 +97,6 @@ function handleLogin() {
     $_SESSION['idDepartamento'] = $user['idDepartamento'];
     $_SESSION['activo'] = $user['activo'];
 
-    closeDBConnection($conn);
-    
     sendJSONSuccess(array(
         'idUsuario' => $user['id'],
         'loginUsuario' => $user['usuario'],
@@ -119,11 +114,11 @@ function handleLogout() {
 
 function checkAuth() {
     @session_start();
-    
+
     if (empty($_SESSION['idUsuario'])) {
         sendJSONError('No hay sesión activa', 401);
     }
-    
+
     sendJSONSuccess(array(
         'idUsuario' => $_SESSION['idUsuario'],
         'loginUsuario' => $_SESSION['loginUsuario'],

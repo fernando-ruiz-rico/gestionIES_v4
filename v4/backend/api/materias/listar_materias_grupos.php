@@ -5,8 +5,8 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
+$conn = getDBConnection();
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['error' => 'Error de conexión']);
     exit;
@@ -21,43 +21,42 @@ if ($idMateria <= 0 || $idCurso <= 0) {
     exit;
 }
 
-// Datos de cabecera (curso - materia)
-$resH = mysqli_query($db, "SELECT c.nombre AS nombreCurso, m.nombre AS nombreMateria FROM cursos c, materias m WHERE c.id = m.idCurso AND c.id = " . intval($idCurso) . " AND m.id = " . intval($idMateria));
-$filaH = mysqli_fetch_assoc($resH);
-mysqli_free_result($resH);
+try {
+    $db = new Db($conn);
 
-// Datos de referencia de la materia (para el botón "Importar")
-$resG = mysqli_query($db, "SELECT cantidad, horas, horas_complementarias, min_num_profesores, max_grupos_profesor FROM materias WHERE id = " . intval($idMateria));
-$general = mysqli_fetch_assoc($resG);
-mysqli_free_result($resG);
+    // Datos de cabecera (curso - materia)
+    $filaH = $db->fetchOne("SELECT c.nombre AS nombreCurso, m.nombre AS nombreMateria FROM cursos c, materias m WHERE c.id = m.idCurso AND c.id = " . intval($idCurso) . " AND m.id = " . intval($idMateria));
 
-// Grupos del curso con sus valores de materias_grupos (o null si no están)
-$grupos = [];
-$resGr = mysqli_query($db, "SELECT id, nombre FROM grupos WHERE idCurso = " . intval($idCurso) . " ORDER BY orden");
-while ($fGr = mysqli_fetch_assoc($resGr)) {
-    $g = [
-        'id' => intval($fGr['id']),
-        'nombre' => $fGr['nombre'],
-        'cantidad' => null,
-        'horas' => null,
-        'horas_complementarias' => null,
-        'min_num_profesores' => null,
-        'max_grupos_profesor' => null
-    ];
-    $resMG = mysqli_query($db, "SELECT * FROM materias_grupos WHERE idMateria = " . intval($idMateria) . " AND idGrupo = " . intval($fGr['id']));
-    $filaMG = mysqli_fetch_assoc($resMG);
-    if ($filaMG) {
-        $g['cantidad'] = intval($filaMG['cantidad']);
-        $g['horas'] = intval($filaMG['horas']);
-        $g['horas_complementarias'] = intval($filaMG['horas_complementarias']);
-        $g['min_num_profesores'] = intval($filaMG['min_num_profesores']);
-        $g['max_grupos_profesor'] = intval($filaMG['max_grupos_profesor']);
+    // Datos de referencia de la materia (para el botón "Importar")
+    $general = $db->fetchOne("SELECT cantidad, horas, horas_complementarias, min_num_profesores, max_grupos_profesor FROM materias WHERE id = " . intval($idMateria));
+
+    // Grupos del curso con sus valores de materias_grupos (o null si no están)
+    $grupos = [];
+    foreach ($db->fetchAll("SELECT id, nombre FROM grupos WHERE idCurso = " . intval($idCurso) . " ORDER BY orden") as $fGr) {
+        $g = [
+            'id' => intval($fGr['id']),
+            'nombre' => $fGr['nombre'],
+            'cantidad' => null,
+            'horas' => null,
+            'horas_complementarias' => null,
+            'min_num_profesores' => null,
+            'max_grupos_profesor' => null
+        ];
+        $filaMG = $db->fetchOne("SELECT * FROM materias_grupos WHERE idMateria = " . intval($idMateria) . " AND idGrupo = " . intval($fGr['id']));
+        if ($filaMG) {
+            $g['cantidad'] = intval($filaMG['cantidad']);
+            $g['horas'] = intval($filaMG['horas']);
+            $g['horas_complementarias'] = intval($filaMG['horas_complementarias']);
+            $g['min_num_profesores'] = intval($filaMG['min_num_profesores']);
+            $g['max_grupos_profesor'] = intval($filaMG['max_grupos_profesor']);
+        }
+        $grupos[] = $g;
     }
-    mysqli_free_result($resMG);
-    $grupos[] = $g;
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
+    exit;
 }
-mysqli_free_result($resGr);
-mysqli_close($db);
 
 echo json_encode([
     'idCurso' => $idCurso,

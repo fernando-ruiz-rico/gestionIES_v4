@@ -4,8 +4,8 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
+$conn = getDBConnection();
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['error' => 'Error de conexión']);
     exit;
@@ -30,26 +30,23 @@ if ($idMateria <= 0 || $idCompetencia <= 0) {
     exit;
 }
 
-// Evita duplicados (PK de competencias_materias es (idMateria, idCompetencia))
-$res = mysqli_query($db, "SELECT * FROM competencias_materias WHERE idMateria = " . intval($idMateria) . " AND idCompetencia = " . intval($idCompetencia));
-$yaAsociada = mysqli_num_rows($res) > 0;
-mysqli_free_result($res);
-mysqli_close($db);
+try {
+    $db = new Db($conn);
 
-if ($yaAsociada) {
-    echo json_encode(['success' => true, 'message' => 'La competencia ya está asociada']);
+    // Evita duplicados (PK de competencias_materias es (idMateria, idCompetencia))
+    $yaAsociada = $db->fetchOne("SELECT * FROM competencias_materias WHERE idMateria = " . intval($idMateria) . " AND idCompetencia = " . intval($idCompetencia)) !== null;
+
+    if ($yaAsociada) {
+        echo json_encode(['success' => true, 'message' => 'La competencia ya está asociada']);
+        exit;
+    }
+
+    $db->execute("INSERT INTO competencias_materias (idCompetencia, idMateria) VALUES (?, ?)", $idCompetencia, $idMateria);
+
+    echo json_encode(['success' => true, 'message' => 'Competencia asociada']);
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error al asociar la competencia: ' . $e->getMessage()]);
     exit;
 }
-
-$db = getDBConnection();
-$stmt = mysqli_prepare($db, "INSERT INTO competencias_materias (idCompetencia, idMateria) VALUES (?, ?)");
-mysqli_stmt_bind_param($stmt, "ii", $idCompetencia, $idMateria);
-$ok = mysqli_stmt_execute($stmt);
-mysqli_stmt_close($stmt);
-mysqli_close($db);
-
-echo json_encode([
-    'success' => (bool) $ok,
-    'message' => $ok ? 'Competencia asociada' : 'Error al asociar la competencia'
-]);
 ?>

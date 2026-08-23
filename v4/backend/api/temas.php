@@ -12,7 +12,6 @@
 //   - recalcular_porcentajes : recalcular % de evaluación de los RA
 //   - repetir_evaluacion    : copiar el campo "evaluación" a toda la materia
 //   - actualizar_ra        : editar porcentaje/es_clave de un RA concreto
-// Compatible con PHP 5 (mysqli_*, sentencias preparadas).
 // ============================================================================
 header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
@@ -33,12 +32,13 @@ if ($action === '' && isset($body['action'])) {
     $action = $body['action'];
 }
 
-$db = getDBConnection();
-if (!$db) {
+$conn = getDBConnection();
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Error de conexión a la base de datos']);
     exit;
 }
+$db = new Db($conn);
 
 // ---------------------------------------------------------------------------
 // Helpers (definidos una sola vez por petición)
@@ -47,30 +47,18 @@ if (!$db) {
 // id del ciclo formativo al que pertenece la materia (0 si no es de FP)
 // Copia de v3 obtenerIdCicloPorMateria().
 function temas_id_ciclo_por_materia($db, $idMateria) {
-    $stmt = mysqli_prepare($db, "SELECT ciclos.id
+    $fila = $db->fetchOne("SELECT ciclos.id
                 FROM ciclos
                 INNER JOIN cursos_ciclos ON ciclos.id = cursos_ciclos.idCiclo
                 INNER JOIN cursos ON cursos_ciclos.idCurso = cursos.id
                 INNER JOIN materias ON materias.idCurso = cursos.id
-                WHERE materias.id = ? LIMIT 1");
-    mysqli_stmt_bind_param($stmt, "i", $idMateria);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $fila = mysqli_fetch_assoc($result);
-    mysqli_stmt_close($stmt);
-    mysqli_free_result($result);
+                WHERE materias.id = ? LIMIT 1", $idMateria);
     return $fila ? intval($fila['id']) : 0;
 }
 
 // Horas anuales de una materia (v3 obtenerHorasAnualesPorMateria)
 function temas_horas_anuales($db, $idMateria) {
-    $stmt = mysqli_prepare($db, "SELECT horas_anuales FROM materias WHERE id = ?");
-    mysqli_stmt_bind_param($stmt, "i", $idMateria);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $fila = mysqli_fetch_assoc($result);
-    mysqli_stmt_close($stmt);
-    mysqli_free_result($result);
+    $fila = $db->fetchOne("SELECT horas_anuales FROM materias WHERE id = ?", $idMateria);
     return $fila ? intval($fila['horas_anuales']) : 0;
 }
 
@@ -80,39 +68,27 @@ function temas_competencias_materia($db, $idMateria, $idCiclo) {
     $yaAgregados = [];
 
     // Tipo 1: asignadas a la materia
-    $stmt = mysqli_prepare($db, "SELECT cc.id, cc.codigo, cc.texto, cc.tipo, cc.orden
+    foreach ($db->fetchAll("SELECT cc.id, cc.codigo, cc.texto, cc.tipo, cc.orden
                 FROM competencias_ciclos cc
                 INNER JOIN competencias_materias cm ON cc.id = cm.idCompetencia
                 WHERE cm.idMateria = ? AND cc.tipo = 1
-                ORDER BY cc.orden");
-    mysqli_stmt_bind_param($stmt, "i", $idMateria);
-    mysqli_stmt_execute($stmt);
-    $r = mysqli_stmt_get_result($stmt);
-    while ($fila = mysqli_fetch_assoc($r)) {
+                ORDER BY cc.orden", $idMateria) as $fila) {
         $competencias[] = $fila;
         $yaAgregados[intval($fila['id'])] = true;
     }
-    mysqli_stmt_close($stmt);
-    mysqli_free_result($r);
 
     // Tipo 2: del ciclo (siempre)
     if ($idCiclo > 0) {
-        $stmt = mysqli_prepare($db, "SELECT id, codigo, texto, tipo, orden
+        foreach ($db->fetchAll("SELECT id, codigo, texto, tipo, orden
                     FROM competencias_ciclos
                     WHERE idCiclo = ? AND tipo = 2
-                    ORDER BY orden");
-        mysqli_stmt_bind_param($stmt, "i", $idCiclo);
-        mysqli_stmt_execute($stmt);
-        $r = mysqli_stmt_get_result($stmt);
-        while ($fila = mysqli_fetch_assoc($r)) {
+                    ORDER BY orden", $idCiclo) as $fila) {
             $id = intval($fila['id']);
             if (!isset($yaAgregados[$id])) {
                 $competencias[] = $fila;
                 $yaAgregados[$id] = true;
             }
         }
-        mysqli_stmt_close($stmt);
-        mysqli_free_result($r);
     }
 
     // Ordenar por (tipo, orden)
@@ -148,30 +124,26 @@ try {
             $rol = isset($session['rol']) ? $session['rol'] : '';
             if ($rol === ROLE_PROFESOR) {
                 $idProfesor = (int)$session['idUsuario'];
-                $stmt = mysqli_prepare($db,
-                    "SELECT DISTINCT m.id AS id, m.nombre AS materia, c.nombre AS curso, m.horas_anuales
-                      FROM materias m
-                      LEFT JOIN cursos c ON c.id = m.idCurso
-                      LEFT JOIN seleccion s ON s.idMateria = m.id
-                      LEFT JOIN escenarios_desideratas e ON e.id = s.idEscenario
-                      WHERE m.tiene_programacion = 1 AND e.actual = 1 AND s.idProfesor = $idProfesor
-                      ORDER BY m.nombre");
+                $sql = "SELECT DISTINCT m.id AS id, m.nombre AS materia, c.nombre AS curso, m.horas_anuales
+                          FROM materias m
+                          LEFT JOIN cursos c ON c.id = m.idCurso
+                          LEFT JOIN seleccion s ON s.idMateria = m.id
+                          LEFT JOIN escenarios_desideratas e ON e.id = s.idEscenario
+                          WHERE m.tiene_programacion = 1 AND e.actual = 1 AND s.idProfesor = $idProfesor
+                          ORDER BY m.nombre";
             } else {
                 $idDepartamento = !empty($session['idDepartamento']) ? (int)$session['idDepartamento'] : 0;
                 $sql = "SELECT m.id AS id, m.nombre AS materia, c.nombre AS curso, m.horas_anuales
-                         FROM materias m
-                         LEFT JOIN cursos c ON c.id = m.idCurso
-                         WHERE m.tiene_programacion = 1";
+                          FROM materias m
+                          LEFT JOIN cursos c ON c.id = m.idCurso
+                          WHERE m.tiene_programacion = 1";
                 if ($idDepartamento > 0) {
                     $sql .= " AND m.idDepartamento = $idDepartamento";
                 }
                 $sql .= " ORDER BY c.orden, c.nombre, m.nombre";
-                $stmt = mysqli_prepare($db, $sql);
             }
-            mysqli_stmt_execute($stmt);
-            $r = mysqli_stmt_get_result($stmt);
             $materias = [];
-            while ($fila = mysqli_fetch_assoc($r)) {
+            foreach ($db->fetchAll($sql) as $fila) {
                 $idMateria = intval($fila['id']);
                 $materias[] = [
                     'id' => $idMateria,
@@ -181,8 +153,6 @@ try {
                     'idCiclo' => temas_id_ciclo_por_materia($db, $idMateria)
                 ];
             }
-            mysqli_stmt_close($stmt);
-            mysqli_free_result($r);
             temas_salida(['success' => true, 'data' => $materias]);
 
         // --------------------------------------------------------------------
@@ -193,13 +163,9 @@ try {
             if ($idMateria <= 0) {
                 temas_salida(['success' => false, 'error' => 'Debe indicar una materia'], 400);
             }
-            $stmt = mysqli_prepare($db, "SELECT id, orden, titulo, horas, peso_evaluacion
-                        FROM temas WHERE idMateria = ? ORDER BY orden");
-            mysqli_stmt_bind_param($stmt, "i", $idMateria);
-            mysqli_stmt_execute($stmt);
-            $r = mysqli_stmt_get_result($stmt);
             $temas = [];
-            while ($fila = mysqli_fetch_assoc($r)) {
+            foreach ($db->fetchAll("SELECT id, orden, titulo, horas, peso_evaluacion
+                        FROM temas WHERE idMateria = ? ORDER BY orden", $idMateria) as $fila) {
                 $temas[] = [
                     'id' => intval($fila['id']),
                     'orden' => intval($fila['orden']),
@@ -208,8 +174,6 @@ try {
                     'peso_evaluacion' => intval($fila['peso_evaluacion'])
                 ];
             }
-            mysqli_stmt_close($stmt);
-            mysqli_free_result($r);
             temas_salida(['success' => true, 'data' => [
                 'temas' => $temas,
                 'horas_anuales' => temas_horas_anuales($db, $idMateria)
@@ -223,40 +187,20 @@ try {
             if ($idTema <= 0) {
                 temas_salida(['success' => false, 'error' => 'Debe indicar un tema'], 400);
             }
-            $stmt = mysqli_prepare($db, "SELECT * FROM temas WHERE id = ?");
-            mysqli_stmt_bind_param($stmt, "i", $idTema);
-            mysqli_stmt_execute($stmt);
-            $r = mysqli_stmt_get_result($stmt);
-            $fila = mysqli_fetch_assoc($r);
-            mysqli_stmt_close($stmt);
-            mysqli_free_result($r);
+            $fila = $db->fetchOne("SELECT * FROM temas WHERE id = ?", $idTema);
             if (!$fila) {
                 temas_salida(['success' => false, 'error' => 'Tema no encontrado'], 404);
             }
 
-            $idTemaP = $idTema;
-            $stmt = mysqli_prepare($db, "SELECT idRA, codigo FROM criterios_temas WHERE idTema = ?");
-            mysqli_stmt_bind_param($stmt, "i", $idTemaP);
-            mysqli_stmt_execute($stmt);
-            $r = mysqli_stmt_get_result($stmt);
             $criterios = [];
-            while ($c = mysqli_fetch_assoc($r)) {
+            foreach ($db->fetchAll("SELECT idRA, codigo FROM criterios_temas WHERE idTema = ?", $idTema) as $c) {
                 $criterios[] = ['idRA' => intval($c['idRA']), 'codigo' => $c['codigo']];
             }
-            mysqli_stmt_close($stmt);
-            mysqli_free_result($r);
 
-            $idTemaP2 = $idTema;
-            $stmt = mysqli_prepare($db, "SELECT idCompetencia FROM competencias_temas WHERE idTema = ?");
-            mysqli_stmt_bind_param($stmt, "i", $idTemaP2);
-            mysqli_stmt_execute($stmt);
-            $r = mysqli_stmt_get_result($stmt);
             $competencias = [];
-            while ($c = mysqli_fetch_assoc($r)) {
+            foreach ($db->fetchAll("SELECT idCompetencia FROM competencias_temas WHERE idTema = ?", $idTema) as $c) {
                 $competencias[] = intval($c['idCompetencia']);
             }
-            mysqli_stmt_close($stmt);
-            mysqli_free_result($r);
 
             $idMateria = intval($fila['idMateria']);
             temas_salida(['success' => true, 'data' => [
@@ -296,27 +240,17 @@ try {
             }
             $idCiclo = temas_id_ciclo_por_materia($db, $idMateria);
 
-            $stmt = mysqli_prepare($db, "SELECT id, orden, texto, porcentaje_evaluacion, es_clave
-                        FROM resultados_aprendizaje WHERE idMateria = ? ORDER BY orden");
-            mysqli_stmt_bind_param($stmt, "i", $idMateria);
-            mysqli_stmt_execute($stmt);
-            $r = mysqli_stmt_get_result($stmt);
             $ra = [];
             $total = 0;
-            while ($fila = mysqli_fetch_assoc($r)) {
+            foreach ($db->fetchAll("SELECT id, orden, texto, porcentaje_evaluacion, es_clave
+                        FROM resultados_aprendizaje WHERE idMateria = ? ORDER BY orden", $idMateria) as $fila) {
                 $idRA = intval($fila['id']);
                 $total += intval($fila['porcentaje_evaluacion']);
 
-                $ceStmt = mysqli_prepare($db, "SELECT codigo, texto FROM criterios_evaluacion WHERE idRA = ? ORDER BY codigo");
-                mysqli_stmt_bind_param($ceStmt, "i", $idRA);
-                mysqli_stmt_execute($ceStmt);
-                $cr = mysqli_stmt_get_result($ceStmt);
                 $ce = [];
-                while ($c = mysqli_fetch_assoc($cr)) {
+                foreach ($db->fetchAll("SELECT codigo, texto FROM criterios_evaluacion WHERE idRA = ? ORDER BY codigo", $idRA) as $c) {
                     $ce[] = ['idRA' => $idRA, 'codigo' => $c['codigo'], 'texto' => $c['texto']];
                 }
-                mysqli_stmt_close($ceStmt);
-                mysqli_free_result($cr);
 
                 $ra[] = [
                     'id' => $idRA,
@@ -327,8 +261,6 @@ try {
                     'ce' => $ce
                 ];
             }
-            mysqli_stmt_close($stmt);
-            mysqli_free_result($r);
 
             $competencias = temas_competencias_materia($db, $idMateria, $idCiclo);
 
@@ -357,25 +289,16 @@ try {
                 temas_salida(['success' => false, 'error' => 'Indica el número y el título del tema'], 400);
             }
 
-            $stmt = mysqli_prepare($db, "INSERT INTO temas
+            // Nota: titulo se inserta como '' aquí; se actualiza a continuación para respetar el texto.
+            $db->execute("INSERT INTO temas
                         (idMateria, orden, titulo, horas, trimestre, peso_evaluacion,
                          descripcion, justificacion, contexto, contenidos, secuenciacion,
                          recursos, evaluacion, metodologia, adaptaciones,
                          contexto_defecto, recursos_defecto, metodologia_defecto, adaptaciones_defecto)
-                        VALUES (?, ?, '', 0, 0, 0, '', '', '', '', '', '', '', '', '', 1, 1, 1, 1)");
-            // Nota: titulo se inserta como '' aquí; se actualiza a continuación para respetar el texto.
-            mysqli_stmt_bind_param($stmt, "ii", $idMateria, $orden);
-            if (!mysqli_stmt_execute($stmt)) {
-                mysqli_stmt_close($stmt);
-                temas_salida(['success' => false, 'error' => 'Error al crear el tema: ' . mysqli_error($db)], 500);
-            }
-            $nuevoId = mysqli_insert_id($db);
-            mysqli_stmt_close($stmt);
-
-            $upd = mysqli_prepare($db, "UPDATE temas SET titulo = ? WHERE id = ?");
-            mysqli_stmt_bind_param($upd, "si", $titulo, $nuevoId);
-            mysqli_stmt_execute($upd);
-            mysqli_stmt_close($upd);
+                        VALUES (?, ?, '', 0, 0, 0, '', '', '', '', '', '', '', '', '', 1, 1, 1, 1)",
+                        $idMateria, $orden);
+            $nuevoId = $db->insertId();
+            $db->execute("UPDATE temas SET titulo = ? WHERE id = ?", $titulo, $nuevoId);
 
             temas_salida(['success' => true, 'message' => 'Tema creado correctamente', 'data' => ['id' => $nuevoId]]);
 
@@ -407,66 +330,43 @@ try {
             $metodologiaDefecto = !empty($body['metodologia_defecto']) ? 1 : 0;
             $adaptacionesDefecto = !empty($body['adaptaciones_defecto']) ? 1 : 0;
 
-            mysqli_begin_transaction($db);
-
-            $upd = mysqli_prepare($db, "UPDATE temas SET
+            try {
+                $db->begin();
+                $afectados = $db->execute("UPDATE temas SET
                         orden = ?, titulo = ?, horas = ?, trimestre = ?, peso_evaluacion = ?,
                         descripcion = ?, justificacion = ?, contexto = ?, contenidos = ?,
                         secuenciacion = ?, recursos = ?, evaluacion = ?, metodologia = ?, adaptaciones = ?,
                         contexto_defecto = ?, recursos_defecto = ?, metodologia_defecto = ?, adaptaciones_defecto = ?
-                        WHERE id = ?");
-            mysqli_stmt_bind_param($upd, "isiiisssssssssssssi",
-                $orden, $titulo, $horas, $trimestre, $peso,
-                $descripcion, $justificacion, $contexto, $contenidos,
-                $secuenciacion, $recursos, $evaluacion, $metodologia, $adaptaciones,
-                $contextoDefecto, $recursosDefecto, $metodologiaDefecto, $adaptacionesDefecto,
-                $idTema);
-            $ok = mysqli_stmt_execute($upd);
-            $afectados = mysqli_affected_rows($db);
-            mysqli_stmt_close($upd);
+                        WHERE id = ?",
+                        $orden, $titulo, $horas, $trimestre, $peso,
+                        $descripcion, $justificacion, $contexto, $contenidos,
+                        $secuenciacion, $recursos, $evaluacion, $metodologia, $adaptaciones,
+                        $contextoDefecto, $recursosDefecto, $metodologiaDefecto, $adaptacionesDefecto,
+                        $idTema);
 
-            if ($ok) {
                 // Reemplazar criterios de evaluación (CE)
-                $del = mysqli_prepare($db, "DELETE FROM criterios_temas WHERE idTema = ?");
-                mysqli_stmt_bind_param($del, "i", $idTema);
-                mysqli_stmt_execute($del);
-                mysqli_stmt_close($del);
-
-                $insCE = mysqli_prepare($db, "INSERT INTO criterios_temas (idRA, codigo, idTema) VALUES (?, ?, ?)");
+                $db->execute("DELETE FROM criterios_temas WHERE idTema = ?", $idTema);
                 $criterios = isset($body['criterios']) && is_array($body['criterios']) ? $body['criterios'] : [];
                 foreach ($criterios as $ce) {
                     if (!is_array($ce) || !isset($ce['idRA'], $ce['codigo'])) {
                         continue;
                     }
-                    $idRA = intval($ce['idRA']);
-                    $codigo = $ce['codigo'];
-                    $idTemaIns = $idTema;
-                    mysqli_stmt_bind_param($insCE, "isi", $idRA, $codigo, $idTemaIns);
-                    mysqli_stmt_execute($insCE);
+                    $db->execute("INSERT INTO criterios_temas (idRA, codigo, idTema) VALUES (?, ?, ?)",
+                        intval($ce['idRA']), $ce['codigo'], $idTema);
                 }
-                mysqli_stmt_close($insCE);
 
                 // Reemplazar competencias
-                $del2 = mysqli_prepare($db, "DELETE FROM competencias_temas WHERE idTema = ?");
-                mysqli_stmt_bind_param($del2, "i", $idTema);
-                mysqli_stmt_execute($del2);
-                mysqli_stmt_close($del2);
-
-                $insCOM = mysqli_prepare($db, "INSERT INTO competencias_temas (idCompetencia, idTema) VALUES (?, ?)");
+                $db->execute("DELETE FROM competencias_temas WHERE idTema = ?", $idTema);
                 $competencias = isset($body['competencias']) && is_array($body['competencias']) ? $body['competencias'] : [];
                 foreach ($competencias as $com) {
-                    $idCom = intval($com);
-                    $idTemaIns = $idTema;
-                    mysqli_stmt_bind_param($insCOM, "ii", $idCom, $idTemaIns);
-                    mysqli_stmt_execute($insCOM);
+                    $db->execute("INSERT INTO competencias_temas (idCompetencia, idTema) VALUES (?, ?)",
+                        intval($com), $idTema);
                 }
-                mysqli_stmt_close($insCOM);
 
-                mysqli_commit($db);
-            } else {
-                mysqli_rollback($db);
-                mysqli_stmt_close($upd);
-                temas_salida(['success' => false, 'error' => 'Error al guardar el tema: ' . mysqli_error($db)], 500);
+                $db->commit();
+            } catch (DbException $e) {
+                $db->rollback();
+                throw $e;
             }
 
             temas_salida(['success' => true,
@@ -484,22 +384,17 @@ try {
                 temas_salida(['success' => false, 'error' => 'Debe indicar el tema a borrar'], 400);
             }
 
-            mysqli_begin_transaction($db);
-            foreach (['competencias_temas', 'criterios_temas', 'programaciones_aula_temas'] as $tabla) {
-                $del = mysqli_prepare($db, "DELETE FROM {$tabla} WHERE idTema = ?");
-                mysqli_stmt_bind_param($del, "i", $idTema);
-                mysqli_stmt_execute($del);
-                mysqli_stmt_close($del);
+            try {
+                $db->begin();
+                foreach (['competencias_temas', 'criterios_temas', 'programaciones_aula_temas'] as $tabla) {
+                    $db->execute("DELETE FROM {$tabla} WHERE idTema = ?", $idTema);
+                }
+                $db->execute("DELETE FROM temas WHERE id = ?", $idTema);
+                $db->commit();
+            } catch (DbException $e) {
+                $db->rollback();
+                throw $e;
             }
-            $delTema = mysqli_prepare($db, "DELETE FROM temas WHERE id = ?");
-            mysqli_stmt_bind_param($delTema, "i", $idTema);
-            if (!mysqli_stmt_execute($delTema)) {
-                mysqli_rollback($db);
-                mysqli_stmt_close($delTema);
-                temas_salida(['success' => false, 'error' => 'Error al borrar el tema: ' . mysqli_error($db)], 500);
-            }
-            mysqli_stmt_close($delTema);
-            mysqli_commit($db);
 
             temas_salida(['success' => true, 'message' => 'Tema eliminado correctamente']);
 
@@ -512,33 +407,21 @@ try {
                 temas_salida(['success' => false, 'error' => 'Debe indicar una materia'], 400);
             }
 
-            $stmt = mysqli_prepare($db, "SELECT ra.id, ra.orden, COUNT(ct.codigo) AS num_criterios
+            $listadoRA = [];
+            foreach ($db->fetchAll("SELECT ra.id, ra.orden, COUNT(ct.codigo) AS num_criterios
                         FROM resultados_aprendizaje ra
                         LEFT JOIN criterios_temas ct ON ra.id = ct.idRA
                         WHERE ra.idMateria = ?
                         GROUP BY ra.id, ra.orden
-                        ORDER BY ra.orden");
-            mysqli_stmt_bind_param($stmt, "i", $idMateria);
-            mysqli_stmt_execute($stmt);
-            $r = mysqli_stmt_get_result($stmt);
-            $listadoRA = [];
-            while ($fila = mysqli_fetch_assoc($r)) {
+                        ORDER BY ra.orden", $idMateria) as $fila) {
                 $listadoRA[] = ['id' => intval($fila['id']), 'num_criterios' => intval($fila['num_criterios'])];
             }
-            mysqli_stmt_close($stmt);
-            mysqli_free_result($r);
 
             if (!empty($listadoRA)) {
-                $stmt2 = mysqli_prepare($db, "SELECT COUNT(*) AS total
+                $filaTotal = $db->fetchOne("SELECT COUNT(*) AS total
                             FROM resultados_aprendizaje ra
                             INNER JOIN criterios_temas ct ON ra.id = ct.idRA
-                            WHERE ra.idMateria = ?");
-                mysqli_stmt_bind_param($stmt2, "i", $idMateria);
-                mysqli_stmt_execute($stmt2);
-                $r2 = mysqli_stmt_get_result($stmt2);
-                $filaTotal = mysqli_fetch_assoc($r2);
-                mysqli_stmt_close($stmt2);
-                mysqli_free_result($r2);
+                            WHERE ra.idMateria = ?", $idMateria);
                 $totalCriterios = $filaTotal ? intval($filaTotal['total']) : 0;
             } else {
                 $totalCriterios = 0;
@@ -563,14 +446,10 @@ try {
                 }
             }
 
-            $upd = mysqli_prepare($db, "UPDATE resultados_aprendizaje SET porcentaje_evaluacion = ? WHERE id = ?");
             foreach ($porcentajes as $p) {
-                $porcentaje = $p['porcentaje'];
-                $idRA = $p['id'];
-                mysqli_stmt_bind_param($upd, "ii", $porcentaje, $idRA);
-                mysqli_stmt_execute($upd);
+                $db->execute("UPDATE resultados_aprendizaje SET porcentaje_evaluacion = ? WHERE id = ?",
+                    $p['porcentaje'], $p['id']);
             }
-            mysqli_stmt_close($upd);
 
             temas_salida(['success' => true, 'message' => 'Porcentajes recalculados',
                 'data' => ['ra' => $porcentajes]]);
@@ -585,14 +464,8 @@ try {
                 temas_salida(['success' => false, 'error' => 'Debe indicar una materia'], 400);
             }
 
-            $upd = mysqli_prepare($db, "UPDATE temas SET evaluacion = ? WHERE idMateria = ?");
-            mysqli_stmt_bind_param($upd, "si", $evaluacion, $idMateria);
-            if (!mysqli_stmt_execute($upd)) {
-                mysqli_stmt_close($upd);
-                temas_salida(['success' => false, 'error' => 'Error al copiar la evaluación: ' . mysqli_error($db)], 500);
-            }
-            $afectados = mysqli_affected_rows($db);
-            mysqli_stmt_close($upd);
+            $afectados = $db->execute("UPDATE temas SET evaluacion = ? WHERE idMateria = ?",
+                $evaluacion, $idMateria);
 
             temas_salida(['success' => true,
                 'message' => 'Campo de evaluación copiado en todos los temas de la materia',
@@ -610,13 +483,8 @@ try {
                 temas_salida(['success' => false, 'error' => 'Debe indicar un resultado de aprendizaje'], 400);
             }
 
-            $upd = mysqli_prepare($db, "UPDATE resultados_aprendizaje SET porcentaje_evaluacion = ?, es_clave = ? WHERE id = ?");
-            mysqli_stmt_bind_param($upd, "iii", $porcentaje, $esClave, $idRA);
-            if (!mysqli_stmt_execute($upd)) {
-                mysqli_stmt_close($upd);
-                temas_salida(['success' => false, 'error' => 'Error al actualizar el RA: ' . mysqli_error($db)], 500);
-            }
-            mysqli_stmt_close($upd);
+            $db->execute("UPDATE resultados_aprendizaje SET porcentaje_evaluacion = ?, es_clave = ? WHERE id = ?",
+                $porcentaje, $esClave, $idRA);
 
             temas_salida(['success' => true, 'message' => 'Resultado de aprendizaje actualizado']);
 
@@ -628,8 +496,10 @@ try {
         temas_salida(['success' => false, 'error' => 'Método no permitido'], 405);
     }
 
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Error de base de datos: ' . $e->getMessage()]);
 } catch (Exception $e) {
-    closeDBConnection($db);
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }

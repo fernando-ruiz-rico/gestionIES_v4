@@ -23,24 +23,24 @@ if (empty($_POST['idProfesor'])) {
 }
 
 $idProfesor = intval($_POST['idProfesor']);
-$db = getDBConnection();
+$conn = getDBConnection();
 
-if (!$db) {
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['error' => 'Error de conexión a la base de datos']);
     exit;
 }
 
-// Activar/Desactivar profesor (toggle !activo)
-$query = "UPDATE profesores SET activo = !activo WHERE id = $idProfesor";
-$result = mysqli_query($db, $query);
+try {
+    $db = new Db($conn);
 
-if (!$result) {
+    // Activar/Desactivar profesor (toggle !activo)
+    $db->execute("UPDATE profesores SET activo = !activo WHERE id = $idProfesor");
+} catch (DbException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error al actualizar el estado del profesor: ' . mysqli_error($db)]);
+    echo json_encode(['error' => 'Error al actualizar el estado del profesor: ' . $e->getMessage()]);
     exit;
 }
 
-mysqli_close($db);
 echo json_encode(['success' => true, 'mensaje' => 'Estado del profesor actualizado correctamente']);
 ?>

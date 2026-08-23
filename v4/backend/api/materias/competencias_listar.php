@@ -5,8 +5,8 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
+$conn = getDBConnection();
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['error' => 'Error de conexión']);
     exit;
@@ -19,34 +19,33 @@ if ($idMateria <= 0) {
     exit;
 }
 
-// Nombre de la materia
-$resN = mysqli_query($db, "SELECT nombre FROM materias WHERE id = " . intval($idMateria));
-$filaN = mysqli_fetch_assoc($resN);
-$nombreMateria = isset($filaN['nombre']) ? $filaN['nombre'] : '';
-mysqli_free_result($resN);
+try {
+    $db = new Db($conn);
 
-// Ciclo al que pertenece la materia (primer ciclo del curso, igual que v3)
-$resC = mysqli_query($db, "SELECT ciclos.id AS id FROM ciclos, cursos, cursos_ciclos, materias WHERE ciclos.id = cursos_ciclos.idCiclo AND cursos.id = cursos_ciclos.idCurso AND materias.idCurso = cursos.id AND materias.id = " . intval($idMateria));
-$filaC = mysqli_fetch_assoc($resC);
-$idCiclo = isset($filaC['id']) ? intval($filaC['id']) : 0;
-mysqli_free_result($resC);
+    // Nombre de la materia
+    $filaN = $db->fetchOne("SELECT nombre FROM materias WHERE id = " . intval($idMateria));
+    $nombreMateria = isset($filaN['nombre']) ? $filaN['nombre'] : '';
 
-// Competencias ya asociadas a la materia
-$asociadas = [];
-$resA = mysqli_query($db, "SELECT competencias_ciclos.* FROM competencias_ciclos, competencias_materias WHERE competencias_ciclos.id = competencias_materias.idCompetencia AND competencias_materias.idMateria = " . intval($idMateria) . " ORDER BY competencias_ciclos.orden");
-while ($fA = mysqli_fetch_assoc($resA)) {
-    $asociadas[] = ['id' => intval($fA['id']), 'codigo' => $fA['codigo'], 'texto' => $fA['texto']];
+    // Ciclo al que pertenece la materia (primer ciclo del curso, igual que v3)
+    $filaC = $db->fetchOne("SELECT ciclos.id AS id FROM ciclos, cursos, cursos_ciclos, materias WHERE ciclos.id = cursos_ciclos.idCiclo AND cursos.id = cursos_ciclos.idCurso AND materias.idCurso = cursos.id AND materias.id = " . intval($idMateria));
+    $idCiclo = isset($filaC['id']) ? intval($filaC['id']) : 0;
+
+    // Competencias ya asociadas a la materia
+    $asociadas = [];
+    foreach ($db->fetchAll("SELECT competencias_ciclos.* FROM competencias_ciclos, competencias_materias WHERE competencias_ciclos.id = competencias_materias.idCompetencia AND competencias_materias.idMateria = " . intval($idMateria) . " ORDER BY competencias_ciclos.orden") as $fA) {
+        $asociadas[] = ['id' => intval($fA['id']), 'codigo' => $fA['codigo'], 'texto' => $fA['texto']];
+    }
+
+    // Opciones para añadir (todas las del ciclo, ordenadas por codigo)
+    $opciones = [];
+    foreach ($db->fetchAll("SELECT * FROM competencias_ciclos WHERE idCiclo = " . intval($idCiclo) . " ORDER BY codigo") as $fO) {
+        $opciones[] = ['id' => intval($fO['id']), 'codigo' => $fO['codigo'], 'texto' => $fO['texto']];
+    }
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
+    exit;
 }
-mysqli_free_result($resA);
-
-// Opciones para añadir (todas las del ciclo, ordenadas por codigo)
-$opciones = [];
-$resO = mysqli_query($db, "SELECT * FROM competencias_ciclos WHERE idCiclo = " . intval($idCiclo) . " ORDER BY codigo");
-while ($fO = mysqli_fetch_assoc($resO)) {
-    $opciones[] = ['id' => intval($fO['id']), 'codigo' => $fO['codigo'], 'texto' => $fO['texto']];
-}
-mysqli_free_result($resO);
-mysqli_close($db);
 
 echo json_encode([
     'idMateria' => $idMateria,

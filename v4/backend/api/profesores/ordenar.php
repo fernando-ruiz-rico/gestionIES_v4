@@ -24,9 +24,9 @@ if (empty($_POST['orden'])) {
 }
 
 $orden = $_POST['orden'];
-$db = getDBConnection();
+$conn = getDBConnection();
 
-if (!$db) {
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['error' => 'Error de conexión a la base de datos']);
     exit;
@@ -35,12 +35,18 @@ if (!$db) {
 // Lo que se recibe en el parámetro "orden" son los id de los profesores en el orden en que
 // se quieren asignar. Cada profesor en el listado viene con id "pr" seguido de su código.
 $partes = explode(",", $orden);
-for ($i = 1; $i <= count($partes); $i++) {
-    // Quitar prefijo "pr" para obtener el código del profesor
-    $codProfesor = substr($partes[$i-1], 2);
-    mysqli_query($db, "UPDATE profesores SET orden=$i WHERE id=$codProfesor");
+try {
+    $db = new Db($conn);
+    for ($i = 1; $i <= count($partes); $i++) {
+        // Quitar prefijo "pr" para obtener el código del profesor
+        $codProfesor = substr($partes[$i-1], 2);
+        $db->execute("UPDATE profesores SET orden=$i WHERE id=$codProfesor");
+    }
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error al actualizar el orden de los profesores: ' . $e->getMessage()]);
+    exit;
 }
 
-mysqli_close($db);
 echo json_encode(['success' => true, 'mensaje' => 'Orden de profesores actualizado correctamente']);
 ?>

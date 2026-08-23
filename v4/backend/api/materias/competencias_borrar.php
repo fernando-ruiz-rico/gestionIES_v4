@@ -4,8 +4,8 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
+$conn = getDBConnection();
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['error' => 'Error de conexión']);
     exit;
@@ -30,14 +30,17 @@ if ($idMateria <= 0 || $idCompetencia <= 0) {
     exit;
 }
 
-$stmt = mysqli_prepare($db, "DELETE FROM competencias_materias WHERE idMateria = ? AND idCompetencia = ?");
-mysqli_stmt_bind_param($stmt, "ii", $idMateria, $idCompetencia);
-$ok = mysqli_stmt_execute($stmt);
-$afectadas = mysqli_stmt_affected_rows($stmt);
-mysqli_stmt_close($stmt);
-mysqli_close($db);
+try {
+    $db = new Db($conn);
 
-if (!$ok || $afectadas === 0) {
+    $afectadas = $db->execute("DELETE FROM competencias_materias WHERE idMateria = ? AND idCompetencia = ?", $idMateria, $idCompetencia);
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error al borrar la competencia: ' . $e->getMessage()]);
+    exit;
+}
+
+if ($afectadas === 0) {
     http_response_code(404);
     echo json_encode(['error' => 'No encontrado']);
     exit;

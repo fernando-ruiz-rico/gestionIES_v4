@@ -24,24 +24,24 @@ if (empty($_POST['idProfesor']) || empty($_POST['idDepartamento'])) {
 
 $idProfesor = intval($_POST['idProfesor']);
 $idDepartamento = intval($_POST['idDepartamento']);
-$db = getDBConnection();
+$conn = getDBConnection();
 
-if (!$db) {
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['error' => 'Error de conexión a la base de datos']);
     exit;
 }
 
-// Asignar/Quitar jefe de departamento (toggle 1 - jefe_departamento)
-$query = "UPDATE profesores SET jefe_departamento = 1 - jefe_departamento WHERE id = $idProfesor";
-$result = mysqli_query($db, $query);
+try {
+    $db = new Db($conn);
 
-if (!$result) {
+    // Asignar/Quitar jefe de departamento (toggle 1 - jefe_departamento)
+    $db->execute("UPDATE profesores SET jefe_departamento = 1 - jefe_departamento WHERE id = $idProfesor");
+} catch (DbException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error al actualizar el jefe de departamento: ' . mysqli_error($db)]);
+    echo json_encode(['error' => 'Error al actualizar el jefe de departamento: ' . $e->getMessage()]);
     exit;
 }
 
-mysqli_close($db);
 echo json_encode(['success' => true, 'mensaje' => 'Jefe de departamento actualizado correctamente']);
 ?>

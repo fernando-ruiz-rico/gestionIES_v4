@@ -5,12 +5,13 @@ require_once '../../config.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-$db = getDBConnection();
-if (!$db) {
+$conn = getDBConnection();
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Error de conexión a la base de datos']);
     exit;
 }
+$db = new Db($conn);
 
 // ---------------------------------------------------------------------------
 // FASE 2.1 — Edición de apartados (fiel a v3/programaciones.php + ajax/programaciones).
@@ -20,25 +21,19 @@ if (!$db) {
 // con `tipo = 0` es EDITABLE (se rellena a mano, TinyMCE en v3); el resto se
 // rellena automáticamente a partir de otros apartados (Unidades, RA/CE, FE...)
 // y solo se editan en sus propias secciones.
-//
-// Funciones auxiliares PHP 5 (sin "..." / sin list() de varios parámetros).
 // ---------------------------------------------------------------------------
 
 // ¿La materia pertenece a un ciclo? → 'FP'; si no, 'ESO/BACH' (criterio v3).
 function programacionesCategoria($db, $idMateria)
 {
     $idMateria = (int)$idMateria;
-    $stmt = mysqli_prepare($db,
+    $fila = $db->fetchOne(
         "SELECT c.id FROM ciclos c
             JOIN cursos_ciclos cc ON cc.idCiclo = c.id
             JOIN cursos cu ON cu.id = cc.idCurso
             JOIN materias m ON m.idCurso = cu.id
-          WHERE m.id = $idMateria
-          LIMIT 1");
-    mysqli_stmt_execute($stmt);
-    $res = mysqli_stmt_get_result($stmt);
-    $fila = mysqli_fetch_assoc($res);
-    mysqli_stmt_close($stmt);
+           WHERE m.id = $idMateria
+           LIMIT 1");
     return $fila ? 'FP' : 'ESO/BACH';
 }
 
@@ -47,18 +42,18 @@ function programacionesCargarApartados($db, $idMateria)
 {
     $idMateria = (int)$idMateria;
     $categoria = programacionesCategoria($db, $idMateria);
-    $catEsc = mysqli_real_escape_string($db, $categoria);
-    $result = mysqli_query($db,
-        "SELECT id, titulo, tipo, subapartado FROM apartados_programaciones
-          WHERE categoria = 'TODOS' OR categoria = '$catEsc'
-          ORDER BY orden");
-    if (!$result) {
-        throw new Exception('Error consultando apartados: ' . mysqli_error($db));
+    try {
+        $filas = $db->fetchAll(
+            "SELECT id, titulo, tipo, subapartado FROM apartados_programaciones
+              WHERE categoria = 'TODOS' OR categoria = ?
+              ORDER BY orden", $categoria);
+    } catch (DbException $e) {
+        throw new Exception('Error consultando apartados: ' . $e->getMessage());
     }
     $apartados = [];
     $principal = 0;
     $secundario = 0;
-    while ($fila = mysqli_fetch_assoc($result)) {
+    foreach ($filas as $fila) {
         if (!(bool)$fila['subapartado']) {
             $principal++;
             $secundario = 0;
@@ -69,11 +64,10 @@ function programacionesCargarApartados($db, $idMateria)
             'id'        => (int)$fila['id'],
             'tipo'      => (int)$fila['tipo'],
             'nombre'    => ($fila['subapartado']
-                                ? "$principal.$secundario. "
-                                : "$principal. ") . $fila['titulo']
+                                 ? "$principal.$secundario. "
+                                 : "$principal. ") . $fila['titulo']
         ];
     }
-    mysqli_free_result($result);
     return $apartados;
 }
 
@@ -102,15 +96,7 @@ try {
 
                 $sql .= " ORDER BY c.orden, c.nombre, m.nombre";
 
-                $result = mysqli_query($db, $sql);
-                if (!$result) {
-                    throw new Exception(mysqli_error($db));
-                }
-                $programaciones = [];
-                while ($fila = mysqli_fetch_assoc($result)) {
-                    $programaciones[] = $fila;
-                }
-                mysqli_free_result($result);
+                $programaciones = $db->fetchAll($sql);
                 echo json_encode(['success' => true, 'data' => $programaciones]);
             } elseif ($action === 'obtener' && isset($_GET['idMateria'])) {
                 // FASE 2.1 — Ver programación (solo lectura): apartados + contenidos
@@ -124,15 +110,11 @@ try {
                             FROM apartados_programaciones ap
                             JOIN contenidos_programaciones c ON c.idApartado = ap.id AND c.idMateria = $idMateria
                             ORDER BY ap.orden, c.id";
-                $result = mysqli_query($db, $sql);
-                if (!$result) {
-                    throw new Exception(mysqli_error($db));
-                }
 
                 // Un apartado puede tener varios contenidos; se agrupan por orden de id.
                 $apartados = [];
                 $posicion = [];
-                while ($fila = mysqli_fetch_assoc($result)) {
+                foreach ($db->fetchAll($sql) as $fila) {
                     $idA = $fila['idApartado'];
                     if (!isset($posicion[$idA])) {
                         $posicion[$idA] = count($apartados);
@@ -145,7 +127,6 @@ try {
                         $apartados[$posicion[$idA]]['texto'] .= "\n" . $fila['texto'];
                     }
                 }
-                mysqli_free_result($result);
 
                 if (empty($apartados)) {
                     http_response_code(404);
@@ -162,26 +143,22 @@ try {
 
                 if ($rol === ROLE_PROFESOR) {
                     $idProfesor = (int)$session['idUsuario'];
-                    $stmt = mysqli_prepare($db,
-                        "SELECT DISTINCT m.id AS id, m.nombre AS nomMateria, cu.nombre AS nomCurso
-                           FROM materias m
-                           JOIN cursos cu ON cu.id = m.idCurso
-                           JOIN seleccion s ON s.idMateria = m.id
-                           JOIN escenarios_desideratas e ON e.id = s.idEscenario
-                          WHERE s.idProfesor = $idProfesor
-                            AND m.tiene_programacion = 1
-                            AND e.actual = 1
-                          ORDER BY m.nombre");
-                    mysqli_stmt_execute($stmt);
-                    $result = mysqli_stmt_get_result($stmt);
+                    $sql = "SELECT DISTINCT m.id AS id, m.nombre AS nomMateria, cu.nombre AS nomCurso
+                              FROM materias m
+                              JOIN cursos cu ON cu.id = m.idCurso
+                              JOIN seleccion s ON s.idMateria = m.id
+                              JOIN escenarios_desideratas e ON e.id = s.idEscenario
+                             WHERE s.idProfesor = $idProfesor
+                               AND m.tiene_programacion = 1
+                               AND e.actual = 1
+                             ORDER BY m.nombre";
                     $materias = [];
-                    while ($fila = mysqli_fetch_assoc($result)) {
+                    foreach ($db->fetchAll($sql) as $fila) {
                         $materias[] = [
                             'id'       => (int)$fila['id'],
                             'nombre'   => $fila['nomMateria'] . ' (' . $fila['nomCurso'] . ')'
                         ];
                     }
-                    mysqli_stmt_close($stmt);
                 } elseif (esUsuarioSuper($rol)) {
                     // Fiel a v3: el jefe ve las del departamento; el admin (sin
                     // selector de departamento en v4) ve todas.
@@ -189,17 +166,15 @@ try {
                     $sql = "SELECT DISTINCT m.id AS id, m.nombre AS nombre, c.orden AS ordenCurso
                               FROM materias m
                               JOIN cursos c ON c.id = m.idCurso
-                              WHERE m.tiene_programacion = 1";
+                             WHERE m.tiene_programacion = 1";
                     if ($idDepartamento > 0) {
                         $sql .= " AND m.idDepartamento = $idDepartamento";
                     }
                     $sql .= " ORDER BY c.orden, m.nombre";
-                    $result = mysqli_query($db, $sql);
                     $materias = [];
-                    while ($fila = mysqli_fetch_assoc($result)) {
+                    foreach ($db->fetchAll($sql) as $fila) {
                         $materias[] = ['id' => (int)$fila['id'], 'nombre' => $fila['nombre']];
                     }
-                    mysqli_free_result($result);
                 } else {
                     throw new Exception('Rol no reconocido');
                 }
@@ -219,12 +194,8 @@ try {
                 if ($idMateria <= 0 || $idApartado <= 0) {
                     throw new Exception('ID de materia o apartado inválido');
                 }
-                $stmt = mysqli_prepare($db,
+                $fila = $db->fetchOne(
                     "SELECT texto FROM contenidos_programaciones WHERE idMateria = $idMateria AND idApartado = $idApartado");
-                mysqli_stmt_execute($stmt);
-                $res = mysqli_stmt_get_result($stmt);
-                $fila = mysqli_fetch_assoc($res);
-                mysqli_stmt_close($stmt);
                 echo json_encode(['success' => true, 'data' => ['texto' => $fila ? $fila['texto'] : '']]);
             } else {
                 throw new Exception('Acción no válida');
@@ -250,67 +221,56 @@ try {
                     throw new Exception('IDs de materia inválidos');
                 }
 
-                // Iniciar transacción (mysqli)
-                mysqli_begin_transaction($db);
-
                 try {
+                    $db->begin();
+
                     // Borrar contenidos previos de programación destino
-                    $sql = "DELETE FROM contenidos_programaciones WHERE idMateria = $idMateriaDestino";
-                    mysqli_query($db, $sql);
-
-                    $sql = "DELETE FROM competencias_temas WHERE idTema IN (SELECT id FROM temas WHERE idMateria = $idMateriaDestino)";
-                    mysqli_query($db, $sql);
-
-                    $sql = "DELETE FROM criterios_temas WHERE idTema IN (SELECT id FROM temas WHERE idMateria = $idMateriaDestino)";
-                    mysqli_query($db, $sql);
-
-                    $sql = "DELETE FROM temas WHERE idMateria = $idMateriaDestino";
-                    mysqli_query($db, $sql);
+                    $db->execute("DELETE FROM contenidos_programaciones WHERE idMateria = $idMateriaDestino");
+                    $db->execute("DELETE FROM competencias_temas WHERE idTema IN (SELECT id FROM temas WHERE idMateria = $idMateriaDestino)");
+                    $db->execute("DELETE FROM criterios_temas WHERE idTema IN (SELECT id FROM temas WHERE idMateria = $idMateriaDestino)");
+                    $db->execute("DELETE FROM temas WHERE idMateria = $idMateriaDestino");
 
                     // Insertar contenidos de la materia origen en la destino
-                    $sql = "INSERT INTO contenidos_programaciones(idMateria, idApartado, texto) SELECT $idMateriaDestino AS idMateria, idApartado, texto FROM contenidos_programaciones WHERE idMateria = $idMateriaOrigen";
-                    mysqli_query($db, $sql);
+                    $db->execute("INSERT INTO contenidos_programaciones(idMateria, idApartado, texto)
+                                   SELECT $idMateriaDestino AS idMateria, idApartado, texto
+                                   FROM contenidos_programaciones WHERE idMateria = $idMateriaOrigen");
 
                     // Insertar temas
-                    $sql = "INSERT INTO temas(idMateria, orden, titulo, horas, trimestre, peso_evaluacion, descripcion, justificacion, contexto, contenidos, secuenciacion, recursos, evaluacion, metodologia, adaptaciones, contexto_defecto, recursos_defecto, metodologia_defecto, adaptaciones_defecto) SELECT $idMateriaDestino AS idMateria, orden, titulo, horas, trimestre, peso_evaluacion, descripcion, justificacion, contexto, contenidos, secuenciacion, recursos, evaluacion, metodologia, adaptaciones, contexto_defecto, recursos_defecto, metodologia_defecto, adaptaciones_defecto FROM temas WHERE idMateria = $idMateriaOrigen";
-                    mysqli_query($db, $sql);
+                    $db->execute("INSERT INTO temas(idMateria, orden, titulo, horas, trimestre, peso_evaluacion, descripcion, justificacion, contexto, contenidos, secuenciacion, recursos, evaluacion, metodologia, adaptaciones, contexto_defecto, recursos_defecto, metodologia_defecto, adaptaciones_defecto)
+                                   SELECT $idMateriaDestino AS idMateria, orden, titulo, horas, trimestre, peso_evaluacion, descripcion, justificacion, contexto, contenidos, secuenciacion, recursos, evaluacion, metodologia, adaptaciones, contexto_defecto, recursos_defecto, metodologia_defecto, adaptaciones_defecto
+                                   FROM temas WHERE idMateria = $idMateriaOrigen");
 
                     // Insertar RA y CE asociados
-                    $sql = "SELECT criterios_temas.codigo as CE, temas.orden as tema, resultados_aprendizaje.orden as RA FROM criterios_temas, temas, resultados_aprendizaje WHERE criterios_temas.idRA = resultados_aprendizaje.id AND criterios_temas.idTema = temas.id AND temas.idMateria = $idMateriaOrigen";
-                    $result = mysqli_query($db, $sql);
-                    
-                    while ($fila = mysqli_fetch_assoc($result)) {
-                        $codigoCE = mysqli_real_escape_string($db, $fila['CE']);
+                    foreach ($db->fetchAll("SELECT criterios_temas.codigo as CE, temas.orden as tema, resultados_aprendizaje.orden as RA
+                                            FROM criterios_temas, temas, resultados_aprendizaje
+                                            WHERE criterios_temas.idRA = resultados_aprendizaje.id
+                                              AND criterios_temas.idTema = temas.id
+                                              AND temas.idMateria = $idMateriaOrigen") as $fila) {
+                        $codigoCE = $fila['CE'];
                         $ordenRA = intval($fila['RA']);
                         $numTema = intval($fila['tema']);
 
                         // Buscar el id del RA para la materia destino
-                        $sql2 = "SELECT id FROM resultados_aprendizaje WHERE idMateria = $idMateriaDestino AND orden = $ordenRA";
-                        $result2 = mysqli_query($db, $sql2);
-                        $row2 = mysqli_fetch_assoc($result2);
+                        $row2 = $db->fetchOne("SELECT id FROM resultados_aprendizaje WHERE idMateria = $idMateriaDestino AND orden = $ordenRA");
                         $idRA = $row2 ? $row2['id'] : null;
-                        mysqli_free_result($result2);
 
                         // Buscar el id del tema para la materia destino
-                        $sql2 = "SELECT id FROM temas WHERE idMateria = $idMateriaDestino AND orden = $numTema";
-                        $result2 = mysqli_query($db, $sql2);
-                        $row2 = mysqli_fetch_assoc($result2);
+                        $row2 = $db->fetchOne("SELECT id FROM temas WHERE idMateria = $idMateriaDestino AND orden = $numTema");
                         $idTema = $row2 ? $row2['id'] : null;
-                        mysqli_free_result($result2);
 
                         if ($idRA && $idTema) {
-                            $sql2 = "INSERT INTO criterios_temas (idRA, codigo, idTema) VALUES ($idRA, '$codigoCE', $idTema)";
-                            mysqli_query($db, $sql2);
+                            $db->execute("INSERT INTO criterios_temas (idRA, codigo, idTema) VALUES (?, ?, ?)",
+                                $idRA, $codigoCE, $idTema);
                         }
                     }
 
-                    mysqli_commit($db);
-                    echo json_encode(['success' => true, 'message' => 'Programación importada correctamente']);
-
-                } catch (Exception $e) {
-                    mysqli_rollback($db);
+                    $db->commit();
+                } catch (DbException $e) {
+                    $db->rollback();
                     throw $e;
                 }
+
+                echo json_encode(['success' => true, 'message' => 'Programación importada correctamente']);
             } elseif ($action === 'guardar_contenido') {
                 // FASE 2.1 — Guardar el texto de un apartado editable (v3/insertar_contenido_programacion).
                 // Permiso: sesión válida (v3 lo permite a cualquier usuario con sesión, y la
@@ -327,30 +287,21 @@ try {
                 }
                 $texto = isset($input['texto']) ? $input['texto'] : '';
 
-                $stmt = mysqli_prepare($db,
+                $fila = $db->fetchOne(
                     "SELECT id FROM contenidos_programaciones WHERE idMateria = $idMateria AND idApartado = $idApartado");
-                mysqli_stmt_execute($stmt);
-                $res = mysqli_stmt_get_result($stmt);
-                $fila = mysqli_fetch_assoc($res);
-                mysqli_stmt_close($stmt);
 
                 // Fiel a v3/insertar_contenido_programacion.php: si el texto es
                 // idéntico al ya guardado, MySQL no modifica filas → "sin cambios".
                 $existia = (bool)$fila;
                 if ($existia) {
-                    $stmt = mysqli_prepare($db,
-                        "UPDATE contenidos_programaciones SET texto = ? WHERE idMateria = $idMateria AND idApartado = $idApartado");
-                    mysqli_stmt_bind_param($stmt, "s", $texto);
+                    $modificadas = $db->execute(
+                        "UPDATE contenidos_programaciones SET texto = ? WHERE idMateria = $idMateria AND idApartado = $idApartado",
+                        $texto);
                 } else {
-                    $stmt = mysqli_prepare($db,
-                        "INSERT INTO contenidos_programaciones (idMateria, idApartado, texto) VALUES ($idMateria, $idApartado, ?)");
-                    mysqli_stmt_bind_param($stmt, "s", $texto);
+                    $modificadas = $db->execute(
+                        "INSERT INTO contenidos_programaciones (idMateria, idApartado, texto) VALUES (?, ?, ?)",
+                        $idMateria, $idApartado, $texto);
                 }
-                if (!mysqli_stmt_execute($stmt)) {
-                    throw new Exception('Error guardando el contenido: ' . mysqli_error($db));
-                }
-                $modificadas = mysqli_stmt_affected_rows($stmt);
-                mysqli_stmt_close($stmt);
 
                 $sinCambios = !$existia ? false : ($modificadas == 0);
                 echo json_encode([
@@ -372,10 +323,11 @@ try {
         default:
             throw new Exception('Método no permitido');
     }
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Error de base de datos: ' . $e->getMessage()]);
 } catch (Exception $e) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
-} finally {
-    closeDBConnection($db);
 }
 ?>

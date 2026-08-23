@@ -13,29 +13,22 @@ if (empty($_GET['idDepartamento'])) {
 }
 
 $idDepartamento = intval($_GET['idDepartamento']);
-$db = getDBConnection();
+$conn = getDBConnection();
 
-if (!$db) {
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['error' => 'Error de conexión a la base de datos']);
     exit;
 }
 
-$result = mysqli_query($db, "SELECT * FROM profesores WHERE idDepartamento = $idDepartamento ORDER BY orden");
-
-if (!$result) {
+try {
+    $db = new Db($conn);
+    $profesores = $db->fetchAll("SELECT * FROM profesores WHERE idDepartamento = $idDepartamento ORDER BY orden");
+} catch (DbException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error al consultar la base de datos: ' . mysqli_error($db)]);
+    echo json_encode(['error' => 'Error al consultar la base de datos: ' . $e->getMessage()]);
     exit;
 }
-
-$profesores = [];
-while ($fila = mysqli_fetch_assoc($result)) {
-    $profesores[] = $fila;
-}
-
-mysqli_free_result($result);
-mysqli_close($db);
 
 echo json_encode($profesores);
 ?>

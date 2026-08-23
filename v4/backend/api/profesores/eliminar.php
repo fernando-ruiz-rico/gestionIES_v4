@@ -24,29 +24,33 @@ if (empty($_POST['id'])) {
 }
 
 $id = intval($_POST['id']);
-$db = getDBConnection();
+$conn = getDBConnection();
 
-if (!$db) {
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['error' => 'Error de conexión a la base de datos']);
     exit;
 }
 
-// Borramos dependencias con otras tablas
-mysqli_query($db, "DELETE FROM seleccion WHERE idProfesor = $id");
-mysqli_query($db, "DELETE FROM preferencias_horario WHERE idProfesor = $id");
-mysqli_query($db, "DELETE FROM programaciones_aula_temas WHERE idProfesor = $id");
+try {
+    $db = new Db($conn);
 
-// Borramos el profesor
-$query = "DELETE FROM profesores WHERE id = $id";
-$result = mysqli_query($db, $query);
+    // Borramos dependencias con otras tablas
+    $db->execute("DELETE FROM seleccion WHERE idProfesor = $id");
+    $db->execute("DELETE FROM preferencias_horario WHERE idProfesor = $id");
+    $db->execute("DELETE FROM programaciones_aula_temas WHERE idProfesor = $id");
 
-if (!$result || mysqli_affected_rows($db) == 0) {
-    mysqli_close($db);
+    // Borramos el profesor
+    $afectadas = $db->execute("DELETE FROM profesores WHERE id = $id");
+} catch (DbException $e) {
     echo json_encode(['success' => false, 'mensaje' => 'Error al eliminar el profesor']);
     exit;
 }
 
-mysqli_close($db);
+if ($afectadas == 0) {
+    echo json_encode(['success' => false, 'mensaje' => 'Error al eliminar el profesor']);
+    exit;
+}
+
 echo json_encode(['success' => true, 'mensaje' => 'Profesor eliminado correctamente']);
 ?>

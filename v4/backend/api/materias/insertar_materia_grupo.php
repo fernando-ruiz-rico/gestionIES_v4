@@ -4,8 +4,8 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
+$conn = getDBConnection();
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['error' => 'Error de conexión']);
     exit;
@@ -36,24 +36,22 @@ $horasComplementarias = intval(isset($datos['horas_complementarias']) ? $datos['
 $minNumProfesores = intval(isset($datos['min_num_profesores']) ? $datos['min_num_profesores'] : 0);
 $maxGruposProfesor = intval(isset($datos['max_grupos_profesor']) ? $datos['max_grupos_profesor'] : 0);
 
-// Comprobamos si ya existe un registro para ese grupo y materia
-$res = mysqli_query($db, "SELECT * FROM materias_grupos WHERE idMateria = " . intval($idMateria) . " AND idGrupo = " . intval($idGrupo));
-$existe = mysqli_num_rows($res) > 0;
-mysqli_free_result($res);
+try {
+    $db = new Db($conn);
 
-if ($existe) {
-    $stmt = mysqli_prepare($db, "UPDATE materias_grupos SET cantidad=?, horas=?, horas_complementarias=?, min_num_profesores=?, max_grupos_profesor=? WHERE idMateria=? AND idGrupo=?");
-    mysqli_stmt_bind_param($stmt, "iiiiiii", $cantidad, $horas, $horasComplementarias, $minNumProfesores, $maxGruposProfesor, $idMateria, $idGrupo);
-} else {
-    $stmt = mysqli_prepare($db, "INSERT INTO materias_grupos (idMateria, idGrupo, cantidad, horas, horas_complementarias, min_num_profesores, max_grupos_profesor) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "iiiiiii", $idMateria, $idGrupo, $cantidad, $horas, $horasComplementarias, $minNumProfesores, $maxGruposProfesor);
+    // Comprobamos si ya existe un registro para ese grupo y materia
+    $existe = $db->fetchOne("SELECT * FROM materias_grupos WHERE idMateria = " . intval($idMateria) . " AND idGrupo = " . intval($idGrupo)) !== null;
+
+    if ($existe) {
+        $db->execute("UPDATE materias_grupos SET cantidad=?, horas=?, horas_complementarias=?, min_num_profesores=?, max_grupos_profesor=? WHERE idMateria=? AND idGrupo=?", $cantidad, $horas, $horasComplementarias, $minNumProfesores, $maxGruposProfesor, $idMateria, $idGrupo);
+    } else {
+        $db->execute("INSERT INTO materias_grupos (idMateria, idGrupo, cantidad, horas, horas_complementarias, min_num_profesores, max_grupos_profesor) VALUES (?, ?, ?, ?, ?, ?, ?)", $idMateria, $idGrupo, $cantidad, $horas, $horasComplementarias, $minNumProfesores, $maxGruposProfesor);
+    }
+
+    echo json_encode(['success' => true, 'message' => 'Datos del grupo guardados']);
+} catch (DbException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error al guardar los datos del grupo: ' . $e->getMessage()]);
+    exit;
 }
-$ok = mysqli_stmt_execute($stmt);
-mysqli_stmt_close($stmt);
-mysqli_close($db);
-
-echo json_encode([
-    'success' => (bool) $ok,
-    'message' => $ok ? 'Datos del grupo guardados' : 'Error al guardar los datos del grupo'
-]);
 ?>

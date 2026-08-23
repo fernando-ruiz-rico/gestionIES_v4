@@ -29,9 +29,9 @@ switch ($action) {
 function getMenusAPI() {
     $rol = $_SESSION['rol'];
     $departamentoUsuario = isset($_SESSION['departamentoUsuario']) ? $_SESSION['departamentoUsuario'] : 0;
-    
+
     $menus = getMenus($rol, $departamentoUsuario);
-    
+
     sendJSONSuccess(array(
         'menus' => $menus,
         'usuario' => array(
@@ -49,6 +49,7 @@ function getActivaciones() {
     if (!$conn) {
         sendJSONError('Error de conexión a la base de datos');
     }
+    $db = new Db($conn);
 
     // Estado de las activaciones, igual que includes/comprobar_activaciones.php de v3:
     // la tabla real es 'config' con columnas 'clave' y 'valor' ('ON' / 'OFF').
@@ -57,21 +58,20 @@ function getActivaciones() {
         'programaciones' => false
     );
 
-    $result = mysqli_query($conn, "SELECT clave, valor FROM config WHERE clave IN ('desideratas', 'programaciones')");
-
-    if ($result) {
-        while ($row = mysqli_fetch_assoc($result)) {
-            if ($row['clave'] == 'desideratas') {
-                $activaciones['desideratas'] = ($row['valor'] == 'ON');
-            }
-            if ($row['clave'] == 'programaciones') {
-                $activaciones['programaciones'] = ($row['valor'] == 'ON');
-            }
-        }
-        mysqli_free_result($result);
+    try {
+        $filas = $db->fetchAll("SELECT clave, valor FROM config WHERE clave IN ('desideratas', 'programaciones')");
+    } catch (DbException $e) {
+        sendJSONError('Error de base de datos: ' . $e->getMessage());
     }
 
-    closeDBConnection($conn);
+    foreach ($filas as $row) {
+        if ($row['clave'] == 'desideratas') {
+            $activaciones['desideratas'] = ($row['valor'] == 'ON');
+        }
+        if ($row['clave'] == 'programaciones') {
+            $activaciones['programaciones'] = ($row['valor'] == 'ON');
+        }
+    }
 
     sendJSONSuccess($activaciones);
 }

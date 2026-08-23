@@ -9,7 +9,7 @@ session_start();
 require_once '../../config.php';
 
 // Verificar permisos
-$permisos = (isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin') || 
+$permisos = (isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin') ||
             (!empty($_SESSION['idUsuario']) && !empty($_POST['id']) && $_SESSION['idUsuario'] == $_POST['id']);
 
 if (!$permisos) {
@@ -25,24 +25,24 @@ if (empty($_POST['nombre']) || empty($_POST['idDepartamento'])) {
     exit;
 }
 
-$db = getDBConnection();
+$conn = getDBConnection();
 
-if (!$db) {
+if (!$conn) {
     http_response_code(500);
     echo json_encode(['error' => 'Error de conexión a la base de datos']);
     exit;
 }
 
-// Escapar datos
+// Las consultas están parametrizadas, así que ya no hace falta escapar los datos
 $idDepartamento = intval($_POST['idDepartamento']);
-$nombre = mysqli_real_escape_string($db, $_POST['nombre']);
-$abreviatura = isset($_POST['abreviatura']) ? mysqli_real_escape_string($db, $_POST['abreviatura']) : null;
-$usuario = isset($_POST['usuario']) ? mysqli_real_escape_string($db, $_POST['usuario']) : null;
+$nombre = $_POST['nombre'];
+$abreviatura = isset($_POST['abreviatura']) ? $_POST['abreviatura'] : null;
+$usuario = isset($_POST['usuario']) ? $_POST['usuario'] : null;
 $clave = isset($_POST['clave']) ? $_POST['clave'] : null;
-$telefono = isset($_POST['telefono']) && !empty($_POST['telefono']) ? mysqli_real_escape_string($db, $_POST['telefono']) : null;
-$email = isset($_POST['email']) && !empty($_POST['email']) ? mysqli_real_escape_string($db, $_POST['email']) : null;
-$idEspecialidad = isset($_POST['idEspecialidad']) && !empty($_POST['idEspecialidad']) ? mysqli_real_escape_string($db, $_POST['idEspecialidad']) : null;
-$observaciones = isset($_POST['observaciones']) ? mysqli_real_escape_string($db, $_POST['observaciones']) : null;
+$telefono = isset($_POST['telefono']) && !empty($_POST['telefono']) ? $_POST['telefono'] : null;
+$email = isset($_POST['email']) && !empty($_POST['email']) ? $_POST['email'] : null;
+$idEspecialidad = isset($_POST['idEspecialidad']) && !empty($_POST['idEspecialidad']) ? $_POST['idEspecialidad'] : null;
+$observaciones = isset($_POST['observaciones']) ? $_POST['observaciones'] : null;
 $prefRojas = isset($_POST['prefRojas']) ? $_POST['prefRojas'] : '';
 $prefAmarillas = isset($_POST['prefAmarillas']) ? $_POST['prefAmarillas'] : '';
 
@@ -52,74 +52,68 @@ if (!empty($clave)) {
 }
 
 // Gestionar valores nulos
-$telefono_sql = !empty($telefono) ? "'$telefono'" : "NULL";
-$email_sql = !empty($email) ? "'$email'" : "NULL";
-$idEspecialidad_sql = !empty($idEspecialidad) ? "'$idEspecialidad'" : "NULL";
-$abreviatura_sql = !empty($abreviatura) ? "'$abreviatura'" : "NULL";
-$usuario_sql = !empty($usuario) ? "'$usuario'" : "NULL";
-$observaciones_sql = !empty($observaciones) ? "'$observaciones'" : "NULL";
+$telefono = !empty($telefono) ? $telefono : null;
+$email = !empty($email) ? $email : null;
+$idEspecialidad = !empty($idEspecialidad) ? $idEspecialidad : null;
+$abreviatura = !empty($abreviatura) ? $abreviatura : null;
+$usuario = !empty($usuario) ? $usuario : null;
+$observaciones = !empty($observaciones) ? $observaciones : null;
 
 // Si no llega un "id" de profesor, es una inserción de nuevo profesor
-if (empty($_POST['id'])) {
-    // Si no ha puesto clave le ponemos como clave su propio login
-    if (empty($clave)) {
-        $clave = md5($usuario);
-    }
-    
-    // La columna "grupo" es NOT NULL sin valor por defecto; v3 no la pide, así que se guarda vacía
-    $query = "INSERT INTO profesores (idDepartamento, nombre, abreviatura, usuario, clave, idEspecialidad, observaciones_horario, telefono, email, grupo) 
-              VALUES ($idDepartamento, '$nombre', $abreviatura_sql, $usuario_sql, '$clave', $idEspecialidad_sql, $observaciones_sql, $telefono_sql, $email_sql, '')";
-    
-    $result = mysqli_query($db, $query);
-    
-    if (!$result) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Error al insertar el profesor: ' . mysqli_error($db)]);
-        exit;
-    }
-    
-    $id_nuevo = mysqli_insert_id($db);
-    
-    // Insertar preferencias horarias si existen
-    if (!empty($prefRojas) || !empty($prefAmarillas)) {
-        insertarPreferencias($db, $id_nuevo, $prefRojas, $prefAmarillas);
-    }
-    
-    mysqli_close($db);
-    echo json_encode(['success' => true, 'id' => $id_nuevo, 'mensaje' => 'Profesor creado correctamente']);
-} else {
-    // Actualizar profesor existente
-    $idProfesor = intval($_POST['id']);
-    
-    // Distinguimos si hay que cambiar también la clave o se deja la que está
-    if (empty($clave)) {
-        $query = "UPDATE profesores SET nombre='$nombre', abreviatura=$abreviatura_sql, usuario=$usuario_sql, 
-                  idEspecialidad=$idEspecialidad_sql, observaciones_horario=$observaciones_sql, 
-                  telefono=$telefono_sql, email=$email_sql WHERE id=$idProfesor";
+try {
+    $db = new Db($conn);
+
+    if (empty($_POST['id'])) {
+        // Si no ha puesto clave le ponemos como clave su propio login
+        if (empty($clave)) {
+            $clave = md5($usuario);
+        }
+
+        // La columna "grupo" es NOT NULL sin valor por defecto; v3 no la pide, así que se guarda vacía
+        $db->execute("INSERT INTO profesores (idDepartamento, nombre, abreviatura, usuario, clave, idEspecialidad, observaciones_horario, telefono, email, grupo)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '')",
+            $idDepartamento, $nombre, $abreviatura, $usuario, $clave, $idEspecialidad, $observaciones, $telefono, $email);
+
+        $id_nuevo = $db->insertId();
+
+        // Insertar preferencias horarias si existen
+        if (!empty($prefRojas) || !empty($prefAmarillas)) {
+            insertarPreferencias($db, $id_nuevo, $prefRojas, $prefAmarillas);
+        }
+
+        echo json_encode(['success' => true, 'id' => $id_nuevo, 'mensaje' => 'Profesor creado correctamente']);
     } else {
-        $query = "UPDATE profesores SET nombre='$nombre', abreviatura=$abreviatura_sql, usuario=$usuario_sql, 
-                  clave='$clave', idEspecialidad=$idEspecialidad_sql, observaciones_horario=$observaciones_sql, 
-                  telefono=$telefono_sql, email=$email_sql WHERE id=$idProfesor";
+        // Actualizar profesor existente
+        $idProfesor = intval($_POST['id']);
+
+        // Distinguimos si hay que cambiar también la clave o se deja la que está
+        if (empty($clave)) {
+            $db->execute("UPDATE profesores SET nombre=?, abreviatura=?, usuario=?,
+                          idEspecialidad=?, observaciones_horario=?,
+                          telefono=?, email=? WHERE id=?",
+                $nombre, $abreviatura, $usuario, $idEspecialidad, $observaciones, $telefono, $email, $idProfesor);
+        } else {
+            $db->execute("UPDATE profesores SET nombre=?, abreviatura=?, usuario=?,
+                          clave=?, idEspecialidad=?, observaciones_horario=?,
+                          telefono=?, email=? WHERE id=?",
+                $nombre, $abreviatura, $usuario, $clave, $idEspecialidad, $observaciones, $telefono, $email, $idProfesor);
+        }
+
+        // Actualizar preferencias horarias
+        // Borramos viejas preferencias
+        $db->execute("DELETE FROM preferencias_horario WHERE idProfesor = ?", $idProfesor);
+        // Añadimos nuevas preferencias
+        if (!empty($prefRojas) || !empty($prefAmarillas)) {
+            insertarPreferencias($db, $idProfesor, $prefRojas, $prefAmarillas);
+        }
+
+        echo json_encode(['success' => true, 'mensaje' => 'Profesor actualizado correctamente']);
     }
-    
-    $result = mysqli_query($db, $query);
-    
-    if (!$result) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Error al actualizar el profesor: ' . mysqli_error($db)]);
-        exit;
-    }
-    
-    // Actualizar preferencias horarias
-    // Borramos viejas preferencias
-    mysqli_query($db, "DELETE FROM preferencias_horario WHERE idProfesor = $idProfesor");
-    // Añadimos nuevas preferencias
-    if (!empty($prefRojas) || !empty($prefAmarillas)) {
-        insertarPreferencias($db, $idProfesor, $prefRojas, $prefAmarillas);
-    }
-    
-    mysqli_close($db);
-    echo json_encode(['success' => true, 'mensaje' => 'Profesor actualizado correctamente']);
+} catch (DbException $e) {
+    http_response_code(500);
+    $error = empty($_POST['id']) ? 'Error al insertar el profesor' : 'Error al actualizar el profesor';
+    echo json_encode(['error' => $error . ': ' . $e->getMessage()]);
+    exit;
 }
 
 // Función auxiliar para insertar preferencias horarias
@@ -131,16 +125,16 @@ function insertarPreferencias($db, $idProfesor, $prefRojas, $prefAmarillas) {
         $hora = substr($pref, 1);
         $hora = str_replace('_', ':', $hora);
         $prefRojas = substr($prefRojas, 6);
-        mysqli_query($db, "INSERT INTO preferencias_horario (dia, hora, idProfesor, preferencia) VALUES ('$dia', '$hora', $idProfesor, 'R')");
+        $db->execute("INSERT INTO preferencias_horario (dia, hora, idProfesor, preferencia) VALUES (?, ?, ?, 'R')", $dia, $hora, $idProfesor);
     }
     // Añadimos preferencias amarillas (menos importantes)
     while (strlen($prefAmarillas) > 0) {
         $pref = substr($prefAmarillas, 0, 6);
-        $dia = substr($pref, 0, 1);
+        $dia = substr($prefAmarillas, 0, 1);
         $hora = substr($pref, 1);
         $hora = str_replace('_', ':', $hora);
         $prefAmarillas = substr($prefAmarillas, 6);
-        mysqli_query($db, "INSERT INTO preferencias_horario (dia, hora, idProfesor, preferencia) VALUES ('$dia', '$hora', $idProfesor, 'A')");
+        $db->execute("INSERT INTO preferencias_horario (dia, hora, idProfesor, preferencia) VALUES (?, ?, ?, 'A')", $dia, $hora, $idProfesor);
     }
 }
 ?>
