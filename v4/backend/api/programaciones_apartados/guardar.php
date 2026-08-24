@@ -6,29 +6,17 @@ require_once '../../config.php';
 // Permiso fiel a v3: admin o jefe de departamento
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
-$db = getDBConnection();
-
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error de conexión a la base de datos']);
-    exit;
-}
-
 $data = json_decode(file_get_contents('php://input'), true);
 
 if (!isset($data['titulo']) || trim($data['titulo']) === '') {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'El título es obligatorio']);
-    exit;
+    sendJSONError('El título es obligatorio', 400);
 }
 
 // Las categorías válidas son las mismas que en v3
 $categoriasValidas = array('ESO/BACH', 'FP', 'TODOS');
 $categoria = isset($data['categoria']) ? $data['categoria'] : '';
 if (!in_array($categoria, $categoriasValidas)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Categoría no válida']);
-    exit;
+    sendJSONError('Categoría no válida', 400);
 }
 
 // El texto no se escapa aquí: la sentencia preparada lo hace por sí misma
@@ -38,40 +26,27 @@ $requerido = isset($data['requerido']) && $data['requerido'] ? 1 : 0;
 $contenidoDefecto = isset($data['contenido_defecto']) && $data['contenido_defecto'] ? 1 : 0;
 $tipo = isset($data['tipo']) ? intval($data['tipo']) : 0;
 if ($tipo < 0) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Tipo no válido']);
-    exit;
+    sendJSONError('Tipo no válido', 400);
 }
 $id = isset($data['id']) && $data['id'] > 0 ? intval($data['id']) : 0;
 
-if ($id > 0) {
-    // Actualizar
-    $stmt = mysqli_prepare($db, "UPDATE apartados_programaciones SET titulo=?, subapartado=?, requerido=?, contenido_defecto=?, categoria=?, tipo=? WHERE id=?");
-    mysqli_stmt_bind_param($stmt, "siiisii", $titulo, $subapartado, $requerido, $contenidoDefecto, $categoria, $tipo, $id);
+try {
+    $db = Db::open();
 
-    if (mysqli_stmt_execute($stmt)) {
-        echo json_encode(['success' => true, 'id' => $id]);
+    if ($id > 0) {
+        // Actualizar
+        $db->execute("UPDATE apartados_programaciones SET titulo=?, subapartado=?, requerido=?, contenido_defecto=?, categoria=?, tipo=? WHERE id=?", $titulo, $subapartado, $requerido, $contenidoDefecto, $categoria, $tipo, $id);
+        $nuevoId = $id;
     } else {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error al actualizar: ' . mysqli_error($db)]);
+        // Crear nuevo: se asigna el siguiente orden disponible
+        $filaOrden = $db->fetchOne("SELECT COALESCE(MAX(orden), 0) + 1 AS nuevoOrden FROM apartados_programaciones");
+        $nuevoOrden = intval($filaOrden['nuevoOrden']);
+        $db->execute("INSERT INTO apartados_programaciones (titulo, subapartado, requerido, contenido_defecto, categoria, tipo, orden) VALUES (?, ?, ?, ?, ?, ?, ?)", $titulo, $subapartado, $requerido, $contenidoDefecto, $categoria, $tipo, $nuevoOrden);
+        $nuevoId = $db->insertId();
     }
-} else {
-    // Crear nuevo: se asigna el siguiente orden disponible
-    $resultOrden = mysqli_query($db, "SELECT COALESCE(MAX(orden), 0) + 1 AS nuevoOrden FROM apartados_programaciones");
-    $filaOrden = mysqli_fetch_assoc($resultOrden);
-    $nuevoOrden = intval($filaOrden['nuevoOrden']);
-    mysqli_free_result($resultOrden);
-
-    $stmt = mysqli_prepare($db, "INSERT INTO apartados_programaciones (titulo, subapartado, requerido, contenido_defecto, categoria, tipo, orden) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "siiisii", $titulo, $subapartado, $requerido, $contenidoDefecto, $categoria, $tipo, $nuevoOrden);
-
-    if (mysqli_stmt_execute($stmt)) {
-        echo json_encode(['success' => true, 'id' => mysqli_insert_id($db)]);
-    } else {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error al insertar: ' . mysqli_error($db)]);
-    }
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
-mysqli_close($db);
+sendJSONSuccess(array('id' => (int)$nuevoId));
 ?>

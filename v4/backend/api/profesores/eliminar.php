@@ -12,45 +12,32 @@ require_once '../../config.php';
 $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';
 
 if (!$permisos) {
-    http_response_code(403);
-    echo json_encode(['error' => 'No tiene permisos para realizar esta acción']);
-    exit;
+    sendJSONError('No tiene permisos para realizar esta acción', 403);
 }
 
 if (empty($_POST['id'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'ID de profesor no proporcionado']);
-    exit;
+    sendJSONError('ID de profesor no proporcionado', 400);
 }
 
 $id = intval($_POST['id']);
-$conn = getDBConnection();
-
-if (!$conn) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión a la base de datos']);
-    exit;
-}
 
 try {
-    $db = new Db($conn);
+    $db = Db::open();
 
     // Borramos dependencias con otras tablas
-    $db->execute("DELETE FROM seleccion WHERE idProfesor = $id");
-    $db->execute("DELETE FROM preferencias_horario WHERE idProfesor = $id");
-    $db->execute("DELETE FROM programaciones_aula_temas WHERE idProfesor = $id");
+    $db->execute("DELETE FROM seleccion WHERE idProfesor = ?", $id);
+    $db->execute("DELETE FROM preferencias_horario WHERE idProfesor = ?", $id);
+    $db->execute("DELETE FROM programaciones_aula_temas WHERE idProfesor = ?", $id);
 
     // Borramos el profesor
-    $afectadas = $db->execute("DELETE FROM profesores WHERE id = $id");
+    $afectadas = $db->execute("DELETE FROM profesores WHERE id = ?", $id);
 } catch (DbException $e) {
-    echo json_encode(['success' => false, 'mensaje' => 'Error al eliminar el profesor']);
-    exit;
+    sendJSONError('Error al eliminar el profesor: ' . $e->getMessage(), 500);
 }
 
 if ($afectadas == 0) {
-    echo json_encode(['success' => false, 'mensaje' => 'Error al eliminar el profesor']);
-    exit;
+    sendJSONError('Error al eliminar el profesor', 404);
 }
 
-echo json_encode(['success' => true, 'mensaje' => 'Profesor eliminado correctamente']);
+sendJSONSuccess(array('mensaje' => 'Profesor eliminado correctamente'));
 ?>

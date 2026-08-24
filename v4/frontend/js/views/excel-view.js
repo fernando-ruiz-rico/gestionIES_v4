@@ -105,7 +105,8 @@ const ExcelView = {
     methods: {
         async cargarDepartamentos() {
             const result = await fetch('../backend/api/departamentos/listar.php', { credentials: 'same-origin' });
-            this.departamentos = await result.json();
+            const data = await result.json();
+            if (data.success) this.departamentos = data.data || [];
             const res = await EscenariosAPI.listar();
             if (res.success) this.escenarios = res.data || [];
         },

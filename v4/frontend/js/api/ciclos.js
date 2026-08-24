@@ -7,7 +7,10 @@ const CiclosAPI = {
         try {
             const response = await fetch(this.baseUrl + 'listar.php', { credentials: 'include' });
             const data = await response.json();
-            return { success: true, data: Array.isArray(data) ? data : [] };
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión', data: [] };
+            }
+            return { success: true, data: Array.isArray(data.data) ? data.data : [] };
         } catch (e) {
             console.error(e);
             return { success: false, error: 'Error de conexión', data: [] };
@@ -18,7 +21,10 @@ const CiclosAPI = {
         try {
             const response = await fetch(this.baseUrl + `obtener.php?id=${id}`, { credentials: 'include' });
             const data = await response.json();
-            return { success: true, data: data };
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión', data: null };
+            }
+            return { success: true, data: data.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión', data: null };
         }
@@ -32,7 +38,11 @@ const CiclosAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(ciclo)
             });
-            return await response.json();
+            const data = await response.json();
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión' };
+            }
+            return data;
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -46,7 +56,11 @@ const CiclosAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: id })
             });
-            return await response.json();
+            const data = await response.json();
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión' };
+            }
+            return data;
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -58,7 +72,10 @@ const CiclosAPI = {
         try {
             const response = await fetch(this.baseUrl + `asociaciones_cursos.php?idCiclo=${idCiclo}`, { credentials: 'include' });
             const data = await response.json();
-            return { success: true, data: data };
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión', data: null };
+            }
+            return { success: true, data: data.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión', data: null };
         }
@@ -72,7 +89,11 @@ const CiclosAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(asociacion)
             });
-            return await response.json();
+            const data = await response.json();
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión' };
+            }
+            return data;
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -86,7 +107,11 @@ const CiclosAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ idCiclo: idCiclo, idCurso: idCurso })
             });
-            return await response.json();
+            const data = await response.json();
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión' };
+            }
+            return data;
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -98,7 +123,10 @@ const CiclosAPI = {
         try {
             const response = await fetch(this.baseUrl + `asociaciones_unidades.php?idCiclo=${idCiclo}`, { credentials: 'include' });
             const data = await response.json();
-            return { success: true, data: data };
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión', data: null };
+            }
+            return { success: true, data: data.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión', data: null };
         }
@@ -112,7 +140,11 @@ const CiclosAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ idCiclo: idCiclo, codigoUnidad: codigoUnidad })
             });
-            return await response.json();
+            const data = await response.json();
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión' };
+            }
+            return data;
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -126,7 +158,11 @@ const CiclosAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ idCiclo: idCiclo, codigoUnidad: codigoUnidad })
             });
-            return await response.json();
+            const data = await response.json();
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión' };
+            }
+            return data;
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }

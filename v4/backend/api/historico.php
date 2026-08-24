@@ -19,12 +19,8 @@ checkSession();
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-$db = getDBConnection();
-if (!$db) {
-    sendJSONError('Error de conexión a la base de datos');
-}
-
 try {
+    $db = Db::open();
     switch ($action) {
         // Devuelve el histórico de selecciones de un departamento para un escenario
         case 'listar':
@@ -42,29 +38,23 @@ try {
             $sqlMaterias = "SELECT m.id AS idMateria, m.divisible AS divisible, mg.idGrupo AS idGrupo, mg.cantidad AS cantidad, mg.horas AS horas
                             FROM materias m
                             JOIN materias_grupos mg ON mg.idMateria = m.id
-                            WHERE mg.idGrupo IN (SELECT DISTINCT idGrupo FROM seleccion WHERE idEscenario=$idEscenario)
-                            AND m.idDepartamento=$idDepartamento AND mg.cantidad > 0";
+                            WHERE mg.idGrupo IN (SELECT DISTINCT idGrupo FROM seleccion WHERE idEscenario=?)
+                            AND m.idDepartamento=? AND mg.cantidad > 0";
             $materiasConflictos = array();
-            $result = mysqli_query($db, $sqlMaterias);
-            if ($result) {
-                while ($fila = mysqli_fetch_assoc($result)) {
-                    $materiasConflictos[$fila['idMateria']][$fila['idGrupo']] = $fila;
-                }
+            $filas = $db->fetchAll($sqlMaterias, $idEscenario, $idDepartamento);
+            foreach ($filas as $fila) {
+                $materiasConflictos[$fila['idMateria']][$fila['idGrupo']] = $fila;
             }
-            mysqli_free_result($result);
 
             // Obtenemos todos los profesores que eligieron en ese escenario
             $sql = "SELECT DISTINCT p.id AS id, p.nombre AS nombre, p.orden AS orden
                     FROM profesores p
-                    WHERE (p.idDepartamento=$idDepartamento AND p.activo=1)
-                    OR p.id IN (SELECT idProfesor FROM seleccion WHERE idEscenario=$idEscenario)
+                    WHERE (p.idDepartamento=? AND p.activo=1)
+                    OR p.id IN (SELECT idProfesor FROM seleccion WHERE idEscenario=?)
                     ORDER BY p.orden";
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
+            $profesores = $db->fetchAll($sql, $idDepartamento, $idEscenario);
             $historico = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
+            foreach ($profesores as $fila) {
                 $idProf = $fila['id'];
                 // Materias elegidas por este profesor
                 $sqlProf = "SELECT s.id AS idSeleccion, s.horas AS horas, s.orden AS orden,
@@ -74,11 +64,11 @@ try {
                             JOIN materias m ON m.id = s.idMateria
                             JOIN cursos c ON c.id = m.idCurso
                             JOIN grupos g ON g.id = s.idGrupo
-                            WHERE s.idProfesor=$idProf AND s.idEscenario=$idEscenario
+                            WHERE s.idProfesor=? AND s.idEscenario=?
                             ORDER BY s.orden";
-                $resultProf = mysqli_query($db, $sqlProf);
                 $materias = [];
-                while ($filaProf = mysqli_fetch_assoc($resultProf)) {
+                $selecciones = $db->fetchAll($sqlProf, $idProf, $idEscenario);
+                foreach ($selecciones as $filaProf) {
                     $materia = $filaProf;
                     // Marcamos si la materia tiene conflicto
                     $conflicto = false;
@@ -88,22 +78,20 @@ try {
                     $materia['conflicto'] = $conflicto;
                     $materias[] = $materia;
                 }
-                mysqli_free_result($resultProf);
                 $historico[] = array(
                     'id' => $fila['id'],
                     'nombre' => $fila['nombre'],
                     'materias' => $materias
                 );
             }
-            mysqli_free_result($result);
-            closeDBConnection($db);
             sendJSONSuccess($historico);
             break;
 
         default:
             throw new Exception('Acción no válida: ' . $action);
     }
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 } catch (Exception $e) {
-    closeDBConnection($db);
     sendJSONError($e->getMessage());
 }

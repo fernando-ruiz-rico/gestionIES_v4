@@ -49,10 +49,13 @@ class MiPDFSeguimiento extends TCPDF
     }
 }
 
+// Endpoint no JSON: se conserva la apertura original, porque si la conexión
+// falla el error debe seguir saliendo igual que antes (die() en texto plano).
 $db = getDBConnection();
 if (!$db) {
     die('Error de conexión a la base de datos');
 }
+$db = new Db($db);
 
 $curso = isset($_REQUEST['curso']) ? trim($_REQUEST['curso']) : '';
 $idEvaluacion = isset($_REQUEST['evaluacion']) ? intval($_REQUEST['evaluacion']) : 0;
@@ -70,36 +73,24 @@ $categoria = (isset($_REQUEST['categoria']) && $_REQUEST['categoria'] == 'FP')
 $categoriaTexto = (isset($_REQUEST['categoria']) && $_REQUEST['categoria'] == 'FP') ? 'FP' : 'ESO/BACH';
 
 if ($curso == '' || $idEvaluacion <= 0) {
-    closeDBConnection($db);
+    $db->close();
     die('Falta el curso o la evaluación');
 }
 
 // ---------------------------------------------------------------------------
 // Datos de la portada
 // ---------------------------------------------------------------------------
-$stmt = mysqli_prepare($db, 'SELECT nombre FROM evaluaciones WHERE id = ?');
-mysqli_stmt_bind_param($stmt, 'i', $idEvaluacion);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
 $evaluacion = 'Evaluación';
-if (mysqli_num_rows($result) > 0) {
-    $fila = mysqli_fetch_assoc($result);
+$fila = $db->fetchOne('SELECT nombre FROM evaluaciones WHERE id = ?', $idEvaluacion);
+if ($fila !== null) {
     $evaluacion = $fila['nombre'];
 }
-mysqli_free_result($result);
-mysqli_stmt_close($stmt);
 
-$stmt = mysqli_prepare($db, 'SELECT nombre FROM departamentos WHERE id = ?');
-mysqli_stmt_bind_param($stmt, 'i', $idDepartamento);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
+$fila = $db->fetchOne('SELECT nombre FROM departamentos WHERE id = ?', $idDepartamento);
 $nomDepartamento = '';
-if (mysqli_num_rows($result) > 0) {
-    $fila = mysqli_fetch_assoc($result);
+if ($fila !== null) {
     $nomDepartamento = $fila['nombre'];
 }
-mysqli_free_result($result);
-mysqli_stmt_close($stmt);
 
 // Carga de los datos comunes del departamento (tabla de datos generales)
 // Nota: igual que en v3, los datos comunes del departamento siguen
@@ -109,35 +100,21 @@ $actividades_extraescolares = "No hay datos disponibles";
 $temporalizacion_defecto = "No hay datos disponibles"; // Se usaría si el profe deja vacía la temporalización
 $inclusion_defecto = "No hay datos disponibles";     // Se usa si no hay ninguna inclusión
 
-$stmt = mysqli_prepare($db, 'SELECT funcionamiento_departamento, actividades_extraescolares, temporalizacion_defecto'
+$filaComunes = $db->fetchOne('SELECT funcionamiento_departamento, actividades_extraescolares, temporalizacion_defecto'
     . ' FROM seguimiento_programaciones_departamento'
-    . ' WHERE idDepartamento = ? AND curso = ? AND evaluacion = ?');
-mysqli_stmt_bind_param($stmt, 'iss', $idDepartamento, $curso, $idEvaluacion);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-if (mysqli_num_rows($result) > 0) {
-    $fila = mysqli_fetch_assoc($result);
-    $funcionamiento_departamento = $fila['funcionamiento_departamento'];
-    $actividades_extraescolares = $fila['actividades_extraescolares'];
-    if (!empty($fila['temporalizacion_defecto'])) {
-        $temporalizacion_defecto = $fila['temporalizacion_defecto'];
+    . ' WHERE idDepartamento = ? AND curso = ? AND evaluacion = ?', $idDepartamento, $curso, $idEvaluacion);
+if ($filaComunes !== null) {
+    $funcionamiento_departamento = $filaComunes['funcionamiento_departamento'];
+    $actividades_extraescolares = $filaComunes['actividades_extraescolares'];
+    if (!empty($filaComunes['temporalizacion_defecto'])) {
+        $temporalizacion_defecto = $filaComunes['temporalizacion_defecto'];
     }
 }
-mysqli_free_result($result);
-mysqli_stmt_close($stmt);
 
 // ---------------------------------------------------------------------------
 // Cursos del tipo elegido (una sola carga; v3 recorría 3 veces con data_seek)
 // ---------------------------------------------------------------------------
-$stmt = mysqli_prepare($db, 'SELECT id, nombre FROM cursos WHERE ' . $categoria . ' ORDER BY orden');
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$cursos = array();
-while ($fila = mysqli_fetch_assoc($result)) {
-    $cursos[] = $fila;
-}
-mysqli_free_result($result);
-mysqli_stmt_close($stmt);
+$cursos = $db->fetchAll('SELECT id, nombre FROM cursos WHERE ' . $categoria . ' ORDER BY orden');
 
 // Filas de seguimiento_programaciones_aula de un grupo del departamento y
 // curso/evaluación pedidos (igual que v3).
@@ -149,17 +126,19 @@ function sp_buscarFilas($db, $filaGrupo, $idDepartamento, $curso, $idEvaluacion,
         . ' FROM seguimiento_programaciones_aula spa'
         . ' INNER JOIN materias m ON spa.idMateria = m.id'
         . ' INNER JOIN profesores p ON spa.idProfesor = p.id'
-        . ' WHERE spa.idGrupo = ' . intval($filaGrupo['id'])
-        . ' AND m.idDepartamento = ' . intval($idDepartamento)
-        . ' AND spa.curso = "' . mysqli_real_escape_string($db, $curso) . '"'
-        . ' AND spa.evaluacion = ' . intval($idEvaluacion)
+        . ' WHERE spa.idGrupo = ?'
+        . ' AND m.idDepartamento = ?'
+        . ' AND spa.curso = ?'
+        . ' AND spa.evaluacion = ?'
         . $filtroExtra
         . ' ORDER BY m.nombre, p.nombre';
-    $result = mysqli_query($db, $sql);
-    if (!$result) {
-        die('Error consultando la base de datos: ' . mysqli_error($db));
+    $params = array(intval($filaGrupo['id']), intval($idDepartamento), $curso, intval($idEvaluacion));
+    try {
+        return call_user_func_array(array($db, 'fetchAll'), array_merge(array($sql), $params));
+    } catch (DbException $e) {
+        // Mismo flujo de error que antes: die() con el error de la consulta.
+        die('Error consultando la base de datos: ' . $e->getMessage());
     }
-    return $result;
 }
 
 // ---------------------------------------------------------------------------
@@ -189,18 +168,15 @@ $pdf->SetFont('helvetica', 'B', 14);
 $pdf->Write(0, "1. SEGUIMIENTO DE LA PROGRAMACIÓN (con respecto a la temporalización que figura en las Propuestas Pedagógicas)" . PHP_EOL . PHP_EOL, '', 0, 'L', true, 0, false, false, 0);
 
 foreach ($cursos as $filaCurso) {
-    $stmt = mysqli_prepare($db, 'SELECT id, nombre FROM grupos WHERE idCurso = ? ORDER BY orden');
-    mysqli_stmt_bind_param($stmt, 'i', $filaCurso['id']);
-    mysqli_stmt_execute($stmt);
-    $resultGrupos = mysqli_stmt_get_result($stmt);
-    while ($filaGrupo = mysqli_fetch_assoc($resultGrupos)) {
+    $resultGrupos = $db->fetchAll('SELECT id, nombre FROM grupos WHERE idCurso = ? ORDER BY orden', intval($filaCurso['id']));
+    foreach ($resultGrupos as $filaGrupo) {
         $resultSeguimiento = sp_buscarFilas($db, $filaGrupo, $idDepartamento, $curso, $idEvaluacion, 'spa.temporalizacion');
-        if (mysqli_num_rows($resultSeguimiento) > 0) {
+        if (count($resultSeguimiento) > 0) {
             $pdf->SetFont('helvetica', 'B', 13);
             $pdf->SetTextColor(0, 0, 128);
             $pdf->Write(0, PHP_EOL . PHP_EOL . $filaCurso['nombre'] . ' ' . $filaGrupo['nombre'], '', 0, 'L', true, 0, false, false, 0);
             $pdf->SetTextColor(0, 0, 0);
-            while ($filaSpa = mysqli_fetch_assoc($resultSeguimiento)) {
+            foreach ($resultSeguimiento as $filaSpa) {
                 $contenidoTemp = trim($filaSpa['temporalizacion']);
                 if ($contenidoTemp != '') {
                     $pdf->SetFont('helvetica', 'B', 12);
@@ -210,10 +186,7 @@ foreach ($cursos as $filaCurso) {
                 }
             }
         }
-        mysqli_free_result($resultSeguimiento);
     }
-    mysqli_free_result($resultGrupos);
-    mysqli_stmt_close($stmt);
 }
 
 // ---------------------------------------------------------------------------
@@ -224,18 +197,15 @@ $pdf->SetFont('helvetica', 'B', 14);
 $pdf->Write(0, "2. VALORACIÓN DE LOS RESULTADOS ACADÉMICOS (con especial atención a los grupos de desdoble o refuerzo, si los hay, detallando cumplimiento de programación, incidencia sobre la convivencia del grupo y resultados académicos)" . PHP_EOL . PHP_EOL, '', 0, 'L', true, 0, false, false, 0);
 
 foreach ($cursos as $filaCurso) {
-    $stmt = mysqli_prepare($db, 'SELECT id, nombre FROM grupos WHERE idCurso = ? ORDER BY orden');
-    mysqli_stmt_bind_param($stmt, 'i', $filaCurso['id']);
-    mysqli_stmt_execute($stmt);
-    $resultGrupos = mysqli_stmt_get_result($stmt);
-    while ($filaGrupo = mysqli_fetch_assoc($resultGrupos)) {
+    $resultGrupos = $db->fetchAll('SELECT id, nombre FROM grupos WHERE idCurso = ? ORDER BY orden', intval($filaCurso['id']));
+    foreach ($resultGrupos as $filaGrupo) {
         $resultSeguimiento = sp_buscarFilas($db, $filaGrupo, $idDepartamento, $curso, $idEvaluacion, 'spa.resultados, spa.inclusion, spa.num_aprobados, spa.num_suspensos, spa.num_otros');
-        if (mysqli_num_rows($resultSeguimiento) > 0) {
+        if (count($resultSeguimiento) > 0) {
             $pdf->SetFont('helvetica', 'B', 13);
             $pdf->SetTextColor(0, 0, 128);
             $pdf->Write(0, PHP_EOL . PHP_EOL . $filaCurso['nombre'] . ' ' . $filaGrupo['nombre'], '', 0, 'L', true, 0, false, false, 0);
             $pdf->SetTextColor(0, 0, 0);
-            while ($filaSpa = mysqli_fetch_assoc($resultSeguimiento)) {
+            foreach ($resultSeguimiento as $filaSpa) {
                 $pdf->SetFont('helvetica', 'B', 12);
                 $pdf->Write(0, PHP_EOL . PHP_EOL . $filaSpa['materia'] . PHP_EOL, '', 0, 'L', true, 0, false, false, 0);
                 $pdf->SetFont('helvetica', '', 12);
@@ -260,10 +230,7 @@ foreach ($cursos as $filaCurso) {
                 $pdf->Ln(2);
             }
         }
-        mysqli_free_result($resultSeguimiento);
     }
-    mysqli_free_result($resultGrupos);
-    mysqli_stmt_close($stmt);
 }
 
 // ---------------------------------------------------------------------------
@@ -284,18 +251,15 @@ $filtroInclusion = " AND spa.inclusion IS NOT NULL"
 $inclusion_vacio = true;
 
 foreach ($cursos as $filaCurso) {
-    $stmt = mysqli_prepare($db, 'SELECT id, nombre FROM grupos WHERE idCurso = ? ORDER BY orden');
-    mysqli_stmt_bind_param($stmt, 'i', $filaCurso['id']);
-    mysqli_stmt_execute($stmt);
-    $resultGrupos = mysqli_stmt_get_result($stmt);
-    while ($filaGrupo = mysqli_fetch_assoc($resultGrupos)) {
+    $resultGrupos = $db->fetchAll('SELECT id, nombre FROM grupos WHERE idCurso = ? ORDER BY orden', intval($filaCurso['id']));
+    foreach ($resultGrupos as $filaGrupo) {
         $resultSeguimiento = sp_buscarFilas($db, $filaGrupo, $idDepartamento, $curso, $idEvaluacion, 'spa.inclusion', $filtroInclusion);
-        if (mysqli_num_rows($resultSeguimiento) > 0) {
+        if (count($resultSeguimiento) > 0) {
             $pdf->SetFont('helvetica', 'B', 13);
             $pdf->SetTextColor(0, 0, 128);
             $pdf->Write(0, PHP_EOL . PHP_EOL . $filaCurso['nombre'] . ' ' . $filaGrupo['nombre'], '', 0, 'L', true, 0, false, false, 0);
             $pdf->SetTextColor(0, 0, 0);
-            while ($filaSpa = mysqli_fetch_assoc($resultSeguimiento)) {
+            foreach ($resultSeguimiento as $filaSpa) {
                 $pdf->SetFont('helvetica', 'B', 12);
                 $pdf->Write(0, PHP_EOL . PHP_EOL . $filaSpa['materia'] . PHP_EOL . PHP_EOL, '', 0, 'L', true, 0, false, false, 0);
                 $pdf->SetFont('helvetica', '', 12);
@@ -303,10 +267,7 @@ foreach ($cursos as $filaCurso) {
             }
             $inclusion_vacio = false;
         }
-        mysqli_free_result($resultSeguimiento);
     }
-    mysqli_free_result($resultGrupos);
-    mysqli_stmt_close($stmt);
 }
 
 if ($inclusion_vacio) {
@@ -335,5 +296,5 @@ $pdf->WriteHTML($actividades_extraescolares . PHP_EOL, true, false, true, false,
 
 $pdf->Output();
 
-closeDBConnection($db);
+$db->close();
 ?>

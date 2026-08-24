@@ -11,8 +11,11 @@ const EspecialidadesAPI = {
                 credentials: 'include'
             });
             const data = await response.json();
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión', data: [] };
+            }
             // Mismo formato de respuesta que el resto de clientes de la app
-            return { success: true, data: Array.isArray(data) ? data : [] };
+            return { success: true, data: Array.isArray(data.data) ? data.data : [] };
         } catch (error) {
             console.error('Error al listar especialidades:', error);
             return { success: false, error: 'Error de conexión', data: [] };
@@ -26,7 +29,11 @@ const EspecialidadesAPI = {
                 method: 'GET',
                 credentials: 'include'
             });
-            return await response.json();
+            const data = await response.json();
+            if (!data.success) {
+                return { success: false, error: data.error || null };
+            }
+            return { success: true, data: data.data };
         } catch (error) {
             console.error('Error al obtener especialidad:', error);
             return null;
@@ -44,7 +51,11 @@ const EspecialidadesAPI = {
                 },
                 body: JSON.stringify(especialidad)
             });
-            return await response.json();
+            const data = await response.json();
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión' };
+            }
+            return { success: true, message: data.message, data: data.data };
         } catch (error) {
             console.error('Error al guardar especialidad:', error);
             return { success: false, error: 'Error de conexión' };
@@ -62,7 +73,11 @@ const EspecialidadesAPI = {
                 },
                 body: JSON.stringify({ id: idEspecialidad })
             });
-            return await response.json();
+            const data = await response.json();
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión' };
+            }
+            return { success: true, message: data.message, data: data.data };
         } catch (error) {
             console.error('Error al eliminar especialidad:', error);
             return { success: false, error: 'Error de conexión' };

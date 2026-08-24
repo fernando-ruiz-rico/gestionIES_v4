@@ -31,36 +31,52 @@ if ($idProfesor <= 0 || $idEscenario <= 0)
     die('Parámetros inválidos');
 }
 
-$db = getDBConnection();
-$sqlProf = "SELECT nombre FROM profesores WHERE id=" . $idProfesor;
-$resultProf = mysqli_query($db, $sqlProf);
+// Endpoint no JSON (imprime el PDF y no devuelve JSON): se conserva la
+// apertura original getDBConnection() y el flujo de errores original;
+// solo las consultas pasan por Db, con el SQL parametrizado.
+$dbConn = getDBConnection();
+$db = new Db($dbConn);
+
 $nombreProfesor = 'Desconocido';
-if ($resultProf && mysqli_num_rows($resultProf) > 0)
+try
 {
-    $filaProf = mysqli_fetch_assoc($resultProf);
-    $nombreProfesor = $filaProf['nombre'];
-    mysqli_free_result($resultProf);
+    $filaProf = $db->fetchOne("SELECT nombre FROM profesores WHERE id = ?", $idProfesor);
+    if ($filaProf !== null)
+    {
+        $nombreProfesor = $filaProf['nombre'];
+    }
+}
+catch (DbException $e)
+{
+    // Mismo flujo que el original: si la consulta falla, se sigue con 'Desconocido'.
 }
 
-$sqlEsc = "SELECT nombre FROM escenarios_desideratas WHERE id=" . $idEscenario;
-$resultEsc = mysqli_query($db, $sqlEsc);
 $nombreEscenario = 'Desconocido';
-if ($resultEsc && mysqli_num_rows($resultEsc) > 0)
+try
 {
-    $filaEsc = mysqli_fetch_assoc($resultEsc);
-    $nombreEscenario = $filaEsc['nombre'];
-    mysqli_free_result($resultEsc);
+    $filaEsc = $db->fetchOne("SELECT nombre FROM escenarios_desideratas WHERE id = ?", $idEscenario);
+    if ($filaEsc !== null)
+    {
+        $nombreEscenario = $filaEsc['nombre'];
+    }
+}
+catch (DbException $e)
+{
+    // Mismo flujo que el original: si la consulta falla, se sigue con 'Desconocido'.
 }
 
 $sql = "SELECT m.nombre AS nombreMateria, m.horas, c.abreviatura AS abrevCurso, g.abreviatura AS abrevGrupo
         FROM seleccion, materias AS m, cursos AS c, grupos AS g
         WHERE seleccion.idMateria = m.id AND m.idCurso = c.id AND seleccion.idGrupo = g.id
-        AND seleccion.idProfesor=" . $idProfesor . " AND seleccion.idEscenario=" . $idEscenario . "
+        AND seleccion.idProfesor = ? AND seleccion.idEscenario = ?
         ORDER BY seleccion.orden";
-$result = mysqli_query($db, $sql);
-if (!$result)
+try
 {
-    die('Error consultando la base de datos: ' . mysqli_error($db));
+    $filas = $db->fetchAll($sql, $idProfesor, $idEscenario);
+}
+catch (DbException $e)
+{
+    die('Error consultando la base de datos: ' . $e->getMessage());
 }
 
 $pdf = new MiPDFSeleccion();
@@ -84,7 +100,7 @@ $pdf->Ln();
 $pdf->SetFont('helvetica', '', 12);
 
 $totalHoras = 0;
-while ($fila = mysqli_fetch_assoc($result))
+foreach ($filas as $fila)
 {
     $totalHoras += intval($fila['horas']);
     $pdf->Cell(100, 8, $fila['nombreMateria'], 1);
@@ -92,11 +108,10 @@ while ($fila = mysqli_fetch_assoc($result))
     $pdf->Cell(30, 8, $fila['horas'], 1);
     $pdf->Ln();
 }
-mysqli_free_result($result);
 
 $pdf->Cell(100, 8, 'TOTAL', 1);
 $pdf->Cell(50, 8, '', 1);
 $pdf->Cell(30, 8, $totalHoras, 1);
 
 $pdf->Output();
-closeDBConnection($db);
+closeDBConnection($dbConn);

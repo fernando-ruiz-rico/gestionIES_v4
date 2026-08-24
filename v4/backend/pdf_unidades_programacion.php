@@ -44,6 +44,12 @@ class MiPDFProgramacionesUnidades extends TCPDF
 
 function pgGenerarPDFTemas($db, $idMateria)
 {
+    // $db es la conexión cruda: la siguen usando las funciones de la
+    // librería compartida lib/programaciones_pdf.php. Las consultas
+    // propias de este endpoint se ejecutan con la capa Db, envolviendo
+    // la misma conexión.
+    $dbDb = new Db($db);
+
     $idCiclo = pgObtenerIdCicloPorMateria($db, $idMateria);
 
     $datosMateria = pgObtenerDatosMateria($db, $idMateria);
@@ -145,12 +151,13 @@ function pgGenerarPDFTemas($db, $idMateria)
             }
 
             // === RAs y criterios POR TEMA ===
-            $criteriosConRA = pgConsultar($db,
+            $criteriosConRA = $dbDb->fetchAll(
                 "SELECT ce.idRA, ce.codigo AS codigo, ce.texto AS criterio
                    FROM criterios_temas ct
                    INNER JOIN criterios_evaluacion ce ON ct.idRA = ce.idRA AND ct.codigo = ce.codigo
-                  WHERE ct.idTema = " . (int)$tema['id'] . "
-                  ORDER BY ce.idRA, ce.codigo");
+                  WHERE ct.idTema = ?
+                  ORDER BY ce.idRA, ce.codigo",
+                (int)$tema['id']);
 
             if (!empty($criteriosConRA)) {
                 $rasAgrupados = [];
@@ -158,8 +165,9 @@ function pgGenerarPDFTemas($db, $idMateria)
                 foreach ($criteriosConRA as $fila) {
                     $idRA = $fila['idRA'];
                     if (!isset($rasAgrupados[$idRA])) {
-                        $raData = pgConsultar($db,
-                            "SELECT orden, texto FROM resultados_aprendizaje WHERE id = " . (int)$idRA . " AND idMateria = " . (int)$idMateria);
+                        $raData = $dbDb->fetchAll(
+                            "SELECT orden, texto FROM resultados_aprendizaje WHERE id = ? AND idMateria = ?",
+                            (int)$idRA, (int)$idMateria);
                         $textoRA = !empty($raData)
                             ? $prefijo . $raData[0]['orden'] . '. ' . $raData[0]['texto']
                             : "Resultado de aprendizaje no encontrado (ID: $idRA)";

@@ -7,9 +7,7 @@ checkPermission(array(ROLE_ADMIN));
 
 $datos = json_decode(file_get_contents('php://input'), true);
 if (!$datos) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Datos inválidos']);
-    exit;
+    sendJSONError('Datos inválidos', 400);
 }
 
 $id = trim(isset($datos['id']) ? $datos['id'] : '');
@@ -19,15 +17,11 @@ $horasTutoria = intval(isset($datos['horasTutoria']) ? $datos['horasTutoria'] : 
 $horasIngles = intval(isset($datos['horasIngles']) ? $datos['horasIngles'] : 0);
 
 if (empty($id)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'ID obligatorio']);
-    exit;
+    sendJSONError('ID obligatorio', 400);
 }
 
 if (empty($descripcion)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Descripción obligatoria']);
-    exit;
+    sendJSONError('Descripción obligatoria', 400);
 }
 
 try {
@@ -42,13 +36,8 @@ try {
         $db->execute("INSERT INTO especialidades (id, descripcion, idDepartamento, horasTutoria, horasIngles) VALUES (?, ?, ?, ?, ?)", $id, $descripcion, $idDepartamento, $horasTutoria, $horasIngles);
     }
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
-echo json_encode([
-    'success' => true,
-    'message' => 'Guardado correctamente'
-]);
+sendJSONSuccess(array('id' => $id), 'Guardado correctamente');
 ?>

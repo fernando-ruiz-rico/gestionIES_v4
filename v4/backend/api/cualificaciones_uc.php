@@ -30,26 +30,15 @@ require_once '../config.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-$db = getDBConnection();
-if (!$db) {
-    sendJSONError('Error de conexión a la base de datos');
-}
-
 try {
+    $db = Db::open();
+
     switch ($action) {
         // Lista las cualificaciones profesionales
         case 'listar_cualificaciones':
             $sql = "SELECT codigo, texto FROM cualificaciones_profesionales ORDER BY codigo";
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $cualificaciones = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $cualificaciones[] = $fila;
-            }
-            mysqli_free_result($result);
-            closeDBConnection($db);
+            $cualificaciones = $db->fetchAll($sql);
+            $db->close();
             sendJSONSuccess($cualificaciones);
             break;
 
@@ -59,13 +48,12 @@ try {
             if (empty($codigo)) {
                 throw new Exception('Código de cualificación inválido');
             }
-            $codigo = mysqli_real_escape_string($db, $codigo);
-            $result = mysqli_query($db, "SELECT * FROM cualificaciones_profesionales WHERE codigo='$codigo'");
-            $fila = mysqli_fetch_assoc($result);
+            $fila = $db->fetchOne("SELECT * FROM cualificaciones_profesionales WHERE codigo=?", $codigo);
             if (!$fila) {
-                throw new Exception('Cualificación no encontrada');
+                $db->close();
+                sendJSONError('Cualificación no encontrada', 404);
             }
-            closeDBConnection($db);
+            $db->close();
             sendJSONSuccess($fila);
             break;
 
@@ -82,26 +70,17 @@ try {
             if (empty($codigo) || empty($texto)) {
                 throw new Exception('Datos incompletos para guardar la cualificación');
             }
-            $codigo = mysqli_real_escape_string($db, $codigo);
-            $texto = mysqli_real_escape_string($db, $texto);
-            $id = mysqli_real_escape_string($db, $id);
             if ($id !== '') {
-                $query = "UPDATE cualificaciones_profesionales SET codigo='$codigo', texto='$texto' WHERE codigo='$id'";
-                if (!mysqli_query($db, $query)) {
-                    throw new Exception(mysqli_error($db));
-                }
+                $query = "UPDATE cualificaciones_profesionales SET codigo=?, texto=? WHERE codigo=?";
+                $db->execute($query, $codigo, $texto, $id);
                 // Si el código ha cambiado, las unidades asociadas siguen al nuevo (v3)
-                $query = "UPDATE cualificaciones_unidades SET codigoCualificacion='$codigo' WHERE codigoCualificacion='$id'";
-                if (!mysqli_query($db, $query)) {
-                    throw new Exception(mysqli_error($db));
-                }
+                $query = "UPDATE cualificaciones_unidades SET codigoCualificacion=? WHERE codigoCualificacion=?";
+                $db->execute($query, $codigo, $id);
             } else {
-                $query = "INSERT INTO cualificaciones_profesionales (codigo, texto) VALUES ('$codigo', '$texto')";
-                if (!mysqli_query($db, $query)) {
-                    throw new Exception(mysqli_error($db));
-                }
+                $query = "INSERT INTO cualificaciones_profesionales (codigo, texto) VALUES (?, ?)";
+                $db->execute($query, $codigo, $texto);
             }
-            closeDBConnection($db);
+            $db->close();
             sendJSONSuccess(array('codigo' => $codigo), 'Cualificación guardada');
             break;
 
@@ -114,33 +93,21 @@ try {
             if (empty($codigo)) {
                 throw new Exception('Código de cualificación inválido');
             }
-            $codigo = mysqli_real_escape_string($db, $codigo);
-            $result = mysqli_query($db, "SELECT COUNT(*) AS total FROM cualificaciones_unidades WHERE codigoCualificacion='$codigo'");
-            $fila = mysqli_fetch_assoc($result);
+            $fila = $db->fetchOne("SELECT COUNT(*) AS total FROM cualificaciones_unidades WHERE codigoCualificacion=?", $codigo);
             if ($fila['total'] > 0) {
-                closeDBConnection($db);
+                $db->close();
                 sendJSONError('La cualificación tiene unidades de competencia asociadas');
             }
-            if (!mysqli_query($db, "DELETE FROM cualificaciones_profesionales WHERE codigo='$codigo'")) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $db->execute("DELETE FROM cualificaciones_profesionales WHERE codigo=?", $codigo);
+            $db->close();
             sendJSONSuccess(null, 'Cualificación eliminada');
             break;
 
         // Lista las unidades de competencia
         case 'listar_unidades':
             $sql = "SELECT codigo, texto FROM unidades_competencia ORDER BY codigo";
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $unidades = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $unidades[] = $fila;
-            }
-            mysqli_free_result($result);
-            closeDBConnection($db);
+            $unidades = $db->fetchAll($sql);
+            $db->close();
             sendJSONSuccess($unidades);
             break;
 
@@ -150,13 +117,12 @@ try {
             if (empty($codigo)) {
                 throw new Exception('Código de unidad inválido');
             }
-            $codigo = mysqli_real_escape_string($db, $codigo);
-            $result = mysqli_query($db, "SELECT * FROM unidades_competencia WHERE codigo='$codigo'");
-            $fila = mysqli_fetch_assoc($result);
+            $fila = $db->fetchOne("SELECT * FROM unidades_competencia WHERE codigo=?", $codigo);
             if (!$fila) {
-                throw new Exception('Unidad no encontrada');
+                $db->close();
+                sendJSONError('Unidad no encontrada', 404);
             }
-            closeDBConnection($db);
+            $db->close();
             sendJSONSuccess($fila);
             break;
 
@@ -172,26 +138,17 @@ try {
             if (empty($codigo) || empty($texto)) {
                 throw new Exception('Datos incompletos para guardar la unidad');
             }
-            $codigo = mysqli_real_escape_string($db, $codigo);
-            $texto = mysqli_real_escape_string($db, $texto);
-            $id = mysqli_real_escape_string($db, $id);
             if ($id !== '') {
-                $query = "UPDATE unidades_competencia SET codigo='$codigo', texto='$texto' WHERE codigo='$id'";
-                if (!mysqli_query($db, $query)) {
-                    throw new Exception(mysqli_error($db));
-                }
+                $query = "UPDATE unidades_competencia SET codigo=?, texto=? WHERE codigo=?";
+                $db->execute($query, $codigo, $texto, $id);
                 // Si el código ha cambiado, las asociaciones siguen al nuevo (v3)
-                $query = "UPDATE unidades_ciclos SET codigoUnidad='$codigo' WHERE codigoUnidad='$id'";
-                if (!mysqli_query($db, $query)) {
-                    throw new Exception(mysqli_error($db));
-                }
+                $query = "UPDATE unidades_ciclos SET codigoUnidad=? WHERE codigoUnidad=?";
+                $db->execute($query, $codigo, $id);
             } else {
-                $query = "INSERT INTO unidades_competencia (codigo, texto) VALUES ('$codigo', '$texto')";
-                if (!mysqli_query($db, $query)) {
-                    throw new Exception(mysqli_error($db));
-                }
+                $query = "INSERT INTO unidades_competencia (codigo, texto) VALUES (?, ?)";
+                $db->execute($query, $codigo, $texto);
             }
-            closeDBConnection($db);
+            $db->close();
             sendJSONSuccess(array('codigo' => $codigo), 'Unidad de competencia guardada');
             break;
 
@@ -204,17 +161,13 @@ try {
             if (empty($codigo)) {
                 throw new Exception('Código de unidad inválido');
             }
-            $codigo = mysqli_real_escape_string($db, $codigo);
-            $result = mysqli_query($db, "SELECT COUNT(*) AS total FROM cualificaciones_unidades WHERE codigoUnidad='$codigo'");
-            $fila = mysqli_fetch_assoc($result);
+            $fila = $db->fetchOne("SELECT COUNT(*) AS total FROM cualificaciones_unidades WHERE codigoUnidad=?", $codigo);
             if ($fila['total'] > 0) {
-                closeDBConnection($db);
+                $db->close();
                 sendJSONError('La unidad está asociada a alguna cualificación');
             }
-            if (!mysqli_query($db, "DELETE FROM unidades_competencia WHERE codigo='$codigo'")) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $db->execute("DELETE FROM unidades_competencia WHERE codigo=?", $codigo);
+            $db->close();
             sendJSONSuccess(null, 'Unidad de competencia eliminada');
             break;
 
@@ -224,22 +177,13 @@ try {
             if (empty($codigo)) {
                 throw new Exception('Código de cualificación inválido');
             }
-            $codigo = mysqli_real_escape_string($db, $codigo);
             $sql = "SELECT cu.codigoUnidad, uc.texto AS texto
                     FROM cualificaciones_unidades cu
                     JOIN unidades_competencia uc ON uc.codigo = cu.codigoUnidad
-                    WHERE cu.codigoCualificacion='$codigo'
+                    WHERE cu.codigoCualificacion=?
                     ORDER BY cu.codigoUnidad";
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $asociaciones = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $asociaciones[] = $fila;
-            }
-            mysqli_free_result($result);
-            closeDBConnection($db);
+            $asociaciones = $db->fetchAll($sql, $codigo);
+            $db->close();
             sendJSONSuccess($asociaciones);
             break;
 
@@ -253,13 +197,9 @@ try {
             if (empty($codigoCualificacion) || empty($codigoUnidad)) {
                 throw new Exception('Datos incompletos para asociar la unidad');
             }
-            $codigoCualificacion = mysqli_real_escape_string($db, $codigoCualificacion);
-            $codigoUnidad = mysqli_real_escape_string($db, $codigoUnidad);
-            $query = "INSERT INTO cualificaciones_unidades (codigoCualificacion, codigoUnidad) VALUES ('$codigoCualificacion', '$codigoUnidad')";
-            if (!mysqli_query($db, $query)) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $query = "INSERT INTO cualificaciones_unidades (codigoCualificacion, codigoUnidad) VALUES (?, ?)";
+            $db->execute($query, $codigoCualificacion, $codigoUnidad);
+            $db->close();
             sendJSONSuccess(null, 'Unidad de competencia asociada');
             break;
 
@@ -273,19 +213,16 @@ try {
             if (empty($codigoCualificacion) || empty($codigoUnidad)) {
                 throw new Exception('Datos incompletos para disociar la unidad');
             }
-            $codigoCualificacion = mysqli_real_escape_string($db, $codigoCualificacion);
-            $codigoUnidad = mysqli_real_escape_string($db, $codigoUnidad);
-            if (!mysqli_query($db, "DELETE FROM cualificaciones_unidades WHERE codigoCualificacion='$codigoCualificacion' AND codigoUnidad='$codigoUnidad'")) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $db->execute("DELETE FROM cualificaciones_unidades WHERE codigoCualificacion=? AND codigoUnidad=?", $codigoCualificacion, $codigoUnidad);
+            $db->close();
             sendJSONSuccess(null, 'Unidad de competencia desasociada');
             break;
 
         default:
             throw new Exception('Acción no válida: ' . $action);
     }
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 } catch (Exception $e) {
-    closeDBConnection($db);
     sendJSONError($e->getMessage());
 }

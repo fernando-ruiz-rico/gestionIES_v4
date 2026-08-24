@@ -19,12 +19,8 @@ checkSession();
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-$db = getDBConnection();
-if (!$db) {
-    sendJSONError('Error de conexión a la base de datos');
-}
-
 try {
+    $db = Db::open();
     switch ($action) {
         // Devuelve los datos de la selección para un escenario (para exportar)
         case 'listar':
@@ -38,49 +34,24 @@ try {
                               g.id AS idGrupo, g.nombre AS nombreGrupo, g.abreviatura AS abrevGrupo, g.orden AS ordenGrupo, g.mostrar
                           FROM cursos c
                           JOIN grupos g ON g.idCurso = c.id
-                          WHERE c.id IN (SELECT idCurso FROM materias WHERE idDepartamento=$idDepartamento)
+                          WHERE c.id IN (SELECT idCurso FROM materias WHERE idDepartamento=?)
                           ORDER BY c.orden, g.orden";
-            $result = mysqli_query($db, $sqlCursos);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $cursos = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $cursos[] = $fila;
-            }
-            mysqli_free_result($result);
+            $cursos = $db->fetchAll($sqlCursos, $idDepartamento);
 
             // Obtenemos las materias del departamento
             $sqlMaterias = "SELECT m.id AS idMateria, m.nombre AS nombre, m.idCurso AS idCurso, m.horas AS horas, m.idEspecialidad AS idEspecialidad, m.asignada_directiva AS asignada_directiva
-                             FROM materias m
-                             WHERE m.idDepartamento=$idDepartamento ORDER BY m.id";
-            $result = mysqli_query($db, $sqlMaterias);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $materias = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $materias[] = $fila;
-            }
-            mysqli_free_result($result);
+                              FROM materias m
+                              WHERE m.idDepartamento=? ORDER BY m.id";
+            $materias = $db->fetchAll($sqlMaterias, $idDepartamento);
 
             // Obtenemos las selecciones del escenario
             $sqlSel = "SELECT s.id AS id, s.idProfesor AS idProfesor, s.idMateria AS idMateria, s.idGrupo AS idGrupo, s.horas AS horas, s.orden AS orden, p.nombre AS nombreProfesor
-                       FROM seleccion s
-                       JOIN profesores p ON p.id = s.idProfesor
-                       WHERE s.idEscenario=$idEscenario
-                       ORDER BY s.orden, p.orden";
-            $result = mysqli_query($db, $sqlSel);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $selecciones = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $selecciones[] = $fila;
-            }
-            mysqli_free_result($result);
+                        FROM seleccion s
+                        JOIN profesores p ON p.id = s.idProfesor
+                        WHERE s.idEscenario=?
+                        ORDER BY s.orden, p.orden";
+            $selecciones = $db->fetchAll($sqlSel, $idEscenario);
 
-            closeDBConnection($db);
             sendJSONSuccess(array(
                 'cursos' => $cursos,
                 'materias' => $materias,
@@ -91,7 +62,8 @@ try {
         default:
             throw new Exception('Acción no válida: ' . $action);
     }
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 } catch (Exception $e) {
-    closeDBConnection($db);
     sendJSONError($e->getMessage());
 }

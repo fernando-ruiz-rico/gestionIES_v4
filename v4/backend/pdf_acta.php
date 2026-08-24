@@ -31,19 +31,18 @@ if ($idActa <= 0)
     die('Acta inválida');
 }
 
-$db = getDBConnection();
-$sql = "SELECT departamentos.nombre AS nombreDepartamento, actas_departamentos.id, actas_departamentos.fecha, actas_departamentos.texto
+$conn = getDBConnection();
+$db = new Db($conn);
+try {
+    $fila = $db->fetchOne("SELECT departamentos.nombre AS nombreDepartamento, actas_departamentos.id, actas_departamentos.fecha, actas_departamentos.texto
         FROM departamentos, actas_departamentos
-        WHERE departamentos.id = actas_departamentos.idDepartamento AND actas_departamentos.id = " . $idActa;
-$result = mysqli_query($db, $sql);
-if (!$result)
-{
-    die('Error consultando la base de datos: ' . mysqli_error($db));
+        WHERE departamentos.id = actas_departamentos.idDepartamento AND actas_departamentos.id = ?", $idActa);
+} catch (DbException $e) {
+    die('Error consultando la base de datos: ' . $e->getMessage());
 }
 
-if (mysqli_num_rows($result) > 0)
+if ($fila)
 {
-    $fila = mysqli_fetch_assoc($result);
     $departamento = $fila['nombreDepartamento'];
     $fecha = date('d/m/Y', strtotime($fila['fecha']));
     $texto = $fila['texto'];
@@ -69,4 +68,4 @@ else
 {
     die('No se encontró el acta');
 }
-closeDBConnection($db);
+$db->close();

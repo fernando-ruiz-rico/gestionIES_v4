@@ -113,7 +113,8 @@ const PCCFContenidosDefectoView = {
     async mounted() {
         try {
             const response = await fetch('../backend/api/departamentos/listar.php');
-            this.departamentos = await response.json();
+            const data = await response.json();
+            if (data.success) this.departamentos = data.data || [];
         } catch (error) {
             Swal.fire('Error', error.message, 'error');
         }

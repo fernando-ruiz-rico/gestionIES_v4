@@ -26,8 +26,8 @@ function programacionesCategoria($db, $idMateria)
             JOIN cursos_ciclos cc ON cc.idCiclo = c.id
             JOIN cursos cu ON cu.id = cc.idCurso
             JOIN materias m ON m.idCurso = cu.id
-           WHERE m.id = $idMateria
-           LIMIT 1");
+           WHERE m.id = ?
+           LIMIT 1", $idMateria);
     return $fila ? 'FP' : 'ESO/BACH';
 }
 
@@ -58,8 +58,8 @@ function programacionesCargarApartados($db, $idMateria)
             'id'        => (int)$fila['id'],
             'tipo'      => (int)$fila['tipo'],
             'nombre'    => ($fila['subapartado']
-                                 ? "$principal.$secundario. "
-                                 : "$principal. ") . $fila['titulo']
+                              ? "$principal.$secundario. "
+                              : "$principal. ") . $fila['titulo']
         ];
     }
     return $apartados;
@@ -79,19 +79,21 @@ try {
                                (SELECT COUNT(DISTINCT cp.idApartado)
                                   FROM contenidos_programaciones cp
                                   WHERE cp.idMateria = m.id) AS num_apartados
-                            FROM materias m
-                            LEFT JOIN cursos c ON c.id = m.idCurso";
+                         FROM materias m
+                         LEFT JOIN cursos c ON c.id = m.idCurso";
+                $params = array();
 
                 if ($idMateria > 0) {
-                    $sql .= " WHERE m.id = $idMateria AND m.tiene_programacion = 1";
+                    $sql .= " WHERE m.id = ? AND m.tiene_programacion = 1";
+                    $params[] = $idMateria;
                 } else {
                     $sql .= " WHERE m.tiene_programacion = 1";
                 }
 
                 $sql .= " ORDER BY c.orden, c.nombre, m.nombre";
 
-                $programaciones = $db->fetchAll($sql);
-                echo json_encode(['success' => true, 'data' => $programaciones]);
+                $programaciones = call_user_func_array(array($db, 'fetchAll'), array_merge(array($sql), $params));
+                sendJSONSuccess($programaciones);
             } elseif ($action === 'obtener' && isset($_GET['idMateria'])) {
                 // FASE 2.1 — Ver programación (solo lectura): apartados + contenidos
                 // de la materia tal y como están guardados en v3.
@@ -102,13 +104,13 @@ try {
 
                 $sql = "SELECT ap.id AS idApartado, ap.titulo, c.texto
                             FROM apartados_programaciones ap
-                            JOIN contenidos_programaciones c ON c.idApartado = ap.id AND c.idMateria = $idMateria
+                            JOIN contenidos_programaciones c ON c.idApartado = ap.id AND c.idMateria = ?
                             ORDER BY ap.orden, c.id";
 
                 // Un apartado puede tener varios contenidos; se agrupan por orden de id.
                 $apartados = [];
                 $posicion = [];
-                foreach ($db->fetchAll($sql) as $fila) {
+                foreach ($db->fetchAll($sql, $idMateria) as $fila) {
                     $idA = $fila['idApartado'];
                     if (!isset($posicion[$idA])) {
                         $posicion[$idA] = count($apartados);
@@ -123,10 +125,9 @@ try {
                 }
 
                 if (empty($apartados)) {
-                    http_response_code(404);
-                    echo json_encode(['success' => false, 'error' => 'La materia no tiene programación']);
+                    sendJSONError('La materia no tiene programación', 404);
                 } else {
-                    echo json_encode(['success' => true, 'data' => $apartados]);
+                    sendJSONSuccess($apartados);
                 }
             } elseif ($action === 'cargar_materias') {
                 // FASE 2.1 — Desplegable de materias (fiel a v3/cargar_materias_programaciones.php).
@@ -142,12 +143,12 @@ try {
                               JOIN cursos cu ON cu.id = m.idCurso
                               JOIN seleccion s ON s.idMateria = m.id
                               JOIN escenarios_desideratas e ON e.id = s.idEscenario
-                             WHERE s.idProfesor = $idProfesor
+                             WHERE s.idProfesor = ?
                                AND m.tiene_programacion = 1
                                AND e.actual = 1
                              ORDER BY m.nombre";
                     $materias = [];
-                    foreach ($db->fetchAll($sql) as $fila) {
+                    foreach ($db->fetchAll($sql, $idProfesor) as $fila) {
                         $materias[] = [
                             'id'       => (int)$fila['id'],
                             'nombre'   => $fila['nomMateria'] . ' (' . $fila['nomCurso'] . ')'
@@ -161,26 +162,28 @@ try {
                               FROM materias m
                               JOIN cursos c ON c.id = m.idCurso
                              WHERE m.tiene_programacion = 1";
+                    $params = array();
                     if ($idDepartamento > 0) {
-                        $sql .= " AND m.idDepartamento = $idDepartamento";
+                        $sql .= " AND m.idDepartamento = ?";
+                        $params[] = $idDepartamento;
                     }
                     $sql .= " ORDER BY c.orden, m.nombre";
                     $materias = [];
-                    foreach ($db->fetchAll($sql) as $fila) {
+                    foreach (call_user_func_array(array($db, 'fetchAll'), array_merge(array($sql), $params)) as $fila) {
                         $materias[] = ['id' => (int)$fila['id'], 'nombre' => $fila['nombre']];
                     }
                 } else {
                     throw new Exception('Rol no reconocido');
                 }
 
-                echo json_encode(['success' => true, 'data' => $materias]);
+                sendJSONSuccess($materias);
             } elseif ($action === 'cargar_apartados') {
                 // FASE 2.1 — Apartados de una materia (fiel a v3/cargar_apartados.php).
                 $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
                 if ($idMateria <= 0) {
                     throw new Exception('ID de materia inválido');
                 }
-                echo json_encode(['success' => true, 'data' => programacionesCargarApartados($db, $idMateria)]);
+                sendJSONSuccess(programacionesCargarApartados($db, $idMateria));
             } elseif ($action === 'cargar_contenido') {
                 // FASE 2.1 — Texto de un apartado de una materia (v3/cargar_contenido_programacion).
                 $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
@@ -189,8 +192,9 @@ try {
                     throw new Exception('ID de materia o apartado inválido');
                 }
                 $fila = $db->fetchOne(
-                    "SELECT texto FROM contenidos_programaciones WHERE idMateria = $idMateria AND idApartado = $idApartado");
-                echo json_encode(['success' => true, 'data' => ['texto' => $fila ? $fila['texto'] : '']]);
+                    "SELECT texto FROM contenidos_programaciones WHERE idMateria = ? AND idApartado = ?",
+                    $idMateria, $idApartado);
+                sendJSONSuccess(array('texto' => $fila ? $fila['texto'] : ''));
             } else {
                 throw new Exception('Acción no válida');
             }
@@ -219,37 +223,41 @@ try {
                     $db->begin();
 
                     // Borrar contenidos previos de programación destino
-                    $db->execute("DELETE FROM contenidos_programaciones WHERE idMateria = $idMateriaDestino");
-                    $db->execute("DELETE FROM competencias_temas WHERE idTema IN (SELECT id FROM temas WHERE idMateria = $idMateriaDestino)");
-                    $db->execute("DELETE FROM criterios_temas WHERE idTema IN (SELECT id FROM temas WHERE idMateria = $idMateriaDestino)");
-                    $db->execute("DELETE FROM temas WHERE idMateria = $idMateriaDestino");
+                    $db->execute("DELETE FROM contenidos_programaciones WHERE idMateria = ?", $idMateriaDestino);
+                    $db->execute("DELETE FROM competencias_temas WHERE idTema IN (SELECT id FROM temas WHERE idMateria = ?)", $idMateriaDestino);
+                    $db->execute("DELETE FROM criterios_temas WHERE idTema IN (SELECT id FROM temas WHERE idMateria = ?)", $idMateriaDestino);
+                    $db->execute("DELETE FROM temas WHERE idMateria = ?", $idMateriaDestino);
 
                     // Insertar contenidos de la materia origen en la destino
                     $db->execute("INSERT INTO contenidos_programaciones(idMateria, idApartado, texto)
-                                   SELECT $idMateriaDestino AS idMateria, idApartado, texto
-                                   FROM contenidos_programaciones WHERE idMateria = $idMateriaOrigen");
+                                    SELECT ? AS idMateria, idApartado, texto
+                                    FROM contenidos_programaciones WHERE idMateria = ?",
+                        $idMateriaDestino, $idMateriaOrigen);
 
                     // Insertar temas
                     $db->execute("INSERT INTO temas(idMateria, orden, titulo, horas, trimestre, peso_evaluacion, descripcion, justificacion, contexto, contenidos, secuenciacion, recursos, evaluacion, metodologia, adaptaciones, contexto_defecto, recursos_defecto, metodologia_defecto, adaptaciones_defecto)
-                                   SELECT $idMateriaDestino AS idMateria, orden, titulo, horas, trimestre, peso_evaluacion, descripcion, justificacion, contexto, contenidos, secuenciacion, recursos, evaluacion, metodologia, adaptaciones, contexto_defecto, recursos_defecto, metodologia_defecto, adaptaciones_defecto
-                                   FROM temas WHERE idMateria = $idMateriaOrigen");
+                                    SELECT ? AS idMateria, orden, titulo, horas, trimestre, peso_evaluacion, descripcion, justificacion, contexto, contenidos, secuenciacion, recursos, evaluacion, metodologia, adaptaciones, contexto_defecto, recursos_defecto, metodologia_defecto, adaptaciones_defecto
+                                    FROM temas WHERE idMateria = ?",
+                        $idMateriaDestino, $idMateriaOrigen);
 
                     // Insertar RA y CE asociados
                     foreach ($db->fetchAll("SELECT criterios_temas.codigo as CE, temas.orden as tema, resultados_aprendizaje.orden as RA
                                             FROM criterios_temas, temas, resultados_aprendizaje
                                             WHERE criterios_temas.idRA = resultados_aprendizaje.id
                                               AND criterios_temas.idTema = temas.id
-                                              AND temas.idMateria = $idMateriaOrigen") as $fila) {
+                                              AND temas.idMateria = ?", $idMateriaOrigen) as $fila) {
                         $codigoCE = $fila['CE'];
                         $ordenRA = intval($fila['RA']);
                         $numTema = intval($fila['tema']);
 
                         // Buscar el id del RA para la materia destino
-                        $row2 = $db->fetchOne("SELECT id FROM resultados_aprendizaje WHERE idMateria = $idMateriaDestino AND orden = $ordenRA");
+                        $row2 = $db->fetchOne("SELECT id FROM resultados_aprendizaje WHERE idMateria = ? AND orden = ?",
+                            $idMateriaDestino, $ordenRA);
                         $idRA = $row2 ? $row2['id'] : null;
 
                         // Buscar el id del tema para la materia destino
-                        $row2 = $db->fetchOne("SELECT id FROM temas WHERE idMateria = $idMateriaDestino AND orden = $numTema");
+                        $row2 = $db->fetchOne("SELECT id FROM temas WHERE idMateria = ? AND orden = ?",
+                            $idMateriaDestino, $numTema);
                         $idTema = $row2 ? $row2['id'] : null;
 
                         if ($idRA && $idTema) {
@@ -264,7 +272,7 @@ try {
                     throw $e;
                 }
 
-                echo json_encode(['success' => true, 'message' => 'Programación importada correctamente']);
+                sendJSONSuccess(null, 'Programación importada correctamente');
             } elseif ($action === 'guardar_contenido') {
                 // FASE 2.1 — Guardar el texto de un apartado editable (v3/insertar_contenido_programacion).
                 // Permiso: sesión válida (v3 lo permite a cualquier usuario con sesión, y la
@@ -282,15 +290,16 @@ try {
                 $texto = isset($input['texto']) ? $input['texto'] : '';
 
                 $fila = $db->fetchOne(
-                    "SELECT id FROM contenidos_programaciones WHERE idMateria = $idMateria AND idApartado = $idApartado");
+                    "SELECT id FROM contenidos_programaciones WHERE idMateria = ? AND idApartado = ?",
+                    $idMateria, $idApartado);
 
                 // Fiel a v3/insertar_contenido_programacion.php: si el texto es
                 // idéntico al ya guardado, MySQL no modifica filas → "sin cambios".
                 $existia = (bool)$fila;
                 if ($existia) {
                     $modificadas = $db->execute(
-                        "UPDATE contenidos_programaciones SET texto = ? WHERE idMateria = $idMateria AND idApartado = $idApartado",
-                        $texto);
+                        "UPDATE contenidos_programaciones SET texto = ? WHERE idMateria = ? AND idApartado = ?",
+                        $texto, $idMateria, $idApartado);
                 } else {
                     $modificadas = $db->execute(
                         "INSERT INTO contenidos_programaciones (idMateria, idApartado, texto) VALUES (?, ?, ?)",
@@ -298,11 +307,9 @@ try {
                 }
 
                 $sinCambios = !$existia ? false : ($modificadas == 0);
-                echo json_encode([
-                    'success'      => true,
-                    'sin_cambios' => (bool)$sinCambios,
-                    'message'     => $sinCambios ? 'El contenido ya estaba guardado así' : 'Contenido guardado correctamente'
-                ]);
+                sendJSONSuccess(
+                    array('sin_cambios' => (bool)$sinCambios),
+                    $sinCambios ? 'El contenido ya estaba guardado así' : 'Contenido guardado correctamente');
             } else {
                 // FASE 2.1 — No hay fila única de programación que eliminar a este nivel.
                 throw new Exception('Las programaciones se gestionan por apartados y contenidos; aquí solo se puede listar, ver, importar y guardar el contenido de un apartado.');
@@ -318,10 +325,8 @@ try {
             throw new Exception('Método no permitido');
     }
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error de base de datos: ' . $e->getMessage()]);
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 } catch (Exception $e) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    sendJSONError($e->getMessage(), 400);
 }
 ?>

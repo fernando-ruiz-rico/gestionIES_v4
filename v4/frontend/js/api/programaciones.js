@@ -101,7 +101,12 @@ const programacionesAPI = {
             if (!data.success) {
                 throw new Error(data.error || 'Error al guardar el contenido');
             }
-            return data;
+            // Contrato unificado: sin_cambios viaja dentro de data.data
+            return {
+                success: true,
+                sin_cambios: !!(data.data && data.data.sin_cambios),
+                message: data.message
+            };
         } catch (error) {
             console.error('Error en guardar contenido:', error);
             throw error;

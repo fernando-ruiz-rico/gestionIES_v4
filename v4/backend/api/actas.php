@@ -23,11 +23,6 @@ require_once '../config.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-$db = getDBConnection();
-if (!$db) {
-    sendJSONError('Error de conexión a la base de datos');
-}
-
 // Permisos de edición (admin o jefe de departamento)
 function tienePermisoEdicion()
 {
@@ -47,6 +42,8 @@ function puedeEditarDepartamento($idDepartamento)
 }
 
 try {
+    $db = Db::open();
+
     switch ($action) {
         // Lista las actas de un departamento (más reciente primero)
         case 'listar':
@@ -54,17 +51,7 @@ try {
             if ($idDepartamento <= 0) {
                 throw new Exception('ID de departamento inválido');
             }
-            $sql = "SELECT id, fecha FROM actas_departamentos WHERE idDepartamento=$idDepartamento ORDER BY fecha DESC";
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $actas = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $actas[] = $fila;
-            }
-            mysqli_free_result($result);
-            closeDBConnection($db);
+            $actas = $db->fetchAll("SELECT id, fecha FROM actas_departamentos WHERE idDepartamento=? ORDER BY fecha DESC", $idDepartamento);
             sendJSONSuccess($actas);
             break;
 
@@ -74,12 +61,10 @@ try {
             if ($idActa <= 0) {
                 throw new Exception('ID de acta inválido');
             }
-            $result = mysqli_query($db, "SELECT texto, fecha FROM actas_departamentos WHERE id=$idActa");
-            $fila = mysqli_fetch_assoc($result);
+            $fila = $db->fetchOne("SELECT texto, fecha FROM actas_departamentos WHERE id=?", $idActa);
             if (!$fila) {
-                throw new Exception('Acta no encontrada');
+                sendJSONError('Acta no encontrada', 404);
             }
-            closeDBConnection($db);
             sendJSONSuccess($fila);
             break;
 
@@ -113,26 +98,19 @@ try {
             }
             $fechaForm = date('Y-m-d', $ts);
             if ($idActa > 0) {
-                $texto = mysqli_real_escape_string($db, $texto);
-                $fecha = mysqli_real_escape_string($db, $fechaForm);
-                $query = "UPDATE actas_departamentos SET texto='$texto', fecha='$fecha' WHERE id=$idActa";
+                $db->execute("UPDATE actas_departamentos SET texto=?, fecha=? WHERE id=?", $texto, $fechaForm, $idActa);
             } else {
-                $texto = mysqli_real_escape_string($db, $texto);
-                $fecha = mysqli_real_escape_string($db, $fechaForm);
-                $query = "INSERT INTO actas_departamentos (idDepartamento, texto, fecha) VALUES ($idDepartamento, '$texto', '$fecha')";
+                $db->execute("INSERT INTO actas_departamentos (idDepartamento, texto, fecha) VALUES (?, ?, ?)", $idDepartamento, $texto, $fechaForm);
             }
-            if (!mysqli_query($db, $query)) {
-                throw new Exception(mysqli_error($db));
-            }
-            $nuevoId = ($idActa > 0) ? $idActa : mysqli_insert_id($db);
-            closeDBConnection($db);
+            $nuevoId = ($idActa > 0) ? $idActa : $db->insertId();
             sendJSONSuccess(array('id' => $nuevoId), 'Acta guardada');
             break;
 
         default:
             throw new Exception('Acción no válida: ' . $action);
     }
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 } catch (Exception $e) {
-    closeDBConnection($db);
     sendJSONError($e->getMessage());
 }

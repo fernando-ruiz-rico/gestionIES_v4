@@ -13,24 +13,12 @@ $permisos = (isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin') ||
             (!empty($_SESSION['idUsuario']) && !empty($_POST['id']) && $_SESSION['idUsuario'] == $_POST['id']);
 
 if (!$permisos) {
-    http_response_code(403);
-    echo json_encode(['error' => 'No tiene permisos para realizar esta acción']);
-    exit;
+    sendJSONError('No tiene permisos para realizar esta acción', 403);
 }
 
 // Validar datos requeridos
 if (empty($_POST['nombre']) || empty($_POST['idDepartamento'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Nombre y departamento son requeridos']);
-    exit;
-}
-
-$conn = getDBConnection();
-
-if (!$conn) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión a la base de datos']);
-    exit;
+    sendJSONError('Nombre y departamento son requeridos', 400);
 }
 
 // Las consultas están parametrizadas, así que ya no hace falta escapar los datos
@@ -61,7 +49,7 @@ $observaciones = !empty($observaciones) ? $observaciones : null;
 
 // Si no llega un "id" de profesor, es una inserción de nuevo profesor
 try {
-    $db = new Db($conn);
+    $db = Db::open();
 
     if (empty($_POST['id'])) {
         // Si no ha puesto clave le ponemos como clave su propio login
@@ -81,7 +69,7 @@ try {
             insertarPreferencias($db, $id_nuevo, $prefRojas, $prefAmarillas);
         }
 
-        echo json_encode(['success' => true, 'id' => $id_nuevo, 'mensaje' => 'Profesor creado correctamente']);
+        sendJSONSuccess(array('id' => $id_nuevo, 'mensaje' => 'Profesor creado correctamente'));
     } else {
         // Actualizar profesor existente
         $idProfesor = intval($_POST['id']);
@@ -107,13 +95,11 @@ try {
             insertarPreferencias($db, $idProfesor, $prefRojas, $prefAmarillas);
         }
 
-        echo json_encode(['success' => true, 'mensaje' => 'Profesor actualizado correctamente']);
+        sendJSONSuccess(array('mensaje' => 'Profesor actualizado correctamente'));
     }
 } catch (DbException $e) {
-    http_response_code(500);
     $error = empty($_POST['id']) ? 'Error al insertar el profesor' : 'Error al actualizar el profesor';
-    echo json_encode(['error' => $error . ': ' . $e->getMessage()]);
-    exit;
+    sendJSONError($error . ': ' . $e->getMessage(), 500);
 }
 
 // Función auxiliar para insertar preferencias horarias

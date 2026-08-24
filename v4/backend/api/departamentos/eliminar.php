@@ -12,15 +12,11 @@ require_once '../../config.php';
 $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';
 
 if (!$permisos) {
-    http_response_code(403);
-    echo json_encode(['error' => 'No tiene permisos para realizar esta acción']);
-    exit;
+    sendJSONError('No tiene permisos para realizar esta acción', 403);
 }
 
 if (empty($_POST['id'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'ID de departamento no proporcionado']);
-    exit;
+    sendJSONError('ID de departamento no proporcionado', 400);
 }
 
 $id = intval($_POST['id']);
@@ -32,8 +28,7 @@ try {
     $profesor = $db->fetchOne("SELECT id FROM profesores WHERE idDepartamento = ?", $id);
 
     if ($profesor) {
-        echo json_encode(['success' => false, 'mensaje' => 'No se puede eliminar el departamento porque tiene profesores asociados']);
-        exit;
+        sendJSONError('No se puede eliminar el departamento porque tiene profesores asociados', 200);
     }
 
     // Borramos dependencias con otras tablas
@@ -44,15 +39,12 @@ try {
     // Borramos el departamento
     $afectadas = $db->execute("DELETE FROM departamentos WHERE id = ?", $id);
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
 if ($afectadas == 0) {
-    echo json_encode(['success' => false, 'mensaje' => 'Error al eliminar el departamento']);
-    exit;
+    sendJSONError('Error al eliminar el departamento', 200);
 }
 
-echo json_encode(['success' => true, 'mensaje' => 'Departamento eliminado correctamente']);
+sendJSONSuccess(null, 'Departamento eliminado correctamente');
 ?>

@@ -64,7 +64,7 @@ const temasAPI = {
         if (!data.success) {
             throw new Error(data.error || 'Error al guardar el tema');
         }
-        return data;
+        return data.data;
     },
 
     async borrar(idTema) {

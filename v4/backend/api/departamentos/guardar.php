@@ -11,9 +11,7 @@ require_once '../../config.php';
 checkPermission(array(ROLE_ADMIN));
 
 if (empty($_POST['nombre'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'El nombre del departamento es requerido']);
-    exit;
+    sendJSONError('El nombre del departamento es requerido', 400);
 }
 
 $nombre = $_POST['nombre'];
@@ -31,14 +29,12 @@ try {
         $idNuevo = $id;
     }
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
 if ($id === null) {
-    echo json_encode(['success' => true, 'id' => (int)$idNuevo, 'mensaje' => 'Departamento creado correctamente']);
+    sendJSONSuccess(array('id' => (int)$idNuevo), 'Departamento creado correctamente');
 } else {
-    echo json_encode(['success' => true, 'mensaje' => 'Departamento actualizado correctamente']);
+    sendJSONSuccess(array('id' => (int)$idNuevo), 'Departamento actualizado correctamente');
 }
 ?>

@@ -13,9 +13,7 @@ $activo_desideratas = isset($datos['activo_desideratas']) ? intval($datos['activ
 $modo_rueda = isset($datos['modo_rueda']) ? intval($datos['modo_rueda']) : 0;
 
 if (empty($nombre)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Nombre obligatorio']);
-    exit;
+    sendJSONError('Nombre obligatorio', 400);
 }
 
 // La tabla real para escenarios es 'escenarios_desideratas'
@@ -27,10 +25,8 @@ try {
         $db->execute("INSERT INTO escenarios_desideratas (nombre, actual, activo_desideratas, modo_rueda) VALUES (?, ?, ?, ?)", $nombre, $actual, $activo_desideratas, $modo_rueda);
     }
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
-echo json_encode(['success' => true, 'message' => 'Guardado']);
+sendJSONSuccess(array('id' => $id), 'Guardado');
 ?>

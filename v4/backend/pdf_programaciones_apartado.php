@@ -142,6 +142,7 @@ if (!empty($_REQUEST['idApartado']) && !empty($_REQUEST['idMateria'])) {
     if (!$db) {
         die('Error de conexión a la base de datos.');
     }
+    $db = new Db($db);
     try {
         pgGenerarPDFApartado($db, (int)$_REQUEST['idMateria'], (int)$_REQUEST['idApartado']);
     } catch (Exception $e) {

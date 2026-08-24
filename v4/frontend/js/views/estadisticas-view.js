@@ -69,7 +69,8 @@ const EstadisticasView = {
     methods: {
         async cargarDepartamentos() {
             const result = await fetch('../backend/api/departamentos/listar.php', { credentials: 'same-origin' });
-            this.departamentos = await result.json();
+            const data = await result.json();
+            if (data.success) this.departamentos = data.data || [];
         },
 
         async cargar() {

@@ -16,9 +16,7 @@ if (esUsuarioSuper($rol)) {
     if (isset($session['activo']) && $session['activo'] == 1) {
         // Ok, continuar
     } else {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'No tiene permisos para realizar esta acción']);
-        exit;
+        sendJSONError('No tiene permisos para realizar esta acción', 403);
     }
 }
 
@@ -36,72 +34,36 @@ if (esUsuarioSuper($rol)) {
 }
 
 if ($idGrupo <= 0 || $idProfesor <= 0) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Parámetros no válidos']);
-    exit;
+    sendJSONError('Parámetros no válidos', 400);
 }
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error de conexión a la base de datos']);
-    exit;
-}
+try {
+    $db = Db::open();
 
-$texto = trim($texto);
+    $texto = trim($texto);
 
-// Verificar si ya existe una fila para este triplete (tema + grupo + profesor)
-$stmtCheck = mysqli_prepare($db, "SELECT id FROM programaciones_aula_temas WHERE idTema = ? AND idGrupo = ? AND idProfesor = ?");
-mysqli_stmt_bind_param($stmtCheck, "iii", $idTema, $idGrupo, $idProfesor);
+    // Verificar si ya existe una fila para este triplete (tema + grupo + profesor)
+    $filaCheck = $db->fetchOne("SELECT id FROM programaciones_aula_temas WHERE idTema = ? AND idGrupo = ? AND idProfesor = ?", $idTema, $idGrupo, $idProfesor);
+    $existe = ($filaCheck !== null);
 
-if (!mysqli_stmt_execute($stmtCheck)) {
-    mysqli_close($db);
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error al verificar registro: ' . mysqli_error($db)]);
-    exit;
-}
-
-$resultCheck = mysqli_stmt_get_result($stmtCheck);
-$existe = mysqli_num_rows($resultCheck) > 0;
-
-if ($texto === '') {
-    // Borrar el contenido si está vacío (mismo comportamiento que v3: insertar_contenido_programacion.php)
-    if ($existe) {
-        $stmtDel = mysqli_prepare($db, "DELETE FROM programaciones_aula_temas WHERE idTema = ? AND idGrupo = ? AND idProfesor = ?");
-        mysqli_stmt_bind_param($stmtDel, "iii", $idTema, $idGrupo, $idProfesor);
-
-        if (mysqli_stmt_execute($stmtDel)) {
-            echo json_encode(['success' => true, 'message' => 'Contenido eliminado']);
+    if ($texto === '') {
+        // Borrar el contenido si está vacío (mismo comportamiento que v3: insertar_contenido_programacion.php)
+        if ($existe) {
+            $db->execute("DELETE FROM programaciones_aula_temas WHERE idTema = ? AND idGrupo = ? AND idProfesor = ?", $idTema, $idGrupo, $idProfesor);
+            sendJSONSuccess(null, 'Contenido eliminado');
         } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'error' => 'Error al eliminar: ' . mysqli_error($db)]);
+            // No había nada que borrar
+            sendJSONSuccess(null, 'No hay contenido para eliminar');
         }
-
-        mysqli_stmt_close($stmtDel);
     } else {
-        // No había nada que borrar
-        echo json_encode(['success' => true, 'message' => 'No hay contenido para eliminar']);
+        if ($existe) {
+            $db->execute("UPDATE programaciones_aula_temas SET texto = ? WHERE idTema = ? AND idGrupo = ? AND idProfesor = ?", $texto, $idTema, $idGrupo, $idProfesor);
+        } else {
+            $db->execute("INSERT INTO programaciones_aula_temas (idTema, idGrupo, idProfesor, texto) VALUES (?, ?, ?, ?)", $idTema, $idGrupo, $idProfesor, $texto);
+        }
+        sendJSONSuccess(null, 'Contenido guardado correctamente');
     }
-} else {
-    if ($existe) {
-        $stmt = mysqli_prepare($db, "UPDATE programaciones_aula_temas SET texto = ? WHERE idTema = ? AND idGrupo = ? AND idProfesor = ?");
-        mysqli_stmt_bind_param($stmt, "siii", $texto, $idTema, $idGrupo, $idProfesor);
-    } else {
-        $stmt = mysqli_prepare($db, "INSERT INTO programaciones_aula_temas (idTema, idGrupo, idProfesor, texto) VALUES (?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, "iiis", $idTema, $idGrupo, $idProfesor, $texto);
-    }
-
-    if (mysqli_stmt_execute($stmt)) {
-        echo json_encode(['success' => true, 'message' => 'Contenido guardado correctamente']);
-    } else {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error al guardar: ' . mysqli_error($db)]);
-    }
-
-    mysqli_stmt_close($stmt);
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
-
-mysqli_stmt_close($stmtCheck);
-mysqli_free_result($resultCheck);
-mysqli_close($db);
 ?>

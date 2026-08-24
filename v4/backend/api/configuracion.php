@@ -18,11 +18,7 @@ require_once '../config.php';
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-$db = getDBConnection();
- $datos = json_decode(file_get_contents("php://input"), true) ?: [];
-if (!$db) {
-    sendJSONError('Error de conexión a la base de datos');
-}
+$datos = json_decode(file_get_contents("php://input"), true) ?: [];
 
 // Permiso fiel a v3: solo admin
 checkPermission(array(ROLE_ADMIN));
@@ -30,12 +26,13 @@ checkPermission(array(ROLE_ADMIN));
 // Consulta un valor de la tabla config
 function getConfigValue($db, $clave)
 {
-    $result = mysqli_query($db, "SELECT valor FROM config WHERE clave='" . mysqli_real_escape_string($db, $clave) . "'");
-    $fila = $result ? mysqli_fetch_assoc($result) : null;
+    $fila = $db->fetchOne("SELECT valor FROM config WHERE clave = ?", $clave);
     return $fila ? $fila['valor'] : null;
 }
 
 try {
+    $db = Db::open();
+
     switch ($action) {
         // Devuelve el estado de configuración.
         // El frontend espera {data: {activaciones: {evaluacionRA, seleccion}}};
@@ -44,7 +41,7 @@ try {
         case 'obtener':
             $programaciones = getConfigValue($db, 'programaciones');
             $desideratas = getConfigValue($db, 'desideratas');
-            closeDBConnection($db);
+            $db->close();
             sendJSONSuccess(array(
                 'activaciones' => array(
                     'evaluacionRA' => ($programaciones === 'ON'),
@@ -61,13 +58,11 @@ try {
             if ($nuevo !== $repetirNuevo) {
                 throw new Exception('La nueva contraseña y la repetición no coinciden');
             }
-            $nuevo = mysqli_real_escape_string($db, $nuevo);
-            $antiguo = mysqli_real_escape_string($db, $antiguo);
-            $result = mysqli_query($db, "UPDATE config SET valor='" . md5($nuevo) . "' WHERE clave='admin' AND valor='" . md5($antiguo) . "'");
-            if (!$result || mysqli_affected_rows($db) == 0) {
+            $afectadas = $db->execute("UPDATE config SET valor=md5(?) WHERE clave='admin' AND valor=md5(?)", $nuevo, $antiguo);
+            if ($afectadas == 0) {
                 throw new Exception('La contraseña antigua no es correcta');
             }
-            closeDBConnection($db);
+            $db->close();
             sendJSONSuccess(null, 'Contraseña de administrador actualizada');
             break;
 
@@ -90,18 +85,16 @@ try {
             } else {
                 throw new Exception('Valor de activación no válido');
             }
-            $result = mysqli_query($db, "UPDATE config SET valor='" . $activo . "' WHERE clave='" . $clave . "'");
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $db->execute("UPDATE config SET valor=? WHERE clave=?", $activo, $clave);
+            $db->close();
             sendJSONSuccess(array('clave' => $clave, 'valor' => $activo), 'Activación actualizada');
             break;
 
         default:
             throw new Exception('Acción no válida: ' . $action);
     }
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 } catch (Exception $e) {
-    closeDBConnection($db);
     sendJSONError($e->getMessage());
 }

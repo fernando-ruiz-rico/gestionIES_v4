@@ -22,12 +22,8 @@ $action = isset($_GET['action']) ? $_GET['action'] : '';
 // Horas lectivas de referencia para un profesor (según v3)
 define('HORAS_PROFESOR', 18);
 
-$db = getDBConnection();
-if (!$db) {
-    sendJSONError('Error de conexión a la base de datos');
-}
-
 try {
+    $db = Db::open();
     switch ($action) {
         // Devuelve las estadísticas de un departamento para un escenario
         case 'listar':
@@ -39,41 +35,31 @@ try {
             // Horas totales impartidas por especialidad
             $sqlEsp = "SELECT e.id AS idEspecialidad, e.descripcion AS descripcion, e.horasTutoria AS tutoria, e.horasIngles AS ingles, e.profesores AS profesores
                        FROM especialidades e
-                       WHERE e.idDepartamento=$idDepartamento";
-            $result = mysqli_query($db, $sqlEsp);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
+                       WHERE e.idDepartamento=?";
             $especialidades = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
+            $filasEsp = $db->fetchAll($sqlEsp, $idDepartamento);
+            foreach ($filasEsp as $fila) {
                 $especialidades[$fila['idEspecialidad']] = $fila;
             }
-            mysqli_free_result($result);
 
             foreach ($especialidades as $idEsp => $valores) {
-                $resultAux = mysqli_query($db, "SELECT COALESCE(SUM(seleccion.horas), 0) AS suma FROM profesores, seleccion WHERE profesores.id = seleccion.idProfesor AND profesores.idEspecialidad='$idEsp' AND seleccion.idEscenario=$idEscenario AND profesores.idDepartamento=$idDepartamento");
-                $fila = mysqli_fetch_assoc($resultAux);
-                $especialidades[$idEsp]['horas_totales'] = $fila['suma'];
+                $filaSuma = $db->fetchOne("SELECT COALESCE(SUM(seleccion.horas), 0) AS suma FROM profesores, seleccion WHERE profesores.id = seleccion.idProfesor AND profesores.idEspecialidad=? AND seleccion.idEscenario=? AND profesores.idDepartamento=?", $idEsp, $idEscenario, $idDepartamento);
+                $especialidades[$idEsp]['horas_totales'] = $filaSuma['suma'];
                 $especialidades[$idEsp]['horas_ref'] = $valores['profesores'] * HORAS_PROFESOR;
             }
 
             // Horas totales por profesor
             $sqlProf = "SELECT p.id AS id, p.nombre AS nombre, COALESCE(SUM(s.horas), 0) AS horas
                         FROM profesores p
-                        LEFT JOIN seleccion s ON s.idProfesor = p.id AND s.idEscenario = $idEscenario
-                        WHERE p.idDepartamento=$idDepartamento AND p.activo=1
+                        LEFT JOIN seleccion s ON s.idProfesor = p.id AND s.idEscenario = ?
+                        WHERE p.idDepartamento=? AND p.activo=1
                         GROUP BY p.id ORDER BY p.orden";
-            $result = mysqli_query($db, $sqlProf);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
             $profesores = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
+            $filasProf = $db->fetchAll($sqlProf, $idEscenario, $idDepartamento);
+            foreach ($filasProf as $fila) {
                 $profesores[] = $fila;
             }
-            mysqli_free_result($result);
 
-            closeDBConnection($db);
             sendJSONSuccess(array(
                 'especialidades' => $especialidades,
                 'profesores' => $profesores,
@@ -84,7 +70,8 @@ try {
         default:
             throw new Exception('Acción no válida: ' . $action);
     }
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 } catch (Exception $e) {
-    closeDBConnection($db);
     sendJSONError($e->getMessage());
 }

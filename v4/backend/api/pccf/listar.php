@@ -13,48 +13,30 @@ if ($idCiclo <= 0) {
     sendJSONError('Ciclo no válido', 400);
 }
 
-$db = getDBConnection();
-if (!$db) {
-    sendJSONError('Error de conexión a la base de datos', 500);
-}
+$db = Db::open();
 
 try {
     // Si se indica un apartado concreto, devuelve su texto.
     if ($idApartado > 0) {
-        $stmt = mysqli_prepare($db, "SELECT texto FROM contenidos_pccf WHERE idCiclo = ? AND idApartado = ?");
-        mysqli_stmt_bind_param($stmt, "ii", $idCiclo, $idApartado);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $texto = '';
-        if (mysqli_num_rows($result) > 0) {
-            $fila = mysqli_fetch_assoc($result);
-            $texto = $fila['texto'];
-        }
-        mysqli_free_result($result);
-        mysqli_stmt_close($stmt);
+        $fila = $db->fetchOne("SELECT texto FROM contenidos_pccf WHERE idCiclo = ? AND idApartado = ?",
+            $idCiclo, $idApartado);
+        $texto = $fila ? $fila['texto'] : '';
         sendJSONSuccess(['texto' => $texto]);
     } else {
         // De lo contrario, devuelve todo el contenido del ciclo agrupado por apartado.
-        $sql = "SELECT idApartado, texto FROM contenidos_pccf WHERE idCiclo = ? ORDER BY idApartado";
-        $stmt = mysqli_prepare($db, $sql);
-        mysqli_stmt_bind_param($stmt, "i", $idCiclo);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-
+        $filas = $db->fetchAll(
+            "SELECT idApartado, texto FROM contenidos_pccf WHERE idCiclo = ? ORDER BY idApartado",
+            $idCiclo);
         $contenido = [];
-        while ($fila = mysqli_fetch_assoc($result)) {
+        foreach ($filas as $fila) {
             $contenido[] = [
                 'idApartado' => $fila['idApartado'],
                 'texto'      => $fila['texto']
             ];
         }
-        mysqli_free_result($result);
-        mysqli_stmt_close($stmt);
         sendJSONSuccess($contenido);
     }
-} catch (Exception $e) {
-    sendJSONError($e->getMessage());
-} finally {
-    closeDBConnection($db);
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 ?>

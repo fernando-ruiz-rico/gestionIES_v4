@@ -56,7 +56,7 @@ function getActivaciones() {
     try {
         $filas = $db->fetchAll("SELECT clave, valor FROM config WHERE clave IN ('desideratas', 'programaciones')");
     } catch (DbException $e) {
-        sendJSONError('Error de base de datos: ' . $e->getMessage());
+        sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
     }
 
     foreach ($filas as $row) {

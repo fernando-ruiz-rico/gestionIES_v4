@@ -38,7 +38,7 @@ function handleLogin() {
     try {
         $rowAdm = $db->fetchOne("SELECT valor FROM config WHERE clave='admin' AND valor = ?", $md5pass);
     } catch (DbException $e) {
-        sendJSONError('Error de base de datos: ' . $e->getMessage());
+        sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
     }
     if ($rowAdm) {
         @session_start();
@@ -66,7 +66,7 @@ function handleLogin() {
                           WHERE usuario = ? AND clave = ? AND activo = 1",
             $username, $md5pass);
     } catch (DbException $e) {
-        sendJSONError('Error de base de datos: ' . $e->getMessage());
+        sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
     }
 
     if (!$user) {

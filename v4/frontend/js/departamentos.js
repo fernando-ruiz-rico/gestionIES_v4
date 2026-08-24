@@ -10,18 +10,20 @@ function cargarDepartamentos() {
         const contenedor = document.getElementById('listadepartamentos');
         if (!contenedor) return;
         
-        if (data.error) {
-            contenedor.innerHTML = '<div class="alert alert-danger m-3">' + escapeHtml(data.error) + '</div>';
+        if (!data.success) {
+            contenedor.innerHTML = '<div class="alert alert-danger m-3">' + escapeHtml(data.error || 'Error al cargar los departamentos') + '</div>';
             return;
         }
         
-        if (data.length === 0) {
+        const filas = data.data || [];
+        
+        if (filas.length === 0) {
             contenedor.innerHTML = '<div class="alert alert-info m-3">No hay departamentos registrados</div>';
             return;
         }
         
         let html = '';
-        data.forEach(depto => {
+        filas.forEach(depto => {
             html += '<div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3">';
             html += '<div class="d-flex align-items-center">';
             html += '<i class="bi bi-building me-3 text-primary fs-5"></i>';
@@ -52,13 +54,14 @@ function cargarDepartamentoModal(id) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.error) {
-            Avisos.error('Error al cargar el departamento: ' + data.error);
+        if (!data.success) {
+            Avisos.error(data.error || 'Error al cargar el departamento');
             return;
         }
         
-        document.getElementById('idDepartamento').value = data.id || '';
-        document.getElementById('nombre').value = data.nombre || '';
+        const depto = data.data || {};
+        document.getElementById('idDepartamento').value = depto.id || '';
+        document.getElementById('nombre').value = depto.nombre || '';
         
         // Mostrar el modal usando Bootstrap
         const modal = new bootstrap.Modal(document.getElementById('formdepartamento'));
@@ -104,7 +107,7 @@ function borrarDepartamento(id, nombre) {
                     Avisos.exito('¡Éxito!', 'Departamento eliminado correctamente');
                     cargarDepartamentos();
                 } else {
-                    Avisos.error(data.mensaje || 'Error al eliminar el departamento');
+                    Avisos.error(data.error || 'Error al eliminar el departamento');
                 }
             })
             .catch(error => {
@@ -138,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    Avisos.exito('¡Éxito!', data.mensaje || 'Departamento guardado correctamente');
+                    Avisos.exito('¡Éxito!', data.message || 'Departamento guardado correctamente');
                     limpiarFormularioDepartamentos();
                     
                     // Ocultar modal

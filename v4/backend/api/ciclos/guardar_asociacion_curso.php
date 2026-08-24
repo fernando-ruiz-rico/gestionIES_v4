@@ -5,13 +5,6 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión']);
-    exit;
-}
-
 // Solo admin
 checkPermission(array(ROLE_ADMIN));
 
@@ -20,26 +13,22 @@ $idCiclo = isset($datos['idCiclo']) ? intval($datos['idCiclo']) : 0;
 $idCurso = isset($datos['idCurso']) ? intval($datos['idCurso']) : 0;
 $orden   = isset($datos['orden']) ? intval($datos['orden']) : 0;
 if ($idCiclo <= 0 || $idCurso <= 0 || $orden <= 0) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Parámetros no válidos']);
-    exit;
+    sendJSONError('Parámetros no válidos', 400);
 }
 
-// Si la asociación ya existe actualizamos el orden; si no, la creamos
-$existe = mysqli_query($db, "SELECT COUNT(*) AS total FROM cursos_ciclos WHERE idCiclo = $idCiclo AND idCurso = $idCurso");
-$fila = mysqli_fetch_assoc($existe);
-mysqli_free_result($existe);
-if ($fila['total'] > 0) {
-    $ok = mysqli_query($db, "UPDATE cursos_ciclos SET orden = $orden WHERE idCiclo = $idCiclo AND idCurso = $idCurso");
-} else {
-    $ok = mysqli_query($db, "INSERT INTO cursos_ciclos (idCurso, idCiclo, orden) VALUES ($idCurso, $idCiclo, $orden)");
+try {
+    $db = Db::open();
+
+    // Si la asociación ya existe actualizamos el orden; si no, la creamos
+    $existe = $db->fetchOne("SELECT COUNT(*) AS total FROM cursos_ciclos WHERE idCiclo = ? AND idCurso = ?", $idCiclo, $idCurso);
+    if ($existe['total'] > 0) {
+        $db->execute("UPDATE cursos_ciclos SET orden = ? WHERE idCiclo = ? AND idCurso = ?", $orden, $idCiclo, $idCurso);
+    } else {
+        $db->execute("INSERT INTO cursos_ciclos (idCurso, idCiclo, orden) VALUES (?, ?, ?)", $idCurso, $idCiclo, $orden);
+    }
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
-mysqli_close($db);
-if ($ok) {
-    echo json_encode(['success' => true, 'message' => 'Asociación guardada']);
-} else {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error al guardar la asociación']);
-}
+sendJSONSuccess(null, 'Asociación guardada');
 ?>

@@ -18,38 +18,17 @@ if (esUsuarioSuper($rol)) {
 }
 
 if ($idGrupo <= 0 || $idProfesor <= 0) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Parámetros no válidos']);
-    exit;
+    sendJSONError('Parámetros no válidos', 400);
 }
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error de conexión a la base de datos']);
-    exit;
+try {
+    $db = Db::open();
+
+    $fila = $db->fetchOne("SELECT texto FROM programaciones_aula_temas WHERE idTema = ? AND idGrupo = ? AND idProfesor = ?", $idTema, $idGrupo, $idProfesor);
+    $texto = ($fila !== null) ? $fila['texto'] : '';
+
+    sendJSONSuccess(array('texto' => $texto));
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
-
-$stmt = mysqli_prepare($db, "SELECT texto FROM programaciones_aula_temas WHERE idTema = ? AND idGrupo = ? AND idProfesor = ?");
-mysqli_stmt_bind_param($stmt, "iii", $idTema, $idGrupo, $idProfesor);
-
-if (!mysqli_stmt_execute($stmt)) {
-    mysqli_close($db);
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error al ejecutar la consulta: ' . mysqli_error($db)]);
-    exit;
-}
-
-$result = mysqli_stmt_get_result($stmt);
-$texto = '';
-if (mysqli_num_rows($result) > 0) {
-    $fila = mysqli_fetch_assoc($result);
-    $texto = $fila['texto'];
-}
-
-mysqli_stmt_close($stmt);
-mysqli_free_result($result);
-mysqli_close($db);
-
-echo json_encode(['success' => true, 'data' => ['texto' => $texto]]);
 ?>

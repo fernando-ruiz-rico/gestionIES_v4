@@ -11,36 +11,23 @@ require_once '../../config.php';
 $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';
 
 if (!$permisos) {
-    http_response_code(403);
-    echo json_encode(['error' => 'No tiene permisos para realizar esta acción']);
-    exit;
+    sendJSONError('No tiene permisos para realizar esta acción', 403);
 }
 
 if (empty($_POST['idProfesor'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'ID de profesor no proporcionado']);
-    exit;
+    sendJSONError('ID de profesor no proporcionado', 400);
 }
 
 $idProfesor = intval($_POST['idProfesor']);
-$conn = getDBConnection();
-
-if (!$conn) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión a la base de datos']);
-    exit;
-}
 
 try {
-    $db = new Db($conn);
+    $db = Db::open();
 
     // Activar/Desactivar profesor (toggle !activo)
-    $db->execute("UPDATE profesores SET activo = !activo WHERE id = $idProfesor");
+    $db->execute("UPDATE profesores SET activo = !activo WHERE id = ?", $idProfesor);
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error al actualizar el estado del profesor: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error al actualizar el estado del profesor: ' . $e->getMessage(), 500);
 }
 
-echo json_encode(['success' => true, 'mensaje' => 'Estado del profesor actualizado correctamente']);
+sendJSONSuccess(array('mensaje' => 'Estado del profesor actualizado correctamente'));
 ?>

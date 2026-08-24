@@ -6,9 +6,7 @@ header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
 if (empty($_GET['id'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'ID de departamento no proporcionado']);
-    exit;
+    sendJSONError('ID de departamento no proporcionado', 400);
 }
 
 $id = intval($_GET['id']);
@@ -17,16 +15,12 @@ try {
     $db = Db::open();
     $departamento = $db->fetchOne("SELECT * FROM departamentos WHERE id = ?", $id);
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
 if (!$departamento) {
-    http_response_code(404);
-    echo json_encode(['error' => 'Departamento no encontrado']);
-    exit;
+    sendJSONError('Departamento no encontrado', 404);
 }
 
-echo json_encode($departamento);
+sendJSONSuccess($departamento);
 ?>

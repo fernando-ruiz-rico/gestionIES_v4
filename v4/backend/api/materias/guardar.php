@@ -7,9 +7,7 @@ checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
 $datos = json_decode(file_get_contents('php://input'), true);
 if (!$datos) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Datos inválidos']);
-    exit;
+    sendJSONError('Datos inválidos', 400);
 }
 
 // --- Campos del formulario (nombres como en v3/modales/materias.php) ---
@@ -48,9 +46,7 @@ $horasAnuales = ($horasAnuales == 0) ? null : $horasAnuales;
 $id = isset($datos['id']) ? intval($datos['id']) : 0;
 
 if (empty($nombre)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Nombre obligatorio']);
-    exit;
+    sendJSONError('Nombre obligatorio', 400);
 }
 
 try {
@@ -77,14 +73,8 @@ try {
         }
     }
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
-echo json_encode([
-    'success' => true,
-    'message' => 'Materia guardada correctamente',
-    'id' => (int)$nuevoId
-]);
+sendJSONSuccess(array('id' => (int)$nuevoId), 'Materia guardada correctamente');
 ?>

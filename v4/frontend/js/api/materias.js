@@ -9,7 +9,10 @@ const MateriasAPI = {
             const url = this.baseUrl + 'listar.php' + ((idCurso > 0) ? `?idCurso=${idCurso}` : '');
             const response = await fetch(url, { credentials: 'include' });
             const data = await response.json();
-            return { success: true, data: Array.isArray(data) ? data : [] };
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión', data: [] };
+            }
+            return { success: true, data: data.data };
         } catch (e) {
             console.error(e);
             return { success: false, error: 'Error de conexión', data: [] };
@@ -20,7 +23,10 @@ const MateriasAPI = {
         try {
             const response = await fetch(this.baseUrl + `obtener.php?id=${id}`, { credentials: 'include' });
             const data = await response.json();
-            return { success: true, data: data };
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión', data: null };
+            }
+            return { success: true, data: data.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión', data: null };
         }
@@ -60,7 +66,10 @@ const MateriasAPI = {
             const url = this.baseUrl + `listar_materias_grupos.php?idMateria=${idMateria}&idCurso=${idCurso}`;
             const response = await fetch(url, { credentials: 'include' });
             const data = await response.json();
-            return { success: true, data: data };
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión', data: null };
+            }
+            return { success: true, data: data.data };
         } catch (e) {
             console.error(e);
             return { success: false, error: 'Error de conexión', data: null };
@@ -88,7 +97,10 @@ const MateriasAPI = {
             const url = this.baseUrl + `competencias_listar.php?idMateria=${idMateria}`;
             const response = await fetch(url, { credentials: 'include' });
             const data = await response.json();
-            return { success: true, data: data };
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error de conexión', data: null };
+            }
+            return { success: true, data: data.data };
         } catch (e) {
             console.error(e);
             return { success: false, error: 'Error de conexión', data: null };

@@ -16,12 +16,9 @@ if ($orden === '') {
 
 $partes = explode(',', $orden);
 
-$db = getDBConnection();
-if (!$db) {
-    sendJSONError('Error de conexión a la base de datos', 500);
-}
-
 try {
+    $db = Db::open();
+
     $i = 0;
     foreach ($partes as $parte) {
         $parte = trim($parte);
@@ -31,16 +28,11 @@ try {
         $codApartado = intval($codApartado);
         if ($codApartado <= 0) continue;
         $i++;
-        $stmt = mysqli_prepare($db, "UPDATE apartados_pccf SET orden = ? WHERE id = ?");
-        mysqli_stmt_bind_param($stmt, "ii", $i, $codApartado);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
+        $db->execute("UPDATE apartados_pccf SET orden = ? WHERE id = ?", $i, $codApartado);
     }
 
     sendJSONSuccess(null, 'Orden actualizado correctamente');
-} catch (Exception $e) {
-    sendJSONError($e->getMessage());
-} finally {
-    closeDBConnection($db);
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 ?>

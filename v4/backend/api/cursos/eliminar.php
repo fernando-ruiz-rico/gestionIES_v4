@@ -12,9 +12,7 @@ checkPermission(array(ROLE_ADMIN));
 $datos = json_decode(file_get_contents('php://input'), true);
 $id = isset($datos['id']) ? intval($datos['id']) : 0;
 if ($id <= 0) {
-    http_response_code(400);
-    echo json_encode(['error' => 'ID inválido']);
-    exit;
+    sendJSONError('ID inválido', 400);
 }
 
 try {
@@ -26,9 +24,7 @@ try {
         $id, $id);
 
     if ($relacionado) {
-        http_response_code(409);
-        echo json_encode(['error' => 'El curso tiene grupos o materias. Elimínalas antes de borrar el curso.']);
-        exit;
+        sendJSONError('El curso tiene grupos o materias. Elimínalas antes de borrar el curso.', 409);
     }
 
     // Limpiamos los datos asociados al curso
@@ -38,16 +34,12 @@ try {
     $db->execute("DELETE FROM cursos_ciclos WHERE idCurso = ?", $id);
     $afectadas = $db->execute("DELETE FROM cursos WHERE id = ?", $id);
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
 if ($afectadas == 0) {
-    http_response_code(404);
-    echo json_encode(['error' => 'No se ha eliminado nada']);
-    exit;
+    sendJSONError('No se ha eliminado nada', 404);
 }
 
-echo json_encode(['success' => true, 'message' => 'Curso eliminado']);
+sendJSONSuccess(null, 'Curso eliminado');
 ?>

@@ -11,7 +11,8 @@ const ResultadosArendizajeAPI = {
                 (idDepartamento ? '&idDepartamento=' + idDepartamento : '');
             const response = await fetch(url, { credentials: 'include' });
             const data = await response.json();
-            return data;
+            if (!data.success) return { success: false, error: data.error || 'Error de conexión' };
+            return { success: true, data: data.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -21,7 +22,8 @@ const ResultadosArendizajeAPI = {
         try {
             const response = await fetch(this.baseUrl + '?action=cargar&idMateria=' + idMateria, { credentials: 'include' });
             const data = await response.json();
-            return data;
+            if (!data.success) return { success: false, error: data.error || 'Error de conexión' };
+            return { success: true, data: data.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -35,7 +37,9 @@ const ResultadosArendizajeAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            return await response.json();
+            const res = await response.json();
+            if (!res.success) return { success: false, error: res.error || 'Error de conexión' };
+            return { success: true, data: res.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -49,7 +53,9 @@ const ResultadosArendizajeAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            return await response.json();
+            const res = await response.json();
+            if (!res.success) return { success: false, error: res.error || 'Error de conexión' };
+            return { success: true, data: res.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -63,7 +69,9 @@ const ResultadosArendizajeAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            return await response.json();
+            const res = await response.json();
+            if (!res.success) return { success: false, error: res.error || 'Error de conexión' };
+            return { success: true, data: res.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -77,7 +85,9 @@ const ResultadosArendizajeAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: id })
             });
-            return await response.json();
+            const res = await response.json();
+            if (!res.success) return { success: false, error: res.error || 'Error de conexión' };
+            return { success: true, data: res.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -87,7 +97,8 @@ const ResultadosArendizajeAPI = {
         try {
             const response = await fetch(this.baseUrl + '?action=obtener&id=' + id, { credentials: 'include' });
             const data = await response.json();
-            return data;
+            if (!data.success) return { success: false, error: data.error || 'Error de conexión' };
+            return { success: true, data: data.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -101,7 +112,9 @@ const ResultadosArendizajeAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            return await response.json();
+            const res = await response.json();
+            if (!res.success) return { success: false, error: res.error || 'Error de conexión' };
+            return { success: true, data: res.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -115,7 +128,9 @@ const ResultadosArendizajeAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            return await response.json();
+            const res = await response.json();
+            if (!res.success) return { success: false, error: res.error || 'Error de conexión' };
+            return { success: true, data: res.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -129,7 +144,9 @@ const ResultadosArendizajeAPI = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            return await response.json();
+            const res = await response.json();
+            if (!res.success) return { success: false, error: res.error || 'Error de conexión' };
+            return { success: true, data: res.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }
@@ -139,7 +156,8 @@ const ResultadosArendizajeAPI = {
         try {
             const response = await fetch(this.baseUrl + '?action=cargar_criterios&idResultado=' + idResultado, { credentials: 'include' });
             const data = await response.json();
-            return data;
+            if (!data.success) return { success: false, error: data.error || 'Error de conexión' };
+            return { success: true, data: data.data };
         } catch (e) {
             return { success: false, error: 'Error de conexión' };
         }

@@ -53,24 +53,14 @@ function puedeTrabajarSobreDepartamento($idDepartamento)
 // Devuelve el departamento del que depende la materia indicada (0 si no existe)
 function idDepartamentoDeMateria($db, $idMateria)
 {
-    $stmt = mysqli_prepare($db, "SELECT idDepartamento FROM materias WHERE id = ?");
-    mysqli_stmt_bind_param($stmt, "i", $idMateria);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $fila = mysqli_fetch_assoc($result);
-    mysqli_stmt_close($stmt);
+    $fila = $db->fetchOne("SELECT idDepartamento FROM materias WHERE id = ?", $idMateria);
     return ($fila && $fila['idDepartamento'] !== null) ? intval($fila['idDepartamento']) : 0;
 }
 
 // Devuelve el departamento de la materia a la que pertenece un resultado
 function idDepartamentoDeRA($db, $idResultado)
 {
-    $stmt = mysqli_prepare($db, "SELECT idMateria FROM resultados_aprendizaje WHERE id = ?");
-    mysqli_stmt_bind_param($stmt, "i", $idResultado);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $fila = mysqli_fetch_assoc($result);
-    mysqli_stmt_close($stmt);
+    $fila = $db->fetchOne("SELECT idMateria FROM resultados_aprendizaje WHERE id = ?", $idResultado);
     return ($fila) ? idDepartamentoDeMateria($db, intval($fila['idMateria'])) : 0;
 }
 
@@ -84,12 +74,9 @@ function comprobarDepartamento($idDepartamento)
     }
 }
 
-$db = getDBConnection();
-if (!$db) {
-    sendJSONError('Error de conexión a la base de datos');
-}
-
 try {
+    $db = Db::open();
+
     switch ($action) {
         // Lista las materias del selector, fiel a v3 (includes/cargar_materias_programaciones.php):
         //   - admin : todas las materias del departamento elegido en la vista
@@ -107,7 +94,7 @@ try {
                 } else {
                     $idDepartamento = intval($_SESSION['departamentoUsuario']);
                 }
-                $stmt = mysqli_prepare($db,
+                $materias = $db->fetchAll(
                     "SELECT m.id AS idMateria, m.nombre AS nombre,
                             c.nombre AS curso, c.abreviatura AS abrevCurso,
                             m.horas AS horas, m.horas_empresa AS horas_empresa,
@@ -115,12 +102,12 @@ try {
                      FROM materias m
                      LEFT JOIN cursos c ON c.id = m.idCurso
                      WHERE m.tiene_programacion = TRUE AND m.idDepartamento = ?
-                     ORDER BY c.orden, c.nombre, m.nombre");
-                mysqli_stmt_bind_param($stmt, "i", $idDepartamento);
+                     ORDER BY c.orden, c.nombre, m.nombre",
+                    $idDepartamento);
             } else {
                 // Profesor: solo las materias que imparte en los escenarios actuales
                 $idProfesor = intval($_SESSION['idUsuario']);
-                $stmt = mysqli_prepare($db,
+                $materias = $db->fetchAll(
                     "SELECT DISTINCT m.id AS idMateria, m.nombre AS nombre,
                             c.nombre AS curso, c.abreviatura AS abrevCurso,
                             m.horas AS horas, m.horas_empresa AS horas_empresa,
@@ -132,19 +119,10 @@ try {
                      WHERE m.tiene_programacion = TRUE
                        AND e.actual = TRUE
                        AND s.idProfesor = ?
-                     ORDER BY m.nombre");
-                mysqli_stmt_bind_param($stmt, "i", $idProfesor);
+                     ORDER BY m.nombre",
+                    $idProfesor);
             }
-            if (!mysqli_stmt_execute($stmt)) {
-                throw new Exception(mysqli_error($db));
-            }
-            $resultadoMaterias = mysqli_stmt_get_result($stmt);
-            $materias = [];
-            while ($fila = mysqli_fetch_assoc($resultadoMaterias)) {
-                $materias[] = $fila;
-            }
-            mysqli_stmt_close($stmt);
-            closeDBConnection($db);
+            $db->close();
             sendJSONSuccess($materias);
             break;
 
@@ -155,22 +133,12 @@ try {
                 throw new Exception('ID de materia inválido');
             }
             // Horas de docencia en empresa para la materia
-            $result = mysqli_query($db, "SELECT horas_empresa FROM materias WHERE id = $idMateria");
-            $fila = mysqli_fetch_assoc($result);
+            $fila = $db->fetchOne("SELECT horas_empresa FROM materias WHERE id = ?", $idMateria);
             $horasEmpresa = $fila ? $fila['horas_empresa'] : 0;
-            mysqli_free_result($result);
 
-            $result = mysqli_query($db, "SELECT * FROM resultados_aprendizaje WHERE idMateria = $idMateria ORDER BY orden");
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $resultados = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $resultados[] = $fila;
-            }
-            mysqli_free_result($result);
+            $resultados = $db->fetchAll("SELECT * FROM resultados_aprendizaje WHERE idMateria = ? ORDER BY orden", $idMateria);
 
-            closeDBConnection($db);
+            $db->close();
             sendJSONSuccess(array(
                 'idMateria' => $idMateria,
                 'horas_empresa' => $horasEmpresa,
@@ -195,17 +163,17 @@ try {
             $idDepartamento = ($id > 0) ? idDepartamentoDeRA($db, $id) : idDepartamentoDeMateria($db, $idMateria);
             comprobarDepartamento($idDepartamento);
             if ($id > 0) {
-                $texto = mysqli_real_escape_string($db, $texto);
-                $query = "UPDATE resultados_aprendizaje SET texto='$texto', orden=$orden, porcentaje_empresa=$porcentajeEmpresa WHERE id=$id";
+                $db->execute(
+                    "UPDATE resultados_aprendizaje SET texto = ?, orden = ?, porcentaje_empresa = ? WHERE id = ?",
+                    $texto, $orden, $porcentajeEmpresa, $id);
+                $nuevoId = $id;
             } else {
-                $texto = mysqli_real_escape_string($db, $texto);
-                $query = "INSERT INTO resultados_aprendizaje (idMateria, texto, orden, porcentaje_empresa) VALUES ($idMateria, '$texto', $orden, $porcentajeEmpresa)";
+                $db->execute(
+                    "INSERT INTO resultados_aprendizaje (idMateria, texto, orden, porcentaje_empresa) VALUES (?, ?, ?, ?)",
+                    $idMateria, $texto, $orden, $porcentajeEmpresa);
+                $nuevoId = $db->insertId();
             }
-            if (!mysqli_query($db, $query)) {
-                throw new Exception(mysqli_error($db));
-            }
-            $nuevoId = ($id > 0) ? $id : mysqli_insert_id($db);
-            closeDBConnection($db);
+            $db->close();
             sendJSONSuccess(array('id' => $nuevoId), 'Resultado de aprendizaje guardado');
             break;
 
@@ -220,11 +188,8 @@ try {
                 throw new Exception('ID de materia inválido');
             }
             comprobarDepartamento(idDepartamentoDeMateria($db, $idMateria));
-            $query = "UPDATE materias SET horas_empresa=$horas WHERE id=$idMateria";
-            if (!mysqli_query($db, $query)) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $db->execute("UPDATE materias SET horas_empresa = ? WHERE id = ?", $horas, $idMateria);
+            $db->close();
             sendJSONSuccess(null, 'Horas de empresa actualizadas');
             break;
 
@@ -237,11 +202,10 @@ try {
                 throw new Exception('ID de resultado inválido');
             }
             comprobarDepartamento(idDepartamentoDeRA($db, $idResultado));
-            $query = "UPDATE resultados_aprendizaje SET porcentaje_evaluacion=$porcentajeEvaluacion, es_clave=$esClave WHERE id=$idResultado";
-            if (!mysqli_query($db, $query)) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $db->execute(
+                "UPDATE resultados_aprendizaje SET porcentaje_evaluacion = ?, es_clave = ? WHERE id = ?",
+                $porcentajeEvaluacion, $esClave, $idResultado);
+            $db->close();
             sendJSONSuccess(null, 'Evaluación actualizada');
             break;
 
@@ -255,11 +219,9 @@ try {
                 throw new Exception('ID de resultado inválido');
             }
             comprobarDepartamento(idDepartamentoDeRA($db, $id));
-            if (!mysqli_query($db, "DELETE FROM criterios_evaluacion WHERE idRA=$id") ||
-                !mysqli_query($db, "DELETE FROM resultados_aprendizaje WHERE id=$id")) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $db->execute("DELETE FROM criterios_evaluacion WHERE idRA = ?", $id);
+            $db->execute("DELETE FROM resultados_aprendizaje WHERE id = ?", $id);
+            $db->close();
             sendJSONSuccess(null, 'Resultado de aprendizaje eliminado');
             break;
 
@@ -269,12 +231,11 @@ try {
             if ($id <= 0) {
                 throw new Exception('ID de resultado inválido');
             }
-            $result = mysqli_query($db, "SELECT * FROM resultados_aprendizaje WHERE id=$id");
-            $fila = mysqli_fetch_assoc($result);
+            $fila = $db->fetchOne("SELECT * FROM resultados_aprendizaje WHERE id = ?", $id);
+            $db->close();
             if (!$fila) {
-                throw new Exception('Resultado no encontrado');
+                sendJSONError('Resultado no encontrado', 404);
             }
-            closeDBConnection($db);
             sendJSONSuccess($fila);
             break;
 
@@ -290,14 +251,10 @@ try {
                 throw new Exception('Datos incompletos para guardar el criterio');
             }
             comprobarDepartamento(idDepartamentoDeRA($db, $idResultado));
-            $codigo = mysqli_real_escape_string($db, $codigo);
-            $texto = empty($texto) ? '' : mysqli_real_escape_string($db, $texto);
-            $query = "INSERT INTO criterios_evaluacion (idRA, codigo, texto) VALUES ($idResultado, '$codigo', '$texto')";
-            if (!mysqli_query($db, $query)) {
-                throw new Exception(mysqli_error($db));
-            }
-            $nuevoId = mysqli_insert_id($db);
-            closeDBConnection($db);
+            $texto = empty($texto) ? '' : $texto;
+            $db->execute("INSERT INTO criterios_evaluacion (idRA, codigo, texto) VALUES (?, ?, ?)", $idResultado, $codigo, $texto);
+            $nuevoId = $db->insertId();
+            $db->close();
             sendJSONSuccess(array('id' => $nuevoId), 'Criterio de evaluación guardado');
             break;
 
@@ -307,18 +264,17 @@ try {
                 throw new Exception('No tiene permisos para realizar esta acción');
             }
             $idResultado = intval($datos['idResultado']);
-            $codigoAntiguo = mysqli_real_escape_string($db, $datos['codigo']);
-            $nuevoCodigo = mysqli_real_escape_string($db, $datos['nuevoCodigo']);
-            $nuevoTexto = $datos['nuevoTexto'] === null ? '' : mysqli_real_escape_string($db, $datos['nuevoTexto']);
+            $codigoAntiguo = $datos['codigo'];
+            $nuevoCodigo = $datos['nuevoCodigo'];
+            $nuevoTexto = $datos['nuevoTexto'] === null ? '' : $datos['nuevoTexto'];
             if ($idResultado <= 0 || empty($codigoAntiguo)) {
                 throw new Exception('Datos incompletos para actualizar el criterio');
             }
             comprobarDepartamento(idDepartamentoDeRA($db, $idResultado));
-            $query = "UPDATE criterios_evaluacion SET codigo='$nuevoCodigo', texto='$nuevoTexto' WHERE idRA=$idResultado AND codigo='$codigoAntiguo'";
-            if (!mysqli_query($db, $query)) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $db->execute(
+                "UPDATE criterios_evaluacion SET codigo = ?, texto = ? WHERE idRA = ? AND codigo = ?",
+                $nuevoCodigo, $nuevoTexto, $idResultado, $codigoAntiguo);
+            $db->close();
             sendJSONSuccess(null, 'Criterio de evaluación actualizado');
             break;
 
@@ -328,15 +284,13 @@ try {
                 throw new Exception('No tiene permisos para realizar esta acción');
             }
             $idResultado = intval($datos['idResultado']);
-            $codigo = mysqli_real_escape_string($db, $datos['codigo']);
+            $codigo = $datos['codigo'];
             if ($idResultado <= 0 || empty($codigo)) {
                 throw new Exception('Datos incompletos para eliminar el criterio');
             }
             comprobarDepartamento(idDepartamentoDeRA($db, $idResultado));
-            if (!mysqli_query($db, "DELETE FROM criterios_evaluacion WHERE idRA=$idResultado AND codigo='$codigo'")) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $db->execute("DELETE FROM criterios_evaluacion WHERE idRA = ? AND codigo = ?", $idResultado, $codigo);
+            $db->close();
             sendJSONSuccess(null, 'Criterio de evaluación eliminado');
             break;
 
@@ -346,23 +300,19 @@ try {
             if ($idResultado <= 0) {
                 throw new Exception('ID de resultado inválido');
             }
-            $result = mysqli_query($db, "SELECT * FROM criterios_evaluacion WHERE idRA=$idResultado ORDER BY codigo");
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $criterios = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $criterios[] = $fila;
-            }
-            mysqli_free_result($result);
-            closeDBConnection($db);
+            $criterios = $db->fetchAll("SELECT * FROM criterios_evaluacion WHERE idRA = ? ORDER BY codigo", $idResultado);
+            $db->close();
             sendJSONSuccess($criterios);
             break;
 
         default:
             throw new Exception('Acción no válida: ' . $action);
     }
+} catch (DbException $e) {
+    $db->close();
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 } catch (Exception $e) {
-    closeDBConnection($db);
+    $db->close();
     sendJSONError($e->getMessage());
 }
+?>

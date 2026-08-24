@@ -7,28 +7,17 @@ header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
 if (empty($_GET['idDepartamento'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'ID de departamento no proporcionado']);
-    exit;
+    sendJSONError('ID de departamento no proporcionado', 400);
 }
 
 $idDepartamento = intval($_GET['idDepartamento']);
-$conn = getDBConnection();
-
-if (!$conn) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión a la base de datos']);
-    exit;
-}
 
 try {
-    $db = new Db($conn);
-    $profesores = $db->fetchAll("SELECT * FROM profesores WHERE idDepartamento = $idDepartamento ORDER BY orden");
+    $db = Db::open();
+    $profesores = $db->fetchAll("SELECT * FROM profesores WHERE idDepartamento = ? ORDER BY orden", $idDepartamento);
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error al consultar la base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error al consultar la base de datos: ' . $e->getMessage(), 500);
 }
 
-echo json_encode($profesores);
+sendJSONSuccess($profesores);
 ?>

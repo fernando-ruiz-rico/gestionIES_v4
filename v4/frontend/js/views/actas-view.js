@@ -85,7 +85,8 @@ const ActasView = {
     methods: {
         async cargarDepartamentos() {
             const result = await fetch('../backend/api/departamentos/listar.php', { credentials: 'same-origin' });
-            this.departamentos = await result.json();
+            const data = await result.json();
+            if (data.success) this.departamentos = data.data || [];
             // Si el usuario es admin, puede editar cualquier depto; si es profesor, no
             this.permisos = this.usuario && (this.usuario.rol === 'admin' || this.usuario.rol === 'jefeDepartamento');
         },

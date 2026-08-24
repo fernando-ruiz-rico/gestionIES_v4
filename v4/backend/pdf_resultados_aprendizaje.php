@@ -48,31 +48,17 @@ class MiPDFResultados extends TCPDF
 }
 
 // ============================================================================
-// Consultas a la base de datos (patrón mysqli de v4)
+// Consultas a la base de datos (capa Db de v4)
 // ============================================================================
-function consultar($db, $sql, $params = array(), $types = 'i')
+function consultar($db, $sql, $params = array())
 {
-    $stmt = mysqli_prepare($db, $sql);
-    if ($stmt === false) {
-        throw new Exception('Error preparando la consulta: ' . mysqli_error($db));
+    // Compatible con PHP 5: sin "..." en la llamada (PHP 5.6+);
+    // se rellenan los argumentos por copia.
+    $args = array($sql);
+    foreach ($params as $p) {
+        $args[] = $p;
     }
-    if (!empty($params)) {
-        // Compatible con PHP 5: sin "..." (PHP 5.6+); se pasan los valores por copia,
-        // que es suficiente porque se ejecuta la sentencia enseguida con los mismos.
-        $args = array($stmt, $types);
-        foreach ($params as $p) {
-            $args[] = $p;
-        }
-        call_user_func_array('mysqli_stmt_bind_param', $args);
-    }
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $rows = array();
-    while ($row = mysqli_fetch_assoc($result)) {
-        $rows[] = $row;
-    }
-    mysqli_stmt_close($stmt);
-    return $rows;
+    return call_user_func_array(array($db, 'fetchAll'), $args);
 }
 
 // Ciclos de la familia de Informática (misma consulta que las vistas de v3)
@@ -88,7 +74,7 @@ function obtenerCursosCiclo($db, $idCiclo)
     return consultar($db,
         "SELECT cursos.id, cursos.nombre FROM cursos, cursos_ciclos
          WHERE cursos.id = cursos_ciclos.idCurso AND cursos_ciclos.idCiclo = ?
-         ORDER BY cursos_ciclos.orden", array($idCiclo), 'i');
+         ORDER BY cursos_ciclos.orden", array($idCiclo));
 }
 
 // Materias del curso con docencia en empresa (misma consulta que las vistas de v3)
@@ -98,13 +84,13 @@ function obtenerMateriasCurso($db, $idCurso)
         "SELECT DISTINCT materias.id, materias.nombre_oficial, materias.horas_empresa
          FROM materias
          WHERE (idDepartamento = 1 OR idDepartamento = 2 OR idDepartamento = 8)
-           AND (materias.idCurso = ? AND materias.horas_empresa > 0)", array($idCurso), 'i');
+           AND (materias.idCurso = ? AND materias.horas_empresa > 0)", array($idCurso));
 }
 
 // Resultados de aprendizaje de una materia
 function obtenerRA($db, $idMateria)
 {
-    return consultar($db, "SELECT * FROM resultados_aprendizaje WHERE idMateria = ? ORDER BY orden", array($idMateria), 'i');
+    return consultar($db, "SELECT * FROM resultados_aprendizaje WHERE idMateria = ? ORDER BY orden", array($idMateria));
 }
 
 // Criterios de evaluación de una materia: solo los de RA con % de empresa
@@ -122,7 +108,7 @@ function obtenerCE($db, $idMateria)
                WHERE ct.idRA = c.idRA AND ct.codigo = c.codigo AND t.idMateria = r.idMateria
            )
          ORDER BY r.orden, c.codigo";
-    return consultar($db, $sql, array($idMateria), 'i');
+    return consultar($db, $sql, array($idMateria));
 }
 
 // ============================================================================
@@ -309,6 +295,7 @@ $db = getDBConnection();
 if (!$db) {
     die('Error de conexión a la base de datos');
 }
+$db = new Db($db);
 
 try {
     $pdf = new MiPDFResultados();

@@ -260,7 +260,8 @@ const ProfesoresView = {
                 credentials: 'include'
             });
             if (result.ok) {
-                this.departamentos = await result.json();
+                const data = await result.json();
+                if (data.success) this.departamentos = data.data || [];
             }
         },
         
@@ -269,7 +270,8 @@ const ProfesoresView = {
                 credentials: 'include'
             });
             if (result.ok) {
-                this.especialidades = await result.json();
+                const data = await result.json();
+                this.especialidades = (data.success && Array.isArray(data.data)) ? data.data : [];
             }
         },
         

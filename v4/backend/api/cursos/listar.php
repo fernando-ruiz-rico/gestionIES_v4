@@ -8,10 +8,8 @@ try {
     $db = Db::open();
     $cursos = $db->fetchAll("SELECT * FROM cursos ORDER BY orden, nombre");
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
-echo json_encode($cursos);
+sendJSONSuccess($cursos);
 ?>

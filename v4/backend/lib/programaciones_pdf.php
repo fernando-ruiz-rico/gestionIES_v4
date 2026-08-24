@@ -51,34 +51,22 @@ class MiPDFProgramaciones extends TCPDF
 }
 
 // ---------------------------------------------------------------------------
-// Consulta a BD (patrón mysqli de v4, PHP 5: sin "..." de PHP 5.6+)
+// Consulta a BD a través de la clase Db (v4), PHP 5 compatible.
+// Acepta un objeto Db; si le llega la conexión mysqli cruda (pendiente de
+// migrar el endpoint que la pasa), se envuelve sola en un Db.
 // ---------------------------------------------------------------------------
-function pgConsultar($db, $sql, $params = [], $types = 'i')
+function pgConsultar($db, $sql, $params = [])
 {
-    $stmt = mysqli_prepare($db, $sql);
-    if ($stmt === false) {
-        throw new Exception('Error preparando la consulta: ' . mysqli_error($db));
+    if (!$db instanceof Db) {
+        $db = new Db($db);
     }
-    if (!empty($params)) {
-        $args = array($stmt, $types);
-        foreach ($params as $p) {
-            $args[] = $p;
-        }
-        call_user_func_array('mysqli_stmt_bind_param', $args);
-    }
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $rows = [];
-    while ($row = mysqli_fetch_assoc($result)) {
-        $rows[] = $row;
-    }
-    mysqli_stmt_close($stmt);
-    return $rows;
+    $args = array_merge([$sql], $params);
+    return call_user_func_array([$db, 'fetchAll'], $args);
 }
 
-function pgConsultarUna($db, $sql, $params = [], $types = 'i')
+function pgConsultarUna($db, $sql, $params = [])
 {
-    $res = pgConsultar($db, $sql, $params, $types);
+    $res = pgConsultar($db, $sql, $params);
     return !empty($res) ? $res[0] : null;
 }
 
@@ -108,7 +96,8 @@ function pgObtenerDatosMateria($db, $idMateria)
            FROM cursos
            INNER JOIN materias ON cursos.id = materias.idCurso
            INNER JOIN departamentos ON materias.idDepartamento = departamentos.id
-          WHERE materias.id = " . (int)$idMateria);
+          WHERE materias.id = ?",
+        array((int)$idMateria));
     return $row;
 }
 
@@ -123,8 +112,9 @@ function pgObtenerIdCicloPorMateria($db, $idMateria)
            INNER JOIN cursos_ciclos cc ON cc.idCiclo = c.id
            INNER JOIN cursos cu ON cu.id = cc.idCurso
            INNER JOIN materias m ON m.idCurso = cu.id
-          WHERE m.id = " . (int)$idMateria . "
-          LIMIT 1");
+          WHERE m.id = ?
+          LIMIT 1",
+        array((int)$idMateria));
     return $row ? (int)$row['id'] : 0;
 }
 
@@ -137,10 +127,11 @@ function pgObtenerProfesoresMateria($db, $idMateria)
         "SELECT p.nombre
            FROM profesores p
            INNER JOIN seleccion s ON p.id = s.idProfesor
-           WHERE s.idMateria = " . (int)$idMateria . "
+           WHERE s.idMateria = ?
              AND s.idEscenario IN (SELECT id FROM escenarios_desideratas WHERE actual = 1)
            GROUP BY p.id
-          ORDER BY p.orden");
+          ORDER BY p.orden",
+        array((int)$idMateria));
     $profesores = [];
     foreach ($rows as $fila) {
         $profesores[] = $fila['nombre'];
@@ -153,11 +144,11 @@ function pgObtenerProfesoresMateria($db, $idMateria)
 // ---------------------------------------------------------------------------
 function pgObtenerApartadosProgramacion($db, $categoria)
 {
-    $cat = mysqli_real_escape_string($db, (string)$categoria);
     return pgConsultar($db,
         "SELECT * FROM apartados_programaciones
-          WHERE categoria IS NULL OR categoria = 'TODOS' OR categoria LIKE '%$cat%'
-          ORDER BY orden");
+          WHERE categoria IS NULL OR categoria = 'TODOS' OR categoria LIKE ?
+          ORDER BY orden",
+        array('%' . (string)$categoria . '%'));
 }
 
 // ---------------------------------------------------------------------------
@@ -166,12 +157,12 @@ function pgObtenerApartadosProgramacion($db, $categoria)
 function pgObtenerContenidoApartado($db, $idApartado, $idMateria, $idDepartamento = 0)
 {
     $row = pgConsultarUna($db,
-        "SELECT texto FROM contenidos_programaciones WHERE idApartado = " . (int)$idApartado . " AND idMateria = " . (int)$idMateria);
+        "SELECT texto FROM contenidos_programaciones WHERE idApartado = ? AND idMateria = ?", array((int)$idApartado, (int)$idMateria));
     if ($row && trim($row['texto']) !== '') {
         return $row['texto'];
     }
     $defecto = pgConsultarUna($db,
-        "SELECT texto FROM contenidos_defecto_programaciones WHERE idApartado = " . (int)$idApartado . " AND idDepartamento = " . (int)$idDepartamento);
+        "SELECT texto FROM contenidos_defecto_programaciones WHERE idApartado = ? AND idDepartamento = ?", array((int)$idApartado, (int)$idDepartamento));
     if ($defecto && trim($defecto['texto']) !== '') {
         return $defecto['texto'];
     }
@@ -205,7 +196,7 @@ function pgImprimirMensajeRAClave($resultadosAprendizaje, $idCiclo)
 // ---------------------------------------------------------------------------
 function pgObtenerTemasDeMateria($db, $idMateria)
 {
-    return pgConsultar($db, "SELECT * FROM temas WHERE idMateria = " . (int)$idMateria . " ORDER BY orden");
+    return pgConsultar($db, "SELECT * FROM temas WHERE idMateria = ? ORDER BY orden", array((int)$idMateria));
 }
 
 // ---------------------------------------------------------------------------
@@ -213,7 +204,7 @@ function pgObtenerTemasDeMateria($db, $idMateria)
 // ---------------------------------------------------------------------------
 function pgObtenerContenidosDefectoTema($db, $idDepartamento)
 {
-    $rows = pgConsultar($db, "SELECT * FROM contenidos_defecto_temas WHERE idDepartamento = " . (int)$idDepartamento);
+    $rows = pgConsultar($db, "SELECT * FROM contenidos_defecto_temas WHERE idDepartamento = ?", array((int)$idDepartamento));
     return empty($rows) ? null : $rows[0];
 }
 
@@ -226,7 +217,8 @@ function pgObtenerCompetenciasDeTema($db, $idTema)
         "SELECT cc.codigo, cc.texto
            FROM competencias_temas cmt
            INNER JOIN competencias_ciclos cc ON cmt.idCompetencia = cc.id
-          WHERE cmt.idTema = " . (int)$idTema);
+          WHERE cmt.idTema = ?",
+        array((int)$idTema));
 }
 
 // ---------------------------------------------------------------------------
@@ -238,8 +230,9 @@ function pgObtenerCompetenciasProfesionales($db, $idCiclo, $idMateria = 0)
         "SELECT DISTINCT cc.codigo, cc.texto, cc.orden
            FROM competencias_ciclos cc
            INNER JOIN competencias_materias cm ON cc.id = cm.idCompetencia
-          WHERE cc.idCiclo = " . (int)$idCiclo . " AND cc.tipo = 1 AND cm.idMateria = " . (int)$idMateria . "
-          ORDER BY cc.orden");
+          WHERE cc.idCiclo = ? AND cc.tipo = 1 AND cm.idMateria = ?
+          ORDER BY cc.orden",
+        array((int)$idCiclo, (int)$idMateria));
 }
 
 // ---------------------------------------------------------------------------
@@ -250,8 +243,9 @@ function pgObtenerCompetenciasEmpleabilidad($db, $idCiclo)
     return pgConsultar($db,
         "SELECT cc.codigo, cc.texto
            FROM competencias_ciclos cc
-          WHERE cc.idCiclo = " . (int)$idCiclo . " AND cc.tipo = '2'
-          ORDER BY cc.orden");
+          WHERE cc.idCiclo = ? AND cc.tipo = '2'
+          ORDER BY cc.orden",
+        array((int)$idCiclo));
 }
 
 // ---------------------------------------------------------------------------
@@ -259,7 +253,7 @@ function pgObtenerCompetenciasEmpleabilidad($db, $idCiclo)
 // ---------------------------------------------------------------------------
 function pgGenerarContenidoEvaluacionAprendizaje($db, $idMateria, $idCiclo)
 {
-    $resultados = pgConsultar($db, "SELECT * FROM resultados_aprendizaje WHERE idMateria = " . (int)$idMateria . " ORDER BY orden");
+    $resultados = pgConsultar($db, "SELECT * FROM resultados_aprendizaje WHERE idMateria = ? ORDER BY orden", array((int)$idMateria));
     if (empty($resultados)) {
         return '<p>No hay resultados de aprendizaje definidos para esta materia.</p>';
     }
@@ -300,7 +294,8 @@ function pgGenerarContenidoContexto($db, $idMateria, $idCiclo, $profesores = arr
 {
     $materia = pgConsultar($db,
         "SELECT m.nombre_oficial, m.codigo_oficial, m.creditos_ects, m.horas_anuales, m.idDepartamento, m.idCurso
-           FROM materias m WHERE m.id = " . (int)$idMateria);
+           FROM materias m WHERE m.id = ?",
+        array((int)$idMateria));
     if (empty($materia)) {
         return '<p>No se encontró la materia especificada.</p>';
     }
@@ -311,7 +306,7 @@ function pgGenerarContenidoContexto($db, $idMateria, $idCiclo, $profesores = arr
         $familia = 'No disponible';
         $nivel = 'No disponible';
     } else {
-        $ciclo = pgConsultarUna($db, "SELECT nombre, familia, nivel FROM ciclos WHERE id = " . (int)$idCiclo);
+        $ciclo = pgConsultarUna($db, "SELECT nombre, familia, nivel FROM ciclos WHERE id = ?", array((int)$idCiclo));
         if (!empty($ciclo)) {
             $nombreCiclo = $ciclo['nombre'];
             $familia = $ciclo['familia'];
@@ -359,8 +354,9 @@ function pgGenerarContenidoRelacionUCModulos($db, $idMateria)
            JOIN cursos cur ON m.idCurso = cur.id
            JOIN cursos_ciclos cc ON cur.id = cc.idCurso
            JOIN ciclos cic ON cc.idCiclo = cic.id
-          WHERE m.id = " . (int)$idMateria . "
-          LIMIT 1");
+          WHERE m.id = ?
+          LIMIT 1",
+        array((int)$idMateria));
     if (empty($resCiclo)) {
         return '<p>No se pudo determinar el ciclo formativo asociado a esta materia.</p>';
     }
@@ -370,8 +366,9 @@ function pgGenerarContenidoRelacionUCModulos($db, $idMateria)
         "SELECT uc.codigo, uc.texto
            FROM unidades_ciclos ucic
            JOIN unidades_competencia uc ON ucic.codigoUnidad = uc.codigo
-          WHERE ucic.idCiclo = {$idCiclo}
-          ORDER BY uc.codigo");
+          WHERE ucic.idCiclo = ?
+          ORDER BY uc.codigo",
+        array($idCiclo));
     if (empty($unidadesCompetencia)) {
         return '<p>No hay unidades de competencia asociadas al ciclo de esta materia.</p>';
     }
@@ -380,18 +377,15 @@ function pgGenerarContenidoRelacionUCModulos($db, $idMateria)
     foreach ($unidadesCompetencia as $uc) {
         $codigosUC[] = $uc['codigo'];
     }
-    $listaCodigosUC = array();
-    foreach ($codigosUC as $codigo) {
-        $listaCodigosUC[] = "'" . addslashes($codigo) . "'";
-    }
-    $listaCodigosUC = implode(',', $listaCodigosUC);
+    $listaCodigosUC = implode(',', array_fill(0, count($codigosUC), '?'));
 
     $relacionesCualifUC = pgConsultar($db,
         "SELECT cu.codigoCualificacion, cu.codigoUnidad, cp.texto AS nombre_cualificacion
            FROM cualificaciones_unidades cu
            JOIN cualificaciones_profesionales cp ON cu.codigoCualificacion = cp.codigo
           WHERE cu.codigoUnidad IN ({$listaCodigosUC})
-          ORDER BY cu.codigoCualificacion, cu.codigoUnidad");
+          ORDER BY cu.codigoCualificacion, cu.codigoUnidad",
+        $codigosUC);
 
     $cualificaciones = [];
     foreach ($relacionesCualifUC as $fila) {
@@ -411,8 +405,9 @@ function pgGenerarContenidoRelacionUCModulos($db, $idMateria)
            JOIN materias m ON ucm.idMateria = m.id
            JOIN cursos cur ON m.idCurso = cur.id
            JOIN cursos_ciclos cc ON cur.id = cc.idCurso
-          WHERE cc.idCiclo = {$idCiclo}
-          ORDER BY m.codigo_oficial");
+          WHERE cc.idCiclo = ?
+          ORDER BY m.codigo_oficial",
+        array($idCiclo));
 
     $ucToModulos = [];
     foreach ($modulosConUC as $modulo) {
@@ -468,7 +463,7 @@ function pgGenerarContenidoRelacionUCModulos($db, $idMateria)
 // ---------------------------------------------------------------------------
 function pgGenerarContenidosESOBACH($db, $idMateria)
 {
-    $filas = pgConsultar($db, "SELECT orden, titulo, contenidos FROM temas WHERE idMateria = " . (int)$idMateria . " ORDER BY orden");
+    $filas = pgConsultar($db, "SELECT orden, titulo, contenidos FROM temas WHERE idMateria = ? ORDER BY orden", array((int)$idMateria));
     if (empty($filas)) {
         return '';
     }
@@ -487,13 +482,14 @@ function pgGenerarContenidoDistribucionTemas($db, $idMateria, $idCiclo)
 {
     $temas = pgConsultar($db,
         "SELECT id, orden, titulo, peso_evaluacion, horas, trimestre
-           FROM temas WHERE idMateria = " . (int)$idMateria . "
-          ORDER BY orden");
+           FROM temas WHERE idMateria = ?
+          ORDER BY orden",
+        array((int)$idMateria));
     if (empty($temas)) {
         return '<p>No hay temas definidos para esta materia.</p>';
     }
 
-    $resultadosAprendizaje = pgConsultar($db, "SELECT id, orden, es_clave FROM resultados_aprendizaje WHERE idMateria = " . (int)$idMateria);
+    $resultadosAprendizaje = pgConsultar($db, "SELECT id, orden, es_clave FROM resultados_aprendizaje WHERE idMateria = ?", array((int)$idMateria));
     $mapaRaOrden = [];
     $mapaRaEsClave = [];
     foreach ($resultadosAprendizaje as $ra) {
@@ -506,9 +502,9 @@ function pgGenerarContenidoDistribucionTemas($db, $idMateria, $idCiclo)
     foreach ($temas as $t) {
         $idsTemas[] = (int)$t['id'];
     }
-    $listaIdsTemas = implode(',', $idsTemas);
+    $listaIdsTemas = implode(',', array_fill(0, count($idsTemas), '?'));
     $relaciones = pgConsultar($db,
-        "SELECT idTema, idRA, codigo FROM criterios_temas WHERE idTema IN ({$listaIdsTemas})");
+        "SELECT idTema, idRA, codigo FROM criterios_temas WHERE idTema IN ({$listaIdsTemas})", $idsTemas);
 
     $temaRaCriterios = [];
     foreach ($relaciones as $rel) {
@@ -625,7 +621,7 @@ function pgGenerarContenidoDistribucionTemas($db, $idMateria, $idCiclo)
 // ---------------------------------------------------------------------------
 function pgGenerarContenidoRACompetencias($db, $idMateria, $idCiclo, $tipoCompetencias = 1)
 {
-    $resultadosAprendizaje = pgConsultar($db, "SELECT id, orden, texto FROM resultados_aprendizaje WHERE idMateria = " . (int)$idMateria . " ORDER BY orden");
+    $resultadosAprendizaje = pgConsultar($db, "SELECT id, orden, texto FROM resultados_aprendizaje WHERE idMateria = ? ORDER BY orden", array((int)$idMateria));
     if (empty($resultadosAprendizaje)) {
         return '<p>No hay resultados de aprendizaje definidos para esta materia.</p>';
     }
@@ -641,14 +637,15 @@ function pgGenerarContenidoRACompetencias($db, $idMateria, $idCiclo, $tipoCompet
            FROM competencias_ciclos cc
            JOIN competencias_temas ct ON cc.id = ct.idCompetencia
            JOIN temas t ON ct.idTema = t.id
-          WHERE t.idMateria = " . (int)$idMateria . " AND cc.tipo = " . (int)$tipoCompetencias . "
-          ORDER BY cc.codigo");
+          WHERE t.idMateria = ? AND cc.tipo = ?
+          ORDER BY cc.codigo",
+        array((int)$idMateria, (int)$tipoCompetencias));
     if (empty($competencias)) {
         return '';
     }
 
-    $idsRAList = implode(',', array_map('intval', $idsRA));
-    $criterios = pgConsultar($db, "SELECT idRA, codigo FROM criterios_evaluacion WHERE idRA IN ({$idsRAList})");
+    $idsRAList = implode(',', array_fill(0, count($idsRA), '?'));
+    $criterios = pgConsultar($db, "SELECT idRA, codigo FROM criterios_evaluacion WHERE idRA IN ({$idsRAList})", $idsRA);
     $criteriosPorRA = [];
     foreach ($criterios as $c) {
         $criteriosPorRA[$c['idRA']][] = $c['codigo'];
@@ -665,16 +662,17 @@ function pgGenerarContenidoRACompetencias($db, $idMateria, $idCiclo, $tipoCompet
             "SELECT ce.idRA, ct.idTema
                FROM criterios_temas ct
                JOIN criterios_evaluacion ce ON ct.idRA = ce.idRA AND ct.codigo = ce.codigo
-              WHERE ce.idRA IN ({$idsRAList})");
+              WHERE ce.idRA IN ({$idsRAList})",
+            $idsRA);
         $idsTemas = [];
         foreach ($temasPorCriterio as $t) {
             $idsTemas[] = (int)$t['idTema'];
         }
         $idsTemas = array_unique($idsTemas);
         if (!empty($idsTemas)) {
-            $listaTemas = implode(',', $idsTemas);
+            $listaTemas = implode(',', array_fill(0, count($idsTemas), '?'));
             $compPorTema = pgConsultar($db,
-                "SELECT ct.idTema, ct.idCompetencia FROM competencias_temas ct WHERE ct.idTema IN ({$listaTemas})");
+                "SELECT ct.idTema, ct.idCompetencia FROM competencias_temas ct WHERE ct.idTema IN ({$listaTemas})", $idsTemas);
             $temaACompetencias = [];
             foreach ($compPorTema as $fila) {
                 $temaACompetencias[(int)$fila['idTema']][] = (int)$fila['idCompetencia'];
@@ -731,7 +729,7 @@ function pgGenerarContenidoRACompetencias($db, $idMateria, $idCiclo, $tipoCompet
 // ---------------------------------------------------------------------------
 function pgGenerarContenidoResultadosAprendizaje($db, $idMateria, $horasEmpresa)
 {
-    $resultados = pgConsultar($db, "SELECT * FROM resultados_aprendizaje WHERE idMateria = " . (int)$idMateria . " ORDER BY orden");
+    $resultados = pgConsultar($db, "SELECT * FROM resultados_aprendizaje WHERE idMateria = ? ORDER BY orden", array((int)$idMateria));
     if (empty($resultados)) {
         // Mismo contrato que v3 (generar_apartado_ra_empresas.php)
         return array('existe' => false, 'texto' => '');
@@ -767,7 +765,7 @@ function pgGenerarContenidoResultadosAprendizaje($db, $idMateria, $horasEmpresa)
 function pgGenerarApartadoRACE($db, $idMateria, $idCiclo)
 {
     $esCiclo = ((int)$idCiclo) > 0;
-    $resultados = pgConsultar($db, "SELECT id, orden, texto FROM resultados_aprendizaje WHERE idMateria = " . (int)$idMateria . " ORDER BY orden");
+    $resultados = pgConsultar($db, "SELECT id, orden, texto FROM resultados_aprendizaje WHERE idMateria = ? ORDER BY orden", array((int)$idMateria));
     if (empty($resultados)) {
         return '<p>No hay resultados de aprendizaje ni competencias específicas definidos para esta materia.</p>';
     }
@@ -775,8 +773,8 @@ function pgGenerarApartadoRACE($db, $idMateria, $idCiclo)
     foreach ($resultados as $ra) {
         $idsRA[] = (int)$ra['id'];
     }
-    $listaIdsRA = implode(',', $idsRA);
-    $criterios = pgConsultar($db, "SELECT idRA, codigo, texto FROM criterios_evaluacion WHERE idRA IN ({$listaIdsRA}) ORDER BY idRA, codigo");
+    $listaIdsRA = implode(',', array_fill(0, count($idsRA), '?'));
+    $criterios = pgConsultar($db, "SELECT idRA, codigo, texto FROM criterios_evaluacion WHERE idRA IN ({$listaIdsRA}) ORDER BY idRA, codigo", $idsRA);
     $criteriosPorRA = [];
     foreach ($criterios as $c) {
         $idRA = (int)$c['idRA'];
@@ -883,15 +881,16 @@ function pgGenerarContenidoTemas($db, $idMateria, $idDepartamento, $idCiclo)
             "SELECT ce.idRA, ce.codigo, ce.texto AS criterio
                FROM criterios_temas ct
                INNER JOIN criterios_evaluacion ce ON ct.idRA = ce.idRA AND ct.codigo = ce.codigo
-              WHERE ct.idTema = " . (int)$tema['id'] . "
-              ORDER BY ce.idRA, ce.codigo");
+              WHERE ct.idTema = ?
+              ORDER BY ce.idRA, ce.codigo",
+            array((int)$tema['id']));
         if (!empty($criteriosConRA)) {
             $rasAgrupados = [];
             $pref = $idCiclo > 0 ? 'RA' : 'CE';
             foreach ($criteriosConRA as $fila) {
                 $idRA = (int)$fila['idRA'];
                 if (!isset($rasAgrupados[$idRA])) {
-                    $raData = pgConsultar($db, "SELECT orden, texto FROM resultados_aprendizaje WHERE id = " . $idRA . " AND idMateria = " . (int)$idMateria);
+                    $raData = pgConsultar($db, "SELECT orden, texto FROM resultados_aprendizaje WHERE id = ? AND idMateria = ?", array($idRA, (int)$idMateria));
                     $textoRA = !empty($raData)
                         ? $pref . $raData[0]['orden'] . '. ' . $raData[0]['texto']
                         : "Resultado de aprendizaje no encontrado (ID: {$idRA})";

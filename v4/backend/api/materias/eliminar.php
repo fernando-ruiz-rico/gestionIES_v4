@@ -9,9 +9,7 @@ $datos = json_decode(file_get_contents('php://input'), true);
 $id = intval(isset($datos['id']) ? $datos['id'] : 0);
 
 if ($id <= 0) {
-    http_response_code(400);
-    echo json_encode(['error' => 'ID inválido']);
-    exit;
+    sendJSONError('ID inválido', 400);
 }
 
 try {
@@ -21,9 +19,7 @@ try {
     $materia = $db->fetchOne("SELECT id FROM materias WHERE id = ?", $id);
 
     if (!$materia) {
-        http_response_code(404);
-        echo json_encode(['error' => 'No encontrado']);
-        exit;
+        sendJSONError('No encontrado', 404);
     }
 
     // Borrado en cascada (fiel a v3/borrar_materia.php): las tablas que la huérfanan
@@ -34,10 +30,8 @@ try {
 
     $db->execute("DELETE FROM materias WHERE id = ?", $id);
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
-echo json_encode(['success' => true, 'message' => 'Eliminado correctamente']);
+sendJSONSuccess(null, 'Eliminado correctamente');
 ?>

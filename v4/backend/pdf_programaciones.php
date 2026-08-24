@@ -154,6 +154,7 @@ if (!empty($_REQUEST['idMateria'])) {
     if (!$db) {
         die('Error de conexión a la base de datos.');
     }
+    $db = new Db($db);
     try {
         pgGenerarPDFProgramacion($db, $idMateria);
     } catch (Exception $e) {

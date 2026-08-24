@@ -96,12 +96,6 @@ function temas_competencias_materia($db, $idMateria, $idCiclo) {
     return $competencias;
 }
 
-function temas_salida($data, $code = 200) {
-    http_response_code($code);
-    echo json_encode($data);
-    exit;
-}
-
 // ---------------------------------------------------------------------------
 // Dispatch
 // ---------------------------------------------------------------------------
@@ -116,6 +110,7 @@ try {
             // las materias que imparte en los escenarios actuales; el jefe, las de
             // su departamento; el admin, todas (v4 no tiene el selector de v3).
             $rol = isset($session['rol']) ? $session['rol'] : '';
+            $filas = array();
             if ($rol === ROLE_PROFESOR) {
                 $idProfesor = (int)$session['idUsuario'];
                 $sql = "SELECT DISTINCT m.id AS id, m.nombre AS materia, c.nombre AS curso, m.horas_anuales
@@ -123,21 +118,25 @@ try {
                           LEFT JOIN cursos c ON c.id = m.idCurso
                           LEFT JOIN seleccion s ON s.idMateria = m.id
                           LEFT JOIN escenarios_desideratas e ON e.id = s.idEscenario
-                          WHERE m.tiene_programacion = 1 AND e.actual = 1 AND s.idProfesor = $idProfesor
+                          WHERE m.tiene_programacion = 1 AND e.actual = 1 AND s.idProfesor = ?
                           ORDER BY m.nombre";
+                $filas = call_user_func_array(array($db, 'fetchAll'), array_merge(array($sql), array($idProfesor)));
             } else {
                 $idDepartamento = !empty($session['idDepartamento']) ? (int)$session['idDepartamento'] : 0;
                 $sql = "SELECT m.id AS id, m.nombre AS materia, c.nombre AS curso, m.horas_anuales
                           FROM materias m
                           LEFT JOIN cursos c ON c.id = m.idCurso
                           WHERE m.tiene_programacion = 1";
+                $params = array();
                 if ($idDepartamento > 0) {
-                    $sql .= " AND m.idDepartamento = $idDepartamento";
+                    $sql .= " AND m.idDepartamento = ?";
+                    $params[] = $idDepartamento;
                 }
                 $sql .= " ORDER BY c.orden, c.nombre, m.nombre";
+                $filas = call_user_func_array(array($db, 'fetchAll'), array_merge(array($sql), $params));
             }
             $materias = [];
-            foreach ($db->fetchAll($sql) as $fila) {
+            foreach ($filas as $fila) {
                 $idMateria = intval($fila['id']);
                 $materias[] = [
                     'id' => $idMateria,
@@ -147,7 +146,7 @@ try {
                     'idCiclo' => temas_id_ciclo_por_materia($db, $idMateria)
                 ];
             }
-            temas_salida(['success' => true, 'data' => $materias]);
+            sendJSONSuccess($materias);
 
         // --------------------------------------------------------------------
         // Listar temas de una materia (como v3 mostrarTemasPorMateria)
@@ -155,7 +154,7 @@ try {
         } elseif ($action === 'listar') {
             $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
             if ($idMateria <= 0) {
-                temas_salida(['success' => false, 'error' => 'Debe indicar una materia'], 400);
+                sendJSONError('Debe indicar una materia', 400);
             }
             $temas = [];
             foreach ($db->fetchAll("SELECT id, orden, titulo, horas, peso_evaluacion
@@ -168,10 +167,10 @@ try {
                     'peso_evaluacion' => intval($fila['peso_evaluacion'])
                 ];
             }
-            temas_salida(['success' => true, 'data' => [
+            sendJSONSuccess([
                 'temas' => $temas,
                 'horas_anuales' => temas_horas_anuales($db, $idMateria)
-            ]]);
+            ]);
 
         // --------------------------------------------------------------------
         // Datos de un tema (prefill del formulario) + CE/competencias
@@ -179,11 +178,11 @@ try {
         } elseif ($action === 'obtener') {
             $idTema = isset($_GET['idTema']) ? intval($_GET['idTema']) : 0;
             if ($idTema <= 0) {
-                temas_salida(['success' => false, 'error' => 'Debe indicar un tema'], 400);
+                sendJSONError('Debe indicar un tema', 400);
             }
             $fila = $db->fetchOne("SELECT * FROM temas WHERE id = ?", $idTema);
             if (!$fila) {
-                temas_salida(['success' => false, 'error' => 'Tema no encontrado'], 404);
+                sendJSONError('Tema no encontrado', 404);
             }
 
             $criterios = [];
@@ -197,7 +196,7 @@ try {
             }
 
             $idMateria = intval($fila['idMateria']);
-            temas_salida(['success' => true, 'data' => [
+            sendJSONSuccess([
                 'tema' => [
                     'id' => intval($fila['id']),
                     'idMateria' => $idMateria,
@@ -222,7 +221,7 @@ try {
                 ],
                 'criterios' => $criterios,
                 'competencias' => $competencias
-            ]]);
+            ]);
 
         // --------------------------------------------------------------------
         // Acordeón RA/CE + competencias (nivel materia)
@@ -230,7 +229,7 @@ try {
         } elseif ($action === 'accordion_ra_ce') {
             $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
             if ($idMateria <= 0) {
-                temas_salida(['success' => false, 'error' => 'Debe indicar una materia'], 400);
+                sendJSONError('Debe indicar una materia', 400);
             }
             $idCiclo = temas_id_ciclo_por_materia($db, $idMateria);
 
@@ -258,15 +257,15 @@ try {
 
             $competencias = temas_competencias_materia($db, $idMateria, $idCiclo);
 
-            temas_salida(['success' => true, 'data' => [
+            sendJSONSuccess([
                 'idCiclo' => $idCiclo,
                 'ra' => $ra,
                 'total' => $total,
                 'competencias' => $competencias
-            ]]);
+            ]);
 
         } else {
-            temas_salida(['success' => false, 'error' => 'Acción no válida'], 400);
+            sendJSONError('Acción no válida', 400);
         }
 
     } elseif ($method === 'POST') {
@@ -280,7 +279,7 @@ try {
             $titulo    = isset($body['titulo']) ? trim($body['titulo']) : '';
 
             if ($idMateria <= 0 || $orden <= 0 || $titulo === '') {
-                temas_salida(['success' => false, 'error' => 'Indica el número y el título del tema'], 400);
+                sendJSONError('Indica el número y el título del tema', 400);
             }
 
             // Nota: titulo se inserta como '' aquí; se actualiza a continuación para respetar el texto.
@@ -294,7 +293,7 @@ try {
             $nuevoId = $db->insertId();
             $db->execute("UPDATE temas SET titulo = ? WHERE id = ?", $titulo, $nuevoId);
 
-            temas_salida(['success' => true, 'message' => 'Tema creado correctamente', 'data' => ['id' => $nuevoId]]);
+            sendJSONSuccess(['id' => $nuevoId], 'Tema creado correctamente');
 
         // ----------------------------------------------------------------------
         // Actualizar tema + reemplazar CE y competencias
@@ -302,7 +301,7 @@ try {
         } elseif ($action === 'guardar') {
             $idTema = isset($body['idTema']) ? intval($body['idTema']) : 0;
             if ($idTema <= 0) {
-                temas_salida(['success' => false, 'error' => 'Debe indicar el tema a guardar'], 400);
+                sendJSONError('Debe indicar el tema a guardar', 400);
             }
 
             $orden            = isset($body['orden']) ? intval($body['orden']) : 0;
@@ -363,11 +362,11 @@ try {
                 throw $e;
             }
 
-            temas_salida(['success' => true,
+            sendJSONSuccess([
                 'errorTema' => ($afectados == 0),
                 'errorCriterios' => false,
-                'errorCompetencias' => false,
-                'message' => 'Tema guardado correctamente']);
+                'errorCompetencias' => false
+            ], 'Tema guardado correctamente');
 
         // ----------------------------------------------------------------------
         // Borrar tema + relaciones
@@ -375,7 +374,7 @@ try {
         } elseif ($action === 'borrar') {
             $idTema = isset($body['id']) ? intval($body['id']) : 0;
             if ($idTema <= 0) {
-                temas_salida(['success' => false, 'error' => 'Debe indicar el tema a borrar'], 400);
+                sendJSONError('Debe indicar el tema a borrar', 400);
             }
 
             try {
@@ -390,7 +389,7 @@ try {
                 throw $e;
             }
 
-            temas_salida(['success' => true, 'message' => 'Tema eliminado correctamente']);
+            sendJSONSuccess(null, 'Tema eliminado correctamente');
 
         // ----------------------------------------------------------------------
         // Recalcular porcentajes de evaluación de los RA (v3 calcularPorcentajesRA)
@@ -398,7 +397,7 @@ try {
         } elseif ($action === 'recalcular_porcentajes') {
             $idMateria = isset($body['idMateria']) ? intval($body['idMateria']) : 0;
             if ($idMateria <= 0) {
-                temas_salida(['success' => false, 'error' => 'Debe indicar una materia'], 400);
+                sendJSONError('Debe indicar una materia', 400);
             }
 
             $listadoRA = [];
@@ -445,8 +444,7 @@ try {
                     $p['porcentaje'], $p['id']);
             }
 
-            temas_salida(['success' => true, 'message' => 'Porcentajes recalculados',
-                'data' => ['ra' => $porcentajes]]);
+            sendJSONSuccess(['ra' => $porcentajes], 'Porcentajes recalculados');
 
         // ----------------------------------------------------------------------
         // Copiar el campo "evaluación" a todos los temas de la materia
@@ -455,15 +453,14 @@ try {
             $idMateria  = isset($body['idMateria']) ? intval($body['idMateria']) : 0;
             $evaluacion = isset($body['evaluacion']) ? $body['evaluacion'] : '';
             if ($idMateria <= 0) {
-                temas_salida(['success' => false, 'error' => 'Debe indicar una materia'], 400);
+                sendJSONError('Debe indicar una materia', 400);
             }
 
             $afectados = $db->execute("UPDATE temas SET evaluacion = ? WHERE idMateria = ?",
                 $evaluacion, $idMateria);
 
-            temas_salida(['success' => true,
-                'message' => 'Campo de evaluación copiado en todos los temas de la materia',
-                'data' => ['actualizados' => $afectados]]);
+            sendJSONSuccess(['actualizados' => $afectados],
+                'Campo de evaluación copiado en todos los temas de la materia');
 
         // ----------------------------------------------------------------------
         // Editar porcentaje/es_clave de un RA concreto
@@ -474,27 +471,25 @@ try {
             $esClave   = !empty($body['es_clave']) ? 1 : 0;
 
             if ($idRA <= 0) {
-                temas_salida(['success' => false, 'error' => 'Debe indicar un resultado de aprendizaje'], 400);
+                sendJSONError('Debe indicar un resultado de aprendizaje', 400);
             }
 
             $db->execute("UPDATE resultados_aprendizaje SET porcentaje_evaluacion = ?, es_clave = ? WHERE id = ?",
                 $porcentaje, $esClave, $idRA);
 
-            temas_salida(['success' => true, 'message' => 'Resultado de aprendizaje actualizado']);
+            sendJSONSuccess(null, 'Resultado de aprendizaje actualizado');
 
         } else {
-            temas_salida(['success' => false, 'error' => 'Acción no válida'], 400);
+            sendJSONError('Acción no válida', 400);
         }
 
     } else {
-        temas_salida(['success' => false, 'error' => 'Método no permitido'], 405);
+        sendJSONError('Método no permitido', 405);
     }
 
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error de base de datos: ' . $e->getMessage()]);
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 } catch (Exception $e) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    sendJSONError($e->getMessage(), 400);
 }
 ?>

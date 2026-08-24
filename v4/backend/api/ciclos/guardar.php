@@ -9,9 +9,7 @@ checkPermission(array(ROLE_ADMIN));
 
 $datos = json_decode(file_get_contents('php://input'), true);
 if (!$datos) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Datos inválidos']);
-    exit;
+    sendJSONError('Datos inválidos', 400);
 }
 
 $nombre   = isset($datos['nombre']) ? trim($datos['nombre']) : '';
@@ -20,9 +18,7 @@ $nivel   = isset($datos['nivel']) ? trim($datos['nivel']) : '';
 $idCiclo = isset($datos['id']) ? intval($datos['id']) : 0;
 
 if ($nombre === '' || $familia === '' || $nivel === '') {
-    http_response_code(400);
-    echo json_encode(['error' => 'Faltan datos obligatorios (nombre, familia y nivel)']);
-    exit;
+    sendJSONError('Faltan datos obligatorios (nombre, familia y nivel)', 400);
 }
 
 try {
@@ -37,14 +33,8 @@ try {
         $nuevoId = $db->insertId();
     }
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
-echo json_encode([
-    'success' => true,
-    'message' => 'Ciclo guardado correctamente',
-    'id' => (int)$nuevoId
-]);
+sendJSONSuccess(array('id' => (int)$nuevoId), 'Ciclo guardado correctamente');
 ?>

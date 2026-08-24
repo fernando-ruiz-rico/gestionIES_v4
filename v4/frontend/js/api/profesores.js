@@ -8,20 +8,19 @@ const ProfesoresAPI = {
                 method: 'GET',
                 credentials: 'include'
             });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                return { success: false, error: errorData.error || 'Error al cargar profesores' };
-            }
-            
+
             const data = await response.json();
-            return { success: true, data: data };
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error al cargar profesores' };
+            }
+
+            return { success: true, data: data.data };
         } catch (error) {
             console.error('Error en listar profesores:', error);
             return { success: false, error: 'Error de conexión con el servidor' };
         }
     },
-    
+
     // Obtener un profesor por ID
     async obtener(id) {
         try {
@@ -29,20 +28,19 @@ const ProfesoresAPI = {
                 method: 'GET',
                 credentials: 'include'
             });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                return { success: false, error: errorData.error || 'Error al cargar profesor' };
-            }
-            
+
             const data = await response.json();
-            return { success: true, data: data };
+            if (!data.success) {
+                return { success: false, error: data.error || 'Error al cargar profesor' };
+            }
+
+            return { success: true, data: data.data };
         } catch (error) {
             console.error('Error en obtener profesor:', error);
             return { success: false, error: 'Error de conexión con el servidor' };
         }
     },
-    
+
     // Guardar profesor (crear o actualizar)
     async guardar(formData) {
         try {
@@ -51,115 +49,110 @@ const ProfesoresAPI = {
                 credentials: 'include',
                 body: formData
             });
-            
+
             const data = await response.json();
-            
-            if (!response.ok) {
+            if (!data.success) {
                 return { success: false, error: data.error || 'Error al guardar profesor' };
             }
-            
-            return { success: true, data: data };
+
+            return { success: true, data: data.data };
         } catch (error) {
             console.error('Error en guardar profesor:', error);
             return { success: false, error: 'Error de conexión con el servidor' };
         }
     },
-    
+
     // Eliminar profesor
     async eliminar(id) {
         try {
             const formData = new FormData();
             formData.append('id', id);
-            
+
             const response = await fetch('../backend/api/profesores/eliminar.php', {
                 method: 'POST',
                 credentials: 'include',
                 body: formData
             });
-            
+
             const data = await response.json();
-            
-            if (!response.ok) {
+            if (!data.success) {
                 return { success: false, error: data.error || 'Error al eliminar profesor' };
             }
-            
-            return { success: true, data: data };
+
+            return { success: true, data: data.data };
         } catch (error) {
             console.error('Error en eliminar profesor:', error);
             return { success: false, error: 'Error de conexión con el servidor' };
         }
     },
-    
+
     // Actualizar jefe de departamento
     async actualizarJefe(idProfesor, idDepartamento) {
         try {
             const formData = new FormData();
             formData.append('idProfesor', idProfesor);
             formData.append('idDepartamento', idDepartamento);
-            
+
             const response = await fetch('../backend/api/profesores/actualizar_jefe.php', {
                 method: 'POST',
                 credentials: 'include',
                 body: formData
             });
-            
+
             const data = await response.json();
-            
-            if (!response.ok) {
+            if (!data.success) {
                 return { success: false, error: data.error || 'Error al actualizar jefe de departamento' };
             }
-            
-            return { success: true, data: data };
+
+            return { success: true, data: data.data };
         } catch (error) {
             console.error('Error en actualizar jefe:', error);
             return { success: false, error: 'Error de conexión con el servidor' };
         }
     },
-    
+
     // Activar/desactivar profesor
     async actualizarActivo(idProfesor) {
         try {
             const formData = new FormData();
             formData.append('idProfesor', idProfesor);
-            
+
             const response = await fetch('../backend/api/profesores/actualizar_activo.php', {
                 method: 'POST',
                 credentials: 'include',
                 body: formData
             });
-            
+
             const data = await response.json();
-            
-            if (!response.ok) {
+            if (!data.success) {
                 return { success: false, error: data.error || 'Error al actualizar estado del profesor' };
             }
-            
-            return { success: true, data: data };
+
+            return { success: true, data: data.data };
         } catch (error) {
             console.error('Error en actualizar activo:', error);
             return { success: false, error: 'Error de conexión con el servidor' };
         }
     },
-    
+
     // Ordenar profesores
     async ordenar(orden) {
         try {
             const formData = new FormData();
             formData.append('orden', orden);
-            
+
             const response = await fetch('../backend/api/profesores/ordenar.php', {
                 method: 'POST',
                 credentials: 'include',
                 body: formData
             });
-            
+
             const data = await response.json();
-            
-            if (!response.ok) {
+            if (!data.success) {
                 return { success: false, error: data.error || 'Error al ordenar profesores' };
             }
-            
-            return { success: true, data: data };
+
+            return { success: true, data: data.data };
         } catch (error) {
             console.error('Error en ordenar profesores:', error);
             return { success: false, error: 'Error de conexión con el servidor' };

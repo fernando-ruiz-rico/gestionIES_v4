@@ -7,14 +7,12 @@ require_once '../../config.php';
 try {
     $db = Db::open();
     $grupos = $db->fetchAll("SELECT g.*, c.nombre AS nombreCurso
-                             FROM grupos g
-                             LEFT JOIN cursos c ON c.id = g.idCurso
-                             ORDER BY g.nombre");
+                              FROM grupos g
+                              LEFT JOIN cursos c ON c.id = g.idCurso
+                              ORDER BY g.nombre");
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
-echo json_encode($grupos);
+sendJSONSuccess($grupos);
 ?>

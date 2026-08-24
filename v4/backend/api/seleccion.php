@@ -32,12 +32,9 @@ function esSuper()
     return isset($_SESSION['rol']) && ($_SESSION['rol'] == 'admin' || $_SESSION['rol'] == 'jefeDepartamento');
 }
 
-$db = getDBConnection();
-if (!$db) {
-    sendJSONError('Error de conexión a la base de datos');
-}
-
 try {
+    $db = Db::open();
+
     switch ($action) {
         // Lista cursos + grupos + materias de un departamento para un escenario
         case 'listar_cursos':
@@ -51,28 +48,20 @@ try {
             if ($super) {
                 $sql = "SELECT DISTINCT c.id AS idCurso, c.nombre AS nombreCurso, c.abreviatura AS abrevCurso, c.orden AS ordenCurso,
                               g.id AS idGrupo, g.nombre AS nombreGrupo, g.abreviatura AS abrevGrupo, g.orden AS ordenGrupo, g.mostrar
-                        FROM cursos c
-                        JOIN grupos g ON g.idCurso = c.id
-                        WHERE c.id IN (SELECT idCurso FROM materias WHERE idDepartamento=$idDepartamento)
-                        ORDER BY c.orden, g.orden";
+                       FROM cursos c
+                       JOIN grupos g ON g.idCurso = c.id
+                       WHERE c.id IN (SELECT idCurso FROM materias WHERE idDepartamento=?)
+                       ORDER BY c.orden, g.orden";
             } else {
                 $sql = "SELECT DISTINCT c.id AS idCurso, c.nombre AS nombreCurso, c.abreviatura AS abrevCurso, c.orden AS ordenCurso,
                               g.id AS idGrupo, g.nombre AS nombreGrupo, g.abreviatura AS abrevGrupo, g.orden AS ordenGrupo, g.mostrar
-                        FROM cursos c
-                        JOIN grupos g ON g.idCurso = c.id
-                        WHERE c.id IN (SELECT idCurso FROM materias WHERE idDepartamento=$idDepartamento AND asignada_directiva=0)
-                        ORDER BY c.orden, g.orden";
+                       FROM cursos c
+                       JOIN grupos g ON g.idCurso = c.id
+                       WHERE c.id IN (SELECT idCurso FROM materias WHERE idDepartamento=? AND asignada_directiva=0)
+                       ORDER BY c.orden, g.orden";
             }
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $cursos = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $cursos[] = $fila;
-            }
-            mysqli_free_result($result);
-            closeDBConnection($db);
+            $cursos = $db->fetchAll($sql, $idDepartamento);
+            $db->close();
             sendJSONSuccess($cursos);
             break;
 
@@ -87,18 +76,10 @@ try {
                            c.abreviatura AS abrevCurso
                     FROM materias m
                     JOIN cursos c ON c.id = m.idCurso
-                    WHERE m.idDepartamento=$idDepartamento
+                    WHERE m.idDepartamento=?
                     ORDER BY c.orden, m.nombre";
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $materias = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $materias[] = $fila;
-            }
-            mysqli_free_result($result);
-            closeDBConnection($db);
+            $materias = $db->fetchAll($sql, $idDepartamento);
+            $db->close();
             sendJSONSuccess($materias);
             break;
 
@@ -110,21 +91,16 @@ try {
                 throw new Exception('Departamento inválido');
             }
             $sql = "SELECT id, nombre, abreviatura, idEspecialidad, orden
-                   FROM profesores WHERE idDepartamento=$idDepartamento AND activo=1";
+                   FROM profesores WHERE idDepartamento=? AND activo=1";
+            $params = array();
+            $params[] = $idDepartamento;
             if (!empty($idEspecialidad)) {
-                $sql .= " AND idEspecialidad='" . mysqli_real_escape_string($db, $idEspecialidad) . "'";
+                $sql .= " AND idEspecialidad=?";
+                $params[] = $idEspecialidad;
             }
             $sql .= " ORDER BY orden";
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $profesores = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $profesores[] = $fila;
-            }
-            mysqli_free_result($result);
-            closeDBConnection($db);
+            $profesores = call_user_func_array(array($db, 'fetchAll'), array_merge(array($sql), $params));
+            $db->close();
             sendJSONSuccess($profesores);
             break;
 
@@ -143,18 +119,10 @@ try {
                     JOIN materias m ON m.id = s.idMateria
                     JOIN cursos c ON c.id = m.idCurso
                     JOIN grupos g ON g.id = s.idGrupo
-                    WHERE s.idProfesor=$idProfesor AND s.idEscenario=$idEscenario
+                    WHERE s.idProfesor=? AND s.idEscenario=?
                     ORDER BY s.orden";
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $selecciones = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $selecciones[] = $fila;
-            }
-            mysqli_free_result($result);
-            closeDBConnection($db);
+            $selecciones = $db->fetchAll($sql, $idProfesor, $idEscenario);
+            $db->close();
             sendJSONSuccess($selecciones);
             break;
 
@@ -169,20 +137,13 @@ try {
                 throw new Exception('Datos incompletos para la selección');
             }
             // Si la materia la asigna la directiva, no hay peligro de conflicto: orden bajo
-            $result = mysqli_query($db, "SELECT asignada_directiva FROM materias WHERE id=$idMateria");
-            $fila = mysqli_fetch_assoc($result);
+            $fila = $db->fetchOne("SELECT asignada_directiva FROM materias WHERE id=?", $idMateria);
             $asignadaDirectiva = $fila ? $fila['asignada_directiva'] : 0;
-            mysqli_free_result($result);
-            $result = mysqli_query($db, "SELECT COUNT(*) AS total FROM seleccion WHERE idProfesor=$idProfesor AND idEscenario=$idEscenario");
-            $fila = mysqli_fetch_assoc($result);
+            $fila = $db->fetchOne("SELECT COUNT(*) AS total FROM seleccion WHERE idProfesor=? AND idEscenario=?", $idProfesor, $idEscenario);
             $orden = $asignadaDirectiva ? 100 : $fila['total'] + 1;
-            mysqli_free_result($result);
-            $query = "INSERT INTO seleccion (idProfesor, idMateria, idGrupo, idEscenario, horas, orden) VALUES ($idProfesor, $idMateria, $idGrupo, $idEscenario, $horas, $orden)";
-            if (!mysqli_query($db, $query)) {
-                throw new Exception(mysqli_error($db));
-            }
-            $nuevoId = mysqli_insert_id($db);
-            closeDBConnection($db);
+            $db->execute("INSERT INTO seleccion (idProfesor, idMateria, idGrupo, idEscenario, horas, orden) VALUES (?, ?, ?, ?, ?, ?)", $idProfesor, $idMateria, $idGrupo, $idEscenario, $horas, $orden);
+            $nuevoId = $db->insertId();
+            $db->close();
             sendJSONSuccess(array('id' => $nuevoId), 'Selección añadida');
             break;
 
@@ -192,10 +153,8 @@ try {
             if ($id <= 0) {
                 throw new Exception('ID de selección inválido');
             }
-            if (!mysqli_query($db, "DELETE FROM seleccion WHERE id=$id")) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $db->execute("DELETE FROM seleccion WHERE id=?", $id);
+            $db->close();
             sendJSONSuccess(null, 'Selección eliminada');
             break;
 
@@ -206,10 +165,8 @@ try {
             if ($idProfesor <= 0 || $idEscenario <= 0) {
                 throw new Exception('Datos inválidos');
             }
-            if (!mysqli_query($db, "DELETE FROM seleccion WHERE idProfesor=$idProfesor AND idEscenario=$idEscenario")) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $db->execute("DELETE FROM seleccion WHERE idProfesor=? AND idEscenario=?", $idProfesor, $idEscenario);
+            $db->close();
             sendJSONSuccess(null, 'Todas las selecciones eliminadas');
             break;
 
@@ -221,17 +178,18 @@ try {
             foreach ($ids as $pos => $cod) {
                 $idSel = intval(substr($cod, 3));
                 if ($idSel > 0) {
-                    mysqli_query($db, "UPDATE seleccion SET orden=" . ($pos + 1) . " WHERE id=$idSel AND idEscenario=$idEscenario");
+                    $db->execute("UPDATE seleccion SET orden=? WHERE id=? AND idEscenario=?", $pos + 1, $idSel, $idEscenario);
                 }
             }
-            closeDBConnection($db);
+            $db->close();
             sendJSONSuccess(null, 'Orden actualizado');
             break;
 
         default:
             throw new Exception('Acción no válida: ' . $action);
     }
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 } catch (Exception $e) {
-    closeDBConnection($db);
     sendJSONError($e->getMessage());
 }

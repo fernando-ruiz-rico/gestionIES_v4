@@ -177,7 +177,7 @@ const EspecialidadesView = {
             try {
                 const response = await fetch('../backend/api/departamentos/listar.php', { credentials: 'include' });
                 const data = await response.json();
-                this.departamentos = Array.isArray(data) ? data : [];
+                this.departamentos = (data.success && Array.isArray(data.data)) ? data.data : [];
             } catch (e) {
                 console.error(e);
                 this.departamentos = [];

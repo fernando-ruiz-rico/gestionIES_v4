@@ -9,25 +9,19 @@ $datos = json_decode(file_get_contents('php://input'), true);
 $id = trim(isset($datos['id']) ? $datos['id'] : '');
 
 if (empty($id)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'ID inválido']);
-    exit;
+    sendJSONError('ID inválido', 400);
 }
 
 try {
     $db = Db::open();
     $afectadas = $db->execute("DELETE FROM especialidades WHERE id = ?", $id);
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
 if ($afectadas === 0) {
-    http_response_code(404);
-    echo json_encode(['error' => 'No encontrado']);
-    exit;
+    sendJSONError('No encontrado', 404);
 }
 
-echo json_encode(['success' => true, 'message' => 'Eliminado correctamente']);
+sendJSONSuccess(null, 'Eliminado correctamente');
 ?>

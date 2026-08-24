@@ -14,9 +14,7 @@ $rol          = $session['rol'];
 $idUsuarioSesion = intval($session['idUsuario']);
 
 if ($idMateria <= 0 || $idGrupo <= 0 || $idEvaluacion <= 0) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Debe indicar materia, grupo y evaluación']);
-    exit;
+    sendJSONError('Debe indicar materia, grupo y evaluación', 400);
 }
 
 // Admin puede ver seguimiento de cualquier profesor
@@ -27,57 +25,41 @@ if (esUsuarioSuper($rol)) {
 }
 
 if ($idProfesor <= 0) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Parámetros no válidos']);
-    exit;
+    sendJSONError('Parámetros no válidos', 400);
 }
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error de conexión a la base de datos']);
-    exit;
-}
+try {
+    $db = Db::open();
 
-$curso = cursoActual();
+    $curso = cursoActual();
 
-$stmt = mysqli_prepare($db, "SELECT temporalizacion, resultados, inclusion, num_aprobados, num_suspensos, num_otros
+    $fila = $db->fetchOne("SELECT temporalizacion, resultados, inclusion, num_aprobados, num_suspensos, num_otros
                                 FROM seguimiento_programaciones_aula
-                                WHERE idMateria = ? AND idGrupo = ? AND idProfesor = ? AND curso = ? AND evaluacion = ?");
-mysqli_stmt_bind_param($stmt, "iisss", $idMateria, $idGrupo, $idProfesor, $curso, $idEvaluacion);
+                                WHERE idMateria = ? AND idGrupo = ? AND idProfesor = ? AND curso = ? AND evaluacion = ?",
+        $idMateria, $idGrupo, $idProfesor, $curso, $idEvaluacion);
 
-if (!mysqli_stmt_execute($stmt)) {
-    mysqli_close($db);
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error al ejecutar la consulta: ' . mysqli_error($db)]);
-    exit;
-}
-
-$result = mysqli_stmt_get_result($stmt);
-$data = [
-    'temporalizacion' => '',
-    'resultados'      => '',
-    'inclusion'       => '',
-    'num_aprobados'   => 0,
-    'num_suspensos'   => 0,
-    'num_otros'       => 0
-];
-
-if (mysqli_num_rows($result) > 0) {
-    $fila = mysqli_fetch_assoc($result);
     $data = [
-        'temporalizacion' => $fila['temporalizacion'],
-        'resultados'      => $fila['resultados'],
-        'inclusion'       => $fila['inclusion'],
-        'num_aprobados'   => intval($fila['num_aprobados']),
-        'num_suspensos'   => intval($fila['num_suspensos']),
-        'num_otros'       => intval($fila['num_otros'])
+        'temporalizacion' => '',
+        'resultados'      => '',
+        'inclusion'       => '',
+        'num_aprobados'   => 0,
+        'num_suspensos'   => 0,
+        'num_otros'       => 0
     ];
+
+    if ($fila) {
+        $data = [
+            'temporalizacion' => $fila['temporalizacion'],
+            'resultados'      => $fila['resultados'],
+            'inclusion'       => $fila['inclusion'],
+            'num_aprobados'   => intval($fila['num_aprobados']),
+            'num_suspensos'   => intval($fila['num_suspensos']),
+            'num_otros'       => intval($fila['num_otros'])
+        ];
+    }
+
+    sendJSONSuccess($data);
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
-
-mysqli_stmt_close($stmt);
-mysqli_free_result($result);
-mysqli_close($db);
-
-echo json_encode(['success' => true, 'data' => $data]);
 ?>

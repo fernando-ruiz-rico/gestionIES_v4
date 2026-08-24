@@ -5,34 +5,25 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$conn = getDBConnection();
-if (!$conn) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión']);
-    exit;
-}
-
 $idMateria = intval(isset($_GET['idMateria']) ? $_GET['idMateria'] : 0);
 $idCurso = intval(isset($_GET['idCurso']) ? $_GET['idCurso'] : 0);
 
 if ($idMateria <= 0 || $idCurso <= 0) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Parámetros inválidos']);
-    exit;
+    sendJSONError('Parámetros inválidos', 400);
 }
 
 try {
-    $db = new Db($conn);
+    $db = Db::open();
 
     // Datos de cabecera (curso - materia)
-    $filaH = $db->fetchOne("SELECT c.nombre AS nombreCurso, m.nombre AS nombreMateria FROM cursos c, materias m WHERE c.id = m.idCurso AND c.id = " . intval($idCurso) . " AND m.id = " . intval($idMateria));
+    $filaH = $db->fetchOne("SELECT c.nombre AS nombreCurso, m.nombre AS nombreMateria FROM cursos c, materias m WHERE c.id = m.idCurso AND c.id = ? AND m.id = ?", $idCurso, $idMateria);
 
     // Datos de referencia de la materia (para el botón "Importar")
-    $general = $db->fetchOne("SELECT cantidad, horas, horas_complementarias, min_num_profesores, max_grupos_profesor FROM materias WHERE id = " . intval($idMateria));
+    $general = $db->fetchOne("SELECT cantidad, horas, horas_complementarias, min_num_profesores, max_grupos_profesor FROM materias WHERE id = ?", $idMateria);
 
     // Grupos del curso con sus valores de materias_grupos (o null si no están)
     $grupos = [];
-    foreach ($db->fetchAll("SELECT id, nombre FROM grupos WHERE idCurso = " . intval($idCurso) . " ORDER BY orden") as $fGr) {
+    foreach ($db->fetchAll("SELECT id, nombre FROM grupos WHERE idCurso = ? ORDER BY orden", $idCurso) as $fGr) {
         $g = [
             'id' => intval($fGr['id']),
             'nombre' => $fGr['nombre'],
@@ -42,7 +33,7 @@ try {
             'min_num_profesores' => null,
             'max_grupos_profesor' => null
         ];
-        $filaMG = $db->fetchOne("SELECT * FROM materias_grupos WHERE idMateria = " . intval($idMateria) . " AND idGrupo = " . intval($fGr['id']));
+        $filaMG = $db->fetchOne("SELECT * FROM materias_grupos WHERE idMateria = ? AND idGrupo = ?", $idMateria, intval($fGr['id']));
         if ($filaMG) {
             $g['cantidad'] = intval($filaMG['cantidad']);
             $g['horas'] = intval($filaMG['horas']);
@@ -53,12 +44,10 @@ try {
         $grupos[] = $g;
     }
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
-echo json_encode([
+sendJSONSuccess([
     'idCurso' => $idCurso,
     'idMateria' => $idMateria,
     'nombreCurso' => isset($filaH['nombreCurso']) ? $filaH['nombreCurso'] : '',

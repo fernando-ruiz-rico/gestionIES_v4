@@ -11,37 +11,24 @@ require_once '../../config.php';
 $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';
 
 if (!$permisos) {
-    http_response_code(403);
-    echo json_encode(['error' => 'No tiene permisos para realizar esta acción']);
-    exit;
+    sendJSONError('No tiene permisos para realizar esta acción', 403);
 }
 
 if (empty($_POST['idProfesor']) || empty($_POST['idDepartamento'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'ID de profesor y departamento son requeridos']);
-    exit;
+    sendJSONError('ID de profesor y departamento son requeridos', 400);
 }
 
 $idProfesor = intval($_POST['idProfesor']);
 $idDepartamento = intval($_POST['idDepartamento']);
-$conn = getDBConnection();
-
-if (!$conn) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión a la base de datos']);
-    exit;
-}
 
 try {
-    $db = new Db($conn);
+    $db = Db::open();
 
     // Asignar/Quitar jefe de departamento (toggle 1 - jefe_departamento)
-    $db->execute("UPDATE profesores SET jefe_departamento = 1 - jefe_departamento WHERE id = $idProfesor");
+    $db->execute("UPDATE profesores SET jefe_departamento = 1 - jefe_departamento WHERE id = ?", $idProfesor);
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error al actualizar el jefe de departamento: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error al actualizar el jefe de departamento: ' . $e->getMessage(), 500);
 }
 
-echo json_encode(['success' => true, 'mensaje' => 'Jefe de departamento actualizado correctamente']);
+sendJSONSuccess(array('mensaje' => 'Jefe de departamento actualizado correctamente'));
 ?>

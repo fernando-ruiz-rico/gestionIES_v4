@@ -23,26 +23,14 @@ require_once '../config.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-$db = getDBConnection();
-if (!$db) {
-    sendJSONError('Error de conexión a la base de datos');
-}
+$db = Db::open();
 
 try {
     switch ($action) {
         // Lista los ciclos para el selector de la vista
         case 'listar_ciclos':
             $sql = "SELECT id, nombre, nivel FROM ciclos ORDER BY nombre";
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $ciclos = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $ciclos[] = $fila;
-            }
-            mysqli_free_result($result);
-            closeDBConnection($db);
+            $ciclos = $db->fetchAll($sql);
             sendJSONSuccess($ciclos);
             break;
 
@@ -52,17 +40,8 @@ try {
             if ($idCiclo <= 0) {
                 throw new Exception('ID de ciclo inválido');
             }
-            $sql = "SELECT * FROM competencias_ciclos WHERE idCiclo = $idCiclo ORDER BY orden";
-            $result = mysqli_query($db, $sql);
-            if (!$result) {
-                throw new Exception(mysqli_error($db));
-            }
-            $competencias = [];
-            while ($fila = mysqli_fetch_assoc($result)) {
-                $competencias[] = $fila;
-            }
-            mysqli_free_result($result);
-            closeDBConnection($db);
+            $sql = "SELECT * FROM competencias_ciclos WHERE idCiclo = ? ORDER BY orden";
+            $competencias = $db->fetchAll($sql, $idCiclo);
             sendJSONSuccess($competencias);
             break;
 
@@ -72,12 +51,10 @@ try {
             if ($id <= 0) {
                 throw new Exception('ID de competencia inválido');
             }
-            $result = mysqli_query($db, "SELECT * FROM competencias_ciclos WHERE id=$id");
-            $fila = mysqli_fetch_assoc($result);
+            $fila = $db->fetchOne("SELECT * FROM competencias_ciclos WHERE id=?", $id);
             if (!$fila) {
-                throw new Exception('Competencia no encontrada');
+                sendJSONError('Competencia no encontrada', 404);
             }
-            closeDBConnection($db);
             sendJSONSuccess($fila);
             break;
 
@@ -92,26 +69,17 @@ try {
             $tipo = intval(isset($datos['tipo']) ? $datos['tipo'] : 1);
             $idCiclo = intval($datos['idCiclo']);
             if ($id > 0) {
-                $codigo = mysqli_real_escape_string($db, $codigo);
-                $texto = mysqli_real_escape_string($db, $texto);
-                $query = "UPDATE competencias_ciclos SET codigo='$codigo', texto='$texto', tipo=$tipo WHERE id=$id";
+                $db->execute("UPDATE competencias_ciclos SET codigo=?, texto=?, tipo=? WHERE id=?", $codigo, $texto, $tipo, $id);
             } else {
                 if (empty($codigo) || empty($texto) || $idCiclo <= 0) {
                     throw new Exception('Datos incompletos para guardar la competencia');
                 }
-                $codigo = mysqli_real_escape_string($db, $codigo);
-                $texto = mysqli_real_escape_string($db, $texto);
                 // "orden" es NOT NULL sin valor por defecto; v3 no la pedía, así que la ponemos al final de la lista
-                $sel = mysqli_query($db, "SELECT MAX(orden) AS maxo FROM competencias_ciclos WHERE idCiclo = $idCiclo");
-                $filaMax = mysqli_fetch_assoc($sel);
+                $filaMax = $db->fetchOne("SELECT MAX(orden) AS maxo FROM competencias_ciclos WHERE idCiclo = ?", $idCiclo);
                 $orden = ($filaMax && $filaMax['maxo'] !== null) ? intval($filaMax['maxo']) + 1 : 1;
-                $query = "INSERT INTO competencias_ciclos (codigo, texto, tipo, idCiclo, orden) VALUES ('$codigo', '$texto', $tipo, $idCiclo, $orden)";
+                $db->execute("INSERT INTO competencias_ciclos (codigo, texto, tipo, idCiclo, orden) VALUES (?, ?, ?, ?, ?)", $codigo, $texto, $tipo, $idCiclo, $orden);
             }
-            if (!mysqli_query($db, $query)) {
-                throw new Exception(mysqli_error($db));
-            }
-            $nuevoId = ($id > 0) ? $id : mysqli_insert_id($db);
-            closeDBConnection($db);
+            $nuevoId = ($id > 0) ? $id : $db->insertId();
             sendJSONSuccess(array('id' => $nuevoId), 'Competencia guardada');
             break;
 
@@ -125,10 +93,9 @@ try {
             foreach ($ids as $pos => $cod) {
                 $idComp = intval(substr($cod, 2));
                 if ($idComp > 0) {
-                    mysqli_query($db, "UPDATE competencias_ciclos SET orden=" . ($pos + 1) . " WHERE id=$idComp");
+                    $db->execute("UPDATE competencias_ciclos SET orden=? WHERE id=?", $pos + 1, $idComp);
                 }
             }
-            closeDBConnection($db);
             sendJSONSuccess(null, 'Orden actualizado');
             break;
 
@@ -141,17 +108,15 @@ try {
             if ($id <= 0) {
                 throw new Exception('ID de competencia inválido');
             }
-            if (!mysqli_query($db, "DELETE FROM competencias_ciclos WHERE id=$id")) {
-                throw new Exception(mysqli_error($db));
-            }
-            closeDBConnection($db);
+            $db->execute("DELETE FROM competencias_ciclos WHERE id=?", $id);
             sendJSONSuccess(null, 'Competencia eliminada');
             break;
 
         default:
             throw new Exception('Acción no válida: ' . $action);
     }
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 } catch (Exception $e) {
-    closeDBConnection($db);
     sendJSONError($e->getMessage());
 }

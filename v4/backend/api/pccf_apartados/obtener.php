@@ -10,30 +10,16 @@ if ($idApartado <= 0) {
     sendJSONError('Apartado no válido', 400);
 }
 
-$db = getDBConnection();
-if (!$db) {
-    sendJSONError('Error de conexión a la base de datos', 500);
-}
-
 try {
-    $stmt = mysqli_prepare($db, "SELECT * FROM apartados_pccf WHERE id = ?");
-    mysqli_stmt_bind_param($stmt, "i", $idApartado);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
+    $db = Db::open();
 
-    if (mysqli_num_rows($result) > 0) {
-        $apartado = mysqli_fetch_assoc($result);
-        mysqli_free_result($result);
-        mysqli_stmt_close($stmt);
+    $apartado = $db->fetchOne("SELECT * FROM apartados_pccf WHERE id = ?", $idApartado);
+    if ($apartado !== null) {
         sendJSONSuccess($apartado);
     } else {
-        mysqli_free_result($result);
-        mysqli_stmt_close($stmt);
         sendJSONError('Apartado no encontrado', 404);
     }
-} catch (Exception $e) {
-    sendJSONError($e->getMessage());
-} finally {
-    closeDBConnection($db);
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 ?>

@@ -19,9 +19,7 @@ if (esUsuarioSuper($rol)) {
     if (isset($session['activo']) && $session['activo'] == 1) {
         // Ok, continuar
     } else {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'No tiene permisos para realizar esta acción']);
-        exit;
+        sendJSONError('No tiene permisos para realizar esta acción', 403);
     }
 }
 
@@ -45,56 +43,34 @@ if (esUsuarioSuper($rol)) {
 }
 
 if ($idMateria <= 0 || $idGrupo <= 0 || $idEvaluacion <= 0 || $idProfesor <= 0) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Parámetros no válidos']);
-    exit;
+    sendJSONError('Parámetros no válidos', 400);
 }
 
-$db = getDBConnection();
-if (!$db) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error de conexión a la base de datos']);
-    exit;
-}
+try {
+    $db = Db::open();
 
-$curso = cursoActual();
+    $curso = cursoActual();
 
-// Verificar si ya existe una fila para esta combinación (materia + grupo + profesor + curso + evaluación)
-$stmtCheck = mysqli_prepare($db, "SELECT id FROM seguimiento_programaciones_aula WHERE idMateria = ? AND idGrupo = ? AND idProfesor = ? AND curso = ? AND evaluacion = ?");
-mysqli_stmt_bind_param($stmtCheck, "iisii", $idMateria, $idGrupo, $idProfesor, $curso, $idEvaluacion);
+    // Verificar si ya existe una fila para esta combinación (materia + grupo + profesor + curso + evaluación)
+    $existe = $db->count("SELECT id FROM seguimiento_programaciones_aula WHERE idMateria = ? AND idGrupo = ? AND idProfesor = ? AND curso = ? AND evaluacion = ?",
+        $idMateria, $idGrupo, $idProfesor, $curso, $idEvaluacion) > 0;
 
-if (!mysqli_stmt_execute($stmtCheck)) {
-    mysqli_close($db);
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error al verificar registro: ' . mysqli_error($db)]);
-    exit;
-}
+    if ($existe) {
+        $db->execute("UPDATE seguimiento_programaciones_aula
+                        SET temporalizacion = ?, resultados = ?, inclusion = ?, num_aprobados = ?, num_suspensos = ?, num_otros = ?
+                        WHERE idMateria = ? AND idGrupo = ? AND idProfesor = ? AND curso = ? AND evaluacion = ?",
+            $temporalizacion, $resultados, $inclusion, $numAprobados, $numSuspensos, $numOtros,
+            $idMateria, $idGrupo, $idProfesor, $curso, $idEvaluacion);
+    } else {
+        $db->execute("INSERT INTO seguimiento_programaciones_aula (idMateria, idGrupo, idProfesor, curso, evaluacion, temporalizacion, resultados, inclusion, num_aprobados, num_suspensos, num_otros)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            $idMateria, $idGrupo, $idProfesor, $curso, $idEvaluacion,
+            $temporalizacion, $resultados, $inclusion,
+            $numAprobados, $numSuspensos, $numOtros);
+    }
 
-$resultCheck = mysqli_stmt_get_result($stmtCheck);
-$existe = mysqli_num_rows($resultCheck) > 0;
-
-if ($existe) {
-    $stmt = mysqli_prepare($db, "UPDATE seguimiento_programaciones_aula
-                                SET temporalizacion = ?, resultados = ?, inclusion = ?, num_aprobados = ?, num_suspensos = ?, num_otros = ?
-                                WHERE idMateria = ? AND idGrupo = ? AND idProfesor = ? AND curso = ? AND evaluacion = ?");
-    mysqli_stmt_bind_param($stmt, "sssiiiiiisi", $temporalizacion, $resultados, $inclusion, $numAprobados, $numSuspensos, $numOtros, $idMateria, $idGrupo, $idProfesor, $curso, $idEvaluacion);
-} else {
-    $stmt = mysqli_prepare($db, "INSERT INTO seguimiento_programaciones_aula (idMateria, idGrupo, idProfesor, curso, evaluacion, temporalizacion, resultados, inclusion, num_aprobados, num_suspensos, num_otros)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "iiisisssiii", $idMateria, $idGrupo, $idProfesor, $curso, $idEvaluacion, $temporalizacion, $resultados, $inclusion, $numAprobados, $numSuspensos, $numOtros);
-}
-
-if (mysqli_stmt_execute($stmt)) {
-    mysqli_stmt_close($stmt);
-    mysqli_free_result($resultCheck);
-    mysqli_close($db);
-    echo json_encode(['success' => true, 'message' => 'Seguimiento guardado correctamente']);
-} else {
-    $error = mysqli_error($db);
-    mysqli_stmt_close($stmt);
-    mysqli_free_result($resultCheck);
-    mysqli_close($db);
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error al guardar: ' . $error]);
+    sendJSONSuccess(null, 'Seguimiento guardado correctamente');
+} catch (DbException $e) {
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 ?>

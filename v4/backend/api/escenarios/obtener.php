@@ -4,9 +4,7 @@ require_once '../../config.php';
 
 $id = intval(isset($_GET['id']) ? $_GET['id'] : 0);
 if ($id <= 0) {
-    http_response_code(400);
-    echo json_encode(['error' => 'ID inválido']);
-    exit;
+    sendJSONError('ID inválido', 400);
 }
 
 // La tabla real para escenarios es 'escenarios_desideratas'
@@ -14,16 +12,12 @@ try {
     $db = Db::open();
     $escenario = $db->fetchOne("SELECT id, nombre, actual, activo_desideratas, modo_rueda FROM escenarios_desideratas WHERE id = ?", $id);
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
 if (!$escenario) {
-    http_response_code(404);
-    echo json_encode(['error' => 'No encontrado']);
-    exit;
+    sendJSONError('No encontrado', 404);
 }
 
-echo json_encode($escenario);
+sendJSONSuccess($escenario);
 ?>

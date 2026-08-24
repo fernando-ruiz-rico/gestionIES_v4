@@ -15,9 +15,7 @@ $categoria   = isset($datos['categoria']) ? trim($datos['categoria']) : '';
 $id          = isset($datos['id']) ? intval($datos['id']) : 0;
 
 if ($nombre === '' || $abreviatura === '') {
-    http_response_code(400);
-    echo json_encode(['error' => 'Faltan datos obligatorios (nombre y abreviatura)']);
-    exit;
+    sendJSONError('Faltan datos obligatorios (nombre y abreviatura)', 400);
 }
 
 // En v3 el campo "horas semanales" puede llegar vacío; en ese caso se guarda 0
@@ -31,14 +29,8 @@ try {
         $nuevoId = $db->insertId();
     }
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
-echo json_encode([
-    'success' => true,
-    'message' => 'Curso guardado correctamente',
-    'id' => (int)$nuevoId
-]);
+sendJSONSuccess(array('id' => (int)$nuevoId), 'Curso guardado correctamente');
 ?>

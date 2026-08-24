@@ -97,6 +97,25 @@ class Db
     }
 
     /**
+     * Devuelve el número de filas que devolvería el SELECT (equivalente a
+     * mysqli_num_rows sobre el resultado). Lanza DbException si la
+     * consulta falla.
+     */
+    public function count($sql, ...$params)
+    {
+        $stmt = $this->prepare($sql, $params);
+        $this->executeStmt($stmt);
+        $res  = $this->getResult($stmt);
+        $n    = 0;
+        while (mysqli_fetch_assoc($res) !== null) {
+            $n++;
+        }
+        mysqli_free_result($res);
+        mysqli_stmt_close($stmt);
+        return $n;
+    }
+
+    /**
      * Último id auto-incremental generado en la conexión
      * (equivalente a mysqli_insert_id).
      */

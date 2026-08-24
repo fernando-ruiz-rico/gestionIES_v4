@@ -6,10 +6,8 @@ try {
     $db = Db::open();
     $especialidades = $db->fetchAll("SELECT e.*, d.nombre as departamento FROM especialidades e LEFT JOIN departamentos d ON e.idDepartamento = d.id ORDER BY e.descripcion");
 } catch (DbException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de base de datos: ' . $e->getMessage()]);
-    exit;
+    sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 
-echo json_encode($especialidades);
+sendJSONSuccess($especialidades);
 ?>

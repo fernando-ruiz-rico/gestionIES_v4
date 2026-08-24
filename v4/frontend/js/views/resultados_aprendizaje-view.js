@@ -279,7 +279,7 @@ const ResultadosArendizajeView = {
             try {
                 const response = await fetch('../backend/api/departamentos/listar.php', { credentials: 'same-origin' });
                 const data = await response.json();
-                this.departamentos = data;
+                if (data.success) this.departamentos = data.data || [];
             } catch (e) {
                 this.departamentos = [];
             }
