@@ -5,7 +5,7 @@ require_once '../../config.php';
 
 $session = checkSession();
 
-$idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
+$idMateria = getOptimoInt('idMateria');
 if ($idMateria <= 0) {
     sendJSONError('Debe indicar una materia', 400);
 }

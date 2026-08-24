@@ -21,7 +21,7 @@ require_once '../config.php';
  $datos = json_decode(file_get_contents("php://input"), true) ?: [];
 
 $method = $_SERVER['REQUEST_METHOD'];
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = getOptimo('action');
 
 $db = Db::open();
 
@@ -36,7 +36,7 @@ try {
 
         // Lista las competencias de un ciclo
         case 'listar':
-            $idCiclo = isset($_GET['idCiclo']) ? intval($_GET['idCiclo']) : 0;
+            $idCiclo = getOptimoInt('idCiclo');
             if ($idCiclo <= 0) {
                 throw new Exception('ID de ciclo inválido');
             }
@@ -47,7 +47,7 @@ try {
 
         // Devuelve una competencia concreta
         case 'obtener':
-            $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+            $id = getOptimoInt('id');
             if ($id <= 0) {
                 throw new Exception('ID de competencia inválido');
             }

@@ -6,7 +6,7 @@
 
 require_once '../config.php';
 
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = getOptimo('action');
 
 switch ($action) {
     case 'login':

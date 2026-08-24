@@ -28,7 +28,7 @@ require_once '../config.php';
  $datos = json_decode(file_get_contents("php://input"), true) ?: [];
 
 $method = $_SERVER['REQUEST_METHOD'];
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = getOptimo('action');
 
 // Permisos de edición: admin o jefe de departamento
 function tienePermisoEdicion()
@@ -128,7 +128,7 @@ try {
 
         // Carga los RA (y sus CE) de una materia. Solo lectura.
         case 'cargar':
-            $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
+            $idMateria = getOptimoInt('idMateria');
             if ($idMateria <= 0) {
                 throw new Exception('ID de materia inválido');
             }
@@ -227,7 +227,7 @@ try {
 
         // Devuelve un resultado de aprendizaje concreto
         case 'obtener':
-            $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+            $id = getOptimoInt('id');
             if ($id <= 0) {
                 throw new Exception('ID de resultado inválido');
             }
@@ -296,7 +296,7 @@ try {
 
         // Carga los criterios de evaluación asociados a un resultado
         case 'cargar_criterios':
-            $idResultado = isset($_GET['idResultado']) ? intval($_GET['idResultado']) : 0;
+            $idResultado = getOptimoInt('idResultado');
             if ($idResultado <= 0) {
                 throw new Exception('ID de resultado inválido');
             }

@@ -6,8 +6,8 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$idCiclo = isset($_GET['idCiclo']) ? intval($_GET['idCiclo']) : 0;
-$idApartado = isset($_GET['idApartado']) ? intval($_GET['idApartado']) : 0;
+$idCiclo = getOptimoInt('idCiclo');
+$idApartado = getOptimoInt('idApartado');
 
 if ($idCiclo <= 0) {
     sendJSONError('Ciclo no válido', 400);

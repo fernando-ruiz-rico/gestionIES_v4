@@ -12,7 +12,7 @@ $rol = $session['rol'];
 $idProfesorSesion = intval($session['idUsuario']);
 
 if (esUsuarioSuper($rol)) {
-    $idProfesor = isset($_GET['idProfesor']) ? intval($_GET['idProfesor']) : $idProfesorSesion;
+    $idProfesor = getOptimoInt('idProfesor', $idProfesorSesion);
 } else {
     $idProfesor = $idProfesorSesion;
 }

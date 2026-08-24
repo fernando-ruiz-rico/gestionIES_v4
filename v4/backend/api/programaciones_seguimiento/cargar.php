@@ -7,9 +7,9 @@ require_once '../../config.php';
 
 $session = checkSession();
 
-$idMateria    = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
-$idGrupo      = isset($_GET['idGrupo']) ? intval($_GET['idGrupo']) : 0;
-$idEvaluacion = isset($_GET['idEvaluacion']) ? intval($_GET['idEvaluacion']) : 0;
+$idMateria    = getOptimoInt('idMateria');
+$idGrupo      = getOptimoInt('idGrupo');
+$idEvaluacion = getOptimoInt('idEvaluacion');
 $rol          = $session['rol'];
 $idUsuarioSesion = intval($session['idUsuario']);
 
@@ -19,7 +19,7 @@ if ($idMateria <= 0 || $idGrupo <= 0 || $idEvaluacion <= 0) {
 
 // Admin puede ver seguimiento de cualquier profesor
 if (esUsuarioSuper($rol)) {
-    $idProfesor = isset($_GET['idProfesor']) ? intval($_GET['idProfesor']) : $idUsuarioSesion;
+    $idProfesor = getOptimoInt('idProfesor', $idUsuarioSesion);
 } else {
     $idProfesor = $idUsuarioSesion;
 }

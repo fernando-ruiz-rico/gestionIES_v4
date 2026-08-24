@@ -29,7 +29,7 @@ if ($method === 'POST') {
     }
 }
 
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = getOptimo('action');
 if ($action === '' && isset($body['action'])) {
     $action = $body['action'];
 }
@@ -41,7 +41,7 @@ try {
     // Acción: cargar (GET ?idDepartamento=N)
     // ---------------------------------------------------------------------------
     if ($action === 'cargar') {
-        $idDepartamento = isset($_GET['idDepartamento']) ? intval($_GET['idDepartamento']) : 0;
+        $idDepartamento = getOptimoInt('idDepartamento');
         if ($idDepartamento <= 0) {
             sendJSONError('Debe indicar un departamento', 400);
         }

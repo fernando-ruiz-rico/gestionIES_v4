@@ -24,7 +24,7 @@ require_once '../config.php';
  $datos = json_decode(file_get_contents("php://input"), true) ?: [];
 
 $method = $_SERVER['REQUEST_METHOD'];
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = getOptimo('action');
 
 // Permisos superiores (admin o jefe de departamento)
 function esSuper()

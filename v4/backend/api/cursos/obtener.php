@@ -4,7 +4,7 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$id = getOptimoInt('id');
 if ($id <= 0) {
     sendJSONError('ID inválido', 400);
 }

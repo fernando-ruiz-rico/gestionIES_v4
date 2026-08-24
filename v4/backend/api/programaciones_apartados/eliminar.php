@@ -6,7 +6,7 @@ require_once '../../config.php';
 // Permiso fiel a v3: admin o jefe de departamento
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$id = getOptimoInt('id');
 
 if ($id <= 0) {
     sendJSONError('ID no válido', 400);

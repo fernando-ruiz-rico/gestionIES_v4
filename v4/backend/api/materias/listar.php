@@ -4,7 +4,7 @@ require_once '../../config.php';
 
 // Filtro opcional por curso (fiel a v3: la vista principal de materias se
 // filtra por idCurso; sin idCurso se devuelven todas las materias).
-$idCurso = isset($_GET['idCurso']) ? intval($_GET['idCurso']) : 0;
+$idCurso = getOptimoInt('idCurso');
 
 try {
     $db = Db::open();

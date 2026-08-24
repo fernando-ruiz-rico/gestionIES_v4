@@ -27,7 +27,7 @@ if ($method === 'POST') {
         $body = $decoded;
     }
 }
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = getOptimo('action');
 if ($action === '' && isset($body['action'])) {
     $action = $body['action'];
 }
@@ -152,7 +152,7 @@ try {
         // Listar temas de una materia (como v3 mostrarTemasPorMateria)
         // ------------------------------------------------------------------
         } elseif ($action === 'listar') {
-            $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
+            $idMateria = getOptimoInt('idMateria');
             if ($idMateria <= 0) {
                 sendJSONError('Debe indicar una materia', 400);
             }
@@ -176,7 +176,7 @@ try {
         // Datos de un tema (prefill del formulario) + CE/competencias
         // ------------------------------------------------------------------
         } elseif ($action === 'obtener') {
-            $idTema = isset($_GET['idTema']) ? intval($_GET['idTema']) : 0;
+            $idTema = getOptimoInt('idTema');
             if ($idTema <= 0) {
                 sendJSONError('Debe indicar un tema', 400);
             }
@@ -227,7 +227,7 @@ try {
         // Acordeón RA/CE + competencias (nivel materia)
         // ------------------------------------------------------------------
         } elseif ($action === 'accordion_ra_ce') {
-            $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
+            $idMateria = getOptimoInt('idMateria');
             if ($idMateria <= 0) {
                 sendJSONError('Debe indicar una materia', 400);
             }

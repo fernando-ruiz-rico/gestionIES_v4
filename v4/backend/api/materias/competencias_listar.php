@@ -5,7 +5,7 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$idMateria = intval(isset($_GET['idMateria']) ? $_GET['idMateria'] : 0);
+$idMateria = getOptimoInt('idMateria');
 if ($idMateria <= 0) {
     sendJSONError('Parámetro inválido', 400);
 }

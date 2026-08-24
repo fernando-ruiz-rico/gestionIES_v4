@@ -5,7 +5,7 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$idApartado = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$idApartado = getOptimoInt('id');
 if ($idApartado <= 0) {
     sendJSONError('Apartado no válido', 400);
 }

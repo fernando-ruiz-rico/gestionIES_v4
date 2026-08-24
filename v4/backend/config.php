@@ -103,6 +103,23 @@ function postOptimoInt($campo) {
     return null;
 }
 
+// Lee un campo opcional de $_GET: devuelve el valor si llega no vacío, y el
+// default (cadena vacía por defecto) si no
+function getOptimo($campo, $defecto = '') {
+    if (isset($_GET[$campo]) && !empty($_GET[$campo])) {
+        return $_GET[$campo];
+    }
+    return $defecto;
+}
+
+// Como getOptimo, pero convertido a entero (default 0 por defecto)
+function getOptimoInt($campo, $defecto = 0) {
+    if (isset($_GET[$campo]) && !empty($_GET[$campo])) {
+        return intval($_GET[$campo]);
+    }
+    return $defecto;
+}
+
 // Comprobar si hay sesión activa
 function checkSession() {
     @session_start();

@@ -3,7 +3,7 @@ header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = getOptimo('action');
 
 $db = Db::open();
 
@@ -72,7 +72,7 @@ try {
                 // FASE 2.1 — modelo fiel a v3: no existe una fila única de "programación".
                 // La programación vive en apartados + contenidos asociados a cada materia;
                 // se listan las materias que la tienen activa y su estado actual.
-                $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
+                $idMateria = getOptimoInt('idMateria');
 
                 $sql = "SELECT m.id AS id, m.nombre AS materia, c.nombre AS curso,
                                m.horas AS horas,
@@ -179,15 +179,15 @@ try {
                 sendJSONSuccess($materias);
             } elseif ($action === 'cargar_apartados') {
                 // FASE 2.1 — Apartados de una materia (fiel a v3/cargar_apartados.php).
-                $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
+                $idMateria = getOptimoInt('idMateria');
                 if ($idMateria <= 0) {
                     throw new Exception('ID de materia inválido');
                 }
                 sendJSONSuccess(programacionesCargarApartados($db, $idMateria));
             } elseif ($action === 'cargar_contenido') {
                 // FASE 2.1 — Texto de un apartado de una materia (v3/cargar_contenido_programacion).
-                $idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
-                $idApartado = isset($_GET['idApartado']) ? intval($_GET['idApartado']) : 0;
+                $idMateria = getOptimoInt('idMateria');
+                $idApartado = getOptimoInt('idApartado');
                 if ($idMateria <= 0 || $idApartado <= 0) {
                     throw new Exception('ID de materia o apartado inválido');
                 }

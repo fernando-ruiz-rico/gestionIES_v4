@@ -5,7 +5,7 @@ require_once '../../config.php';
 
 $session = checkSession();
 
-$idMateria = isset($_GET['idMateria']) ? intval($_GET['idMateria']) : 0;
+$idMateria = getOptimoInt('idMateria');
 $rol = $session['rol'];
 $idProfesorSesion = intval($session['idUsuario']);
 
@@ -15,7 +15,7 @@ if ($idMateria <= 0) {
 
 // Admin puede ver grupos de cualquier profesor
 if (esUsuarioSuper($rol)) {
-    $idProfesor = isset($_GET['idProfesor']) ? intval($_GET['idProfesor']) : $idProfesorSesion;
+    $idProfesor = getOptimoInt('idProfesor', $idProfesorSesion);
 } else {
     $idProfesor = $idProfesorSesion;
 }

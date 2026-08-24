@@ -16,7 +16,7 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
 
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = getOptimo('action');
 
 $datos = json_decode(file_get_contents("php://input"), true) ?: [];
 

@@ -21,7 +21,7 @@ require_once '../config.php';
  $datos = json_decode(file_get_contents("php://input"), true) ?: [];
 
 $method = $_SERVER['REQUEST_METHOD'];
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = getOptimo('action');
 
 // Permisos de edición (admin o jefe de departamento)
 function tienePermisoEdicion()
@@ -47,7 +47,7 @@ try {
     switch ($action) {
         // Lista las actas de un departamento (más reciente primero)
         case 'listar':
-            $idDepartamento = isset($_GET['idDepartamento']) ? intval($_GET['idDepartamento']) : 0;
+            $idDepartamento = getOptimoInt('idDepartamento');
             if ($idDepartamento <= 0) {
                 throw new Exception('ID de departamento inválido');
             }
@@ -57,7 +57,7 @@ try {
 
         // Devuelve el texto y fecha de un acta
         case 'obtener':
-            $idActa = isset($_GET['idActa']) ? intval($_GET['idActa']) : 0;
+            $idActa = getOptimoInt('idActa');
             if ($idActa <= 0) {
                 throw new Exception('ID de acta inválido');
             }

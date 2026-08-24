@@ -5,14 +5,14 @@ require_once '../../config.php';
 
 $session = checkSession();
 
-$idTema     = isset($_GET['idTema']) ? intval($_GET['idTema']) : 0;
-$idGrupo    = isset($_GET['idGrupo']) ? intval($_GET['idGrupo']) : 0;
+$idTema     = getOptimoInt('idTema');
+$idGrupo    = getOptimoInt('idGrupo');
 $rol        = $session['rol'];
 $idUsuarioSesion = intval($session['idUsuario']);
 
 // Admin puede ver contenido de cualquier profesor
 if (esUsuarioSuper($rol)) {
-    $idProfesor = isset($_GET['idProfesor']) ? intval($_GET['idProfesor']) : $idUsuarioSesion;
+    $idProfesor = getOptimoInt('idProfesor', $idUsuarioSesion);
 } else {
     $idProfesor = $idUsuarioSesion;
 }

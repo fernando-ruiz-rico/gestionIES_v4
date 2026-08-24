@@ -17,7 +17,7 @@ require_once '../config.php';
 // Fiel a v3 (página con cabecera): requiere sesión iniciada
 checkSession();
 
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = getOptimo('action');
 
 // Horas lectivas de referencia para un profesor (según v3)
 define('HORAS_PROFESOR', 18);
@@ -27,8 +27,8 @@ try {
     switch ($action) {
         // Devuelve las estadísticas de un departamento para un escenario
         case 'listar':
-            $idEscenario = isset($_GET['idEscenario']) ? intval($_GET['idEscenario']) : 0;
-            $idDepartamento = isset($_GET['idDepartamento']) ? intval($_GET['idDepartamento']) : 0;
+            $idEscenario = getOptimoInt('idEscenario');
+            $idDepartamento = getOptimoInt('idDepartamento');
             if ($idEscenario <= 0 || $idDepartamento <= 0) {
                 throw new Exception('Datos inválidos');
             }

@@ -17,20 +17,20 @@ require_once '../config.php';
 // Fiel a v3 (página con cabecera): requiere sesión iniciada
 checkSession();
 
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = getOptimo('action');
 
 try {
     $db = Db::open();
     switch ($action) {
         // Devuelve el histórico de selecciones de un departamento para un escenario
         case 'listar':
-            $idEscenario = isset($_GET['idEscenario']) ? intval($_GET['idEscenario']) : 0;
+            $idEscenario = getOptimoInt('idEscenario');
             if ($idEscenario <= 0) {
                 throw new Exception('Escenario inválido');
             }
             // Solo se puede consultar el histórico de un departamento. Los jefes
             // solo ven su propio departamento; los admins pueden elegir uno.
-            $idDepartamento = isset($_GET['idDepartamento']) ? intval($_GET['idDepartamento']) : 0;
+            $idDepartamento = getOptimoInt('idDepartamento');
             if ($idDepartamento <= 0) {
                 throw new Exception('ID de departamento inválido');
             }

@@ -13,7 +13,7 @@ if (empty($_SESSION['idUsuario'])) {
     sendJSONError('No hay sesión activa', 401);
 }
 
-$action = isset($_GET['action']) ? $_GET['action'] : 'menus';
+$action = getOptimo('action', 'menus');
 
 switch ($action) {
     case 'menus':

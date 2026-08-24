@@ -28,7 +28,7 @@ require_once '../config.php';
  $datos = json_decode(file_get_contents("php://input"), true) ?: [];
 
 $method = $_SERVER['REQUEST_METHOD'];
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = getOptimo('action');
 
 try {
     $db = Db::open();
@@ -44,7 +44,7 @@ try {
 
         // Devuelve una cualificación
         case 'obtener_cualificacion':
-            $codigo = isset($_GET['codigo']) ? $_GET['codigo'] : '';
+            $codigo = getOptimo('codigo');
             if (empty($codigo)) {
                 throw new Exception('Código de cualificación inválido');
             }
@@ -113,7 +113,7 @@ try {
 
         // Devuelve una unidad de competencia
         case 'obtener_unidad':
-            $codigo = isset($_GET['codigo']) ? $_GET['codigo'] : '';
+            $codigo = getOptimo('codigo');
             if (empty($codigo)) {
                 throw new Exception('Código de unidad inválido');
             }
@@ -173,7 +173,7 @@ try {
 
         // Lista las unidades asociadas a una cualificación
         case 'listar_asociaciones':
-            $codigo = isset($_GET['codigo']) ? $_GET['codigo'] : '';
+            $codigo = getOptimo('codigo');
             if (empty($codigo)) {
                 throw new Exception('Código de cualificación inválido');
             }

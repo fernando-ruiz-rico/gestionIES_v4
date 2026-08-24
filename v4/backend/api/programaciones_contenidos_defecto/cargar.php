@@ -3,8 +3,8 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
 
-$idApartado = isset($_GET['idApartado']) ? intval($_GET['idApartado']) : 0;
-$idDepartamento = isset($_GET['idDepartamento']) ? intval($_GET['idDepartamento']) : 0;
+$idApartado = getOptimoInt('idApartado');
+$idDepartamento = getOptimoInt('idDepartamento');
 
 if ($idApartado <= 0 || $idDepartamento <= 0) {
     sendJSONError('Parámetros no válidos', 400);
