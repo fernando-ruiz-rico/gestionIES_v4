@@ -56,6 +56,7 @@ v4/
 │       ├── configuracion.php           # Fase 7.3
 │       └── excel.php                   # Fase 7.4
 │   ├── pdf_acta.php                  # Fase 8 (PDF del acta, TCPDF)
+│   ├── pdf_programaciones_seguimiento.php # Fase 8 (PDFs de seguimiento de aula, TCPDF)
 │   ├── pdf_resultados_aprendizaje.php # Fase 8 (PDFs de RA/CE empresa, TCPDF)
 │   ├── pdf_seleccion.php             # Fase 8 (PDF de la selección, TCPDF)
 │   ├── pdf_programaciones.php        # Fase 2.1 (PDF completo de la programación, TCPDF)
@@ -178,7 +179,7 @@ v4/
 | 7.3 Configuración | ✅ | ✅ | Completado |
 | 7.4 Exportación a Excel | ✅ | ✅ | Completado |
 | 7.5 Ayuda | ❌ | ❌ | Pendiente (página estática de ayuda) |
-| **Fase 8 – PDFs** | ✅ | N/A | Completado (TCPDF: actas, selección y RA/CE empresa) |
+| **Fase 8 – PDFs** | ✅ | N/A | Completado (TCPDF: actas, selección, RA/CE empresa y seguimiento de aula) |
 | **Fase 9 – Características Avanzadas** | | | |
 | Edición de temas con accordion RA/CE | ✅ | ✅ | Completado (Fase 2.6) |
 | Modales reutilizables globales | — | — | Retirados en v4.4.1 (ninguna vista los usaba; los modales de cada módulo son inline en sus vistas) |
@@ -271,8 +272,9 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 - `backend/pdf_programaciones.php` — **PDF completo** de la programación de una materia (`?idMateria=X`), Fase 2.1, fiel a `v3/pdf_programaciones.php` (portada + índice con TOC + apartados con `Bookmark`, FE en página propia, temas en su página). ✅ Verificado en vivo.
 - `backend/pdf_programaciones_apartado.php` — **PDF de un apartado** (`?idMateria=X&idApartado=Y`), el apartado pedido + sus subapartados hasta el siguiente principal, fiel a v3. ✅ Verificado en vivo.
 - `backend/pdf_unidades_programacion.php` — **PDF de unidades/temas** (`?idMateria=X`, una página por tema), fiel a `v3/pdf_unidades_programacion.php`. El «PDF de Apartado» de la vista enruta aquí si el apartado es de temas (`tipo = 13`), igual que v3. ✅ Verificado en vivo.
+- `backend/pdf_programaciones_seguimiento.php` — **PDFs de seguimiento de aula** (`?departamento=X&curso=Y&evaluacion=Z&categoria=FP|ESO/BACH`), Fase 2.5, fiel a `v3/pdf_programaciones_seguimiento.php`: portada (curso + evaluación + departamento) y las 5 secciones (1. temporalización, 2. resultados académicos con % de aprobados, 3. inclusión del alumnado —con «No hay datos disponibles» si no hay inclusiones—, 4. valoración de las horas de atención a pendientes [datos comunes del departamento], 5. actividades extraescolares programadas para la evaluación siguiente). Los dos botones de la vista de seguimiento (`Ciclos Formativos` → `categoria=FP`; `ESO/BACH` → el resto) abren este endpoint con el curso actual, la evaluación elegida y el **departamento del usuario** (jefe/profesor: el suyo; **admin real: el que elige en el desplegable de la vista**, equivalente al `seleccion_departamento` de la cabecera de v3 — sin departamento el botón queda desactivado). ✅ Verificado en vivo.
 
-> Los botones PDF de `programaciones-aula` y `programaciones-seguimiento` siguen siendo stubs informativos (igual que en la entrega 2.4/2.5); los PDFs de la Fase 2 se abren desde sus vistas (los de «Programaciones» ahora son los 3 de arriba, y el de «Resultados de aprendizaje» el de la empresa).
+> El botón PDF de `programaciones-aula` (Fase 2.4) sigue siendo un stub informativo, igual que en la entrega 2.4/2.5. Los PDFs de la Fase 2 se abren desde sus vistas (los de «Programaciones» son los 3 de arriba, el de «Resultados de aprendizaje» el de la empresa, y los de «Seguimiento» el de arriba).
 
 ### Fase 9: Características Avanzadas (Parcial)
 
@@ -287,6 +289,13 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 ## Historial de cambios
 
 > Registro cronológico (más reciente primero) de las entregas por versión.
+
+### PDFs de seguimiento de programaciones (Fase 8 — los botones «Pendiente» ya generan PDF, fieles a v3)
+- 📄 **Nuevo endpoint** `backend/pdf_programaciones_seguimiento.php` (`?departamento=X&curso=Y&evaluacion=Z&categoria=FP|ESO/BACH`): replica fiel de `v3/pdf_programaciones_seguimiento.php` — portada (I.E.S. San Vicente, título, curso/evaluación, departamento + categoría) y las 5 secciones de v3: 1. seguimiento de la programación (temporalización por grupo y materia), 2. valoración de resultados académicos (aprobados/suspensos/otros + % de aprobados + HTML de `resultados`), 3. inclusión del alumnado (solo inclusiones con contenido, con el filtro de «HTML vacío» de v3; si no hay ninguna, «No hay datos disponibles»), 4. valoración de las horas de atención a pendientes/desdobles… (datos comunes del departamento) y 5. actividades extraescolares programadas **para la evaluación siguiente** (los datos comunes siguen en `seguimiento_programaciones_departamento`, igual que v3). Cabecera/pie «I.E.S. San Vicente» + «Pág x/y» como en v3.
+- 🔗 **Frontend** (`programaciones-seguimiento-view.js`): los dos botones —que antes avisaban con SweetAlert2 «Pendiente (Fase 8)»— abren ahora `../backend/pdf_programaciones_seguimiento.php` con el **curso actual** (mismo criterio que `cargar`/`guardar`), la evaluación elegida y la categoría (`Ciclos Formativos` → `FP`, `ESO/BACH` → `ESO/BACH`), en una pestaña nueva. El **departamento** lo pone el propio usuario: jefe/profesor el suyo (de sesión); el **admin real** —que en v4 no tiene departamento, a diferencia de v3, donde lo guardaba la cabecera— elige el departamento en un **selector desplegable de la vista** (mismo patrón v4 de `actas`/`excel`/`historico`); sin departamento elegido los botones quedan desactivados y `generarPDF` avisa con SweetAlert2, de modo que nunca se genera un PDF con departamento 0 vacío.
+- ✅ **Verificado en vivo**: PDFs válidos de 5 páginas para `categoria=FP` (con las 3 filas reales del curso actual —grupos 1º DAW y 2º DAM—: temporalizaciones, resultados con % de aprobados y secciones comunes) y `ESO/BACH` (secciones vacías con el texto por defecto, correcto porque no hay datos ESO/BACH); también con el departamento por sesión (sin el parámetro), el error «Falta el curso o la evaluación» sin curso/evaluación y la portada con departamento 0 sin sesión (mismo comportamiento que v3). `php -l` / `node --check` limpios.
+- 🔧 **Corrección del PDF vacío con el admin real**: con el usuario `admin` (tabla `config`) el PDF salía **sin datos**, porque el front enviaba `departamento=` vacío —en v4 ese usuario no tiene `idDepartamento` (ni en sesión) y el endpoint caía en departamento 0, cuyo `m.idDepartamento = 0` no casa con ninguna materia. En v3 ese caso no existía: la cabecera dejaba `$_SESSION['departamentoUsuario']` fijado con el desplegable `seleccion_departamento` de la propia página. Corrección: la vista carga `departamentos/listar.php` y muestra el selector solo para el admin sin departamento propio; `generarPDF` usa `dptoParaPDF` (el propio o el elegido) y, si aún no hay ninguno, avisa en vez de abrir un PDF vacío; los botones, además de `idEvaluacion`, se desactivan hasta que hay departamento. Jefe/profesor siguen sin desplegable (el suyo, como en v3).
+- 📌 El PDF de «Programación de aula» (Fase 2.4) **sigue siendo stub**: no se tocó en esta corrección (no formaba parte del encargo).
 
 ### Seguimiento de programaciones — las materias salían todas las del profesor, sin tener en cuenta el curso (corregido, fiel a v3)
 - 🐞 **Causa raíz**: en `backend/api/programaciones_seguimiento/materias.php`, el desplegable de materias listaba **todas** las materias del profesor **de todos los cursos**: la consulta hacía `m.id IN (SELECT idMateria FROM seleccion WHERE idProfesor = ?)` **sin** el filtro de escenario. En v3 (`includes/cargar_materias_programaciones.php`, rama del profesor) el criterio es `… AND escenarios_desideratas.actual = TRUE`: solo las materias impartidas en los escenarios del **curso actual** — la misma consulta que ya usaban la opción de Programaciones, «Unidades», Resultados de aprendizaje **y el propio `grupos.php` de seguimiento** (que traía `e.actual = 1`; de ahí el «no se enlazan bien»: los grupos ya estaban filtrados y las materias, no).

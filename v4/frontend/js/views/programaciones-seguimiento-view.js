@@ -17,13 +17,22 @@ const ProgramacionesSeguimientoView = {
                 </div>
             </div>
 
-            <!-- Selector de profesor (solo admin) -->
+            <!-- Selectores de profesor y departamento (solo admin) -->
+            <!-- El admin real no tiene departamento propio: lo elige aquí, como
+                 en la cabecera de v3 (seleccion_departamento), para el PDF -->
             <div class="row mb-3" v-if="esAdmin">
                 <div class="col-md-6">
                     <label for="selectorProfesor" class="form-label">Profesor</label>
                     <select id="selectorProfesor" class="form-select" v-model="idProfesor" @change="cambiarProfesor">
                         <option :value="0">--Selecciona un profesor--</option>
                         <option v-for="p in profesores" :key="p.id" :value="p.id">{{ p.nombre }}</option>
+                    </select>
+                </div>
+                <div class="col-md-6" v-if="!idDepartamentoUsuario">
+                    <label for="selectorDepartamentoSeguimiento" class="form-label">Departamento</label>
+                    <select id="selectorDepartamentoSeguimiento" class="form-select" v-model="idDepartamento">
+                        <option :value="0">--Selecciona un departamento--</option>
+                        <option v-for="d in departamentos" :key="d.id" :value="d.id">{{ d.nombre }}</option>
                     </select>
                 </div>
             </div>
@@ -55,16 +64,17 @@ const ProgramacionesSeguimientoView = {
                 </div>
             </div>
 
-            <!-- PDF buttons (pendientes de Fase 8) -->
+            <!-- Botones de PDF de seguimiento (Fase 8): piden evaluación y,
+                 para el admin sin departamento propio, departamento elegido -->
             <div class="row mb-3">
                 <div class="col-md-6 d-flex align-items-center justify-content-center">
-                    <button class="btn btn-light" :disabled="!idEvaluacion" @click="generarPDF('Ciclos Formativos')">
+                    <button class="btn btn-light" :disabled="!idEvaluacion || (!idDepartamentoUsuario && !idDepartamento)" @click="generarPDF('Ciclos Formativos')">
                         <i class="bi bi-filetype-pdf me-1"></i>PDF seguimiento Ciclos Formativos
                     </button>
                 </div>
 
                 <div class="col-md-6 d-flex align-items-center justify-content-center">
-                    <button class="btn btn-light" :disabled="!idEvaluacion" @click="generarPDF('ESO/BACH')">
+                    <button class="btn btn-light" :disabled="!idEvaluacion || (!idDepartamentoUsuario && !idDepartamento)" @click="generarPDF('ESO/BACH')">
                         <i class="bi bi-filetype-pdf me-1"></i>PDF seguimiento ESO/BACH
                     </button>
                 </div>
@@ -199,6 +209,8 @@ const ProgramacionesSeguimientoView = {
         return {
             profesores: [],
             idProfesor: 0,
+            departamentos: [],
+            idDepartamento: 0,
             evaluaciones: [],
             idEvaluacion: 0,
             materias: [],
@@ -219,6 +231,17 @@ const ProgramacionesSeguimientoView = {
     computed: {
         esAdmin() {
             return this.usuario.rol === 'admin' || this.usuario.rol === 'jefeDepartamento';
+        },
+
+        // Departamento propio del usuario (jefe o profesor); el admin real no lo tiene
+        idDepartamentoUsuario() {
+            return (this.usuario && this.usuario.idDepartamento) ? this.usuario.idDepartamento : 0;
+        },
+
+        // Departamento para el PDF: el propio del usuario; si no lo tiene
+        // (admin real), el elegido en el desplegable, como en v3
+        dptoParaPDF() {
+            return this.idDepartamentoUsuario || this.idDepartamento || 0;
         },
 
         completa() {
@@ -262,6 +285,9 @@ const ProgramacionesSeguimientoView = {
 
         if (this.esAdmin) {
             await this.cargarProfesores();
+            if (!this.idDepartamentoUsuario) {
+                await this.cargarDepartamentos();
+            }
         } else {
             // Un profesor usa siempre su propio id; no necesita desplegable
             this.idProfesor = 0; // El backend usa la sesión
@@ -350,6 +376,15 @@ const ProgramacionesSeguimientoView = {
                 this.profesores = await programacionesSeguimientoAPI.cargarProfesores() || [];
             } catch (error) {
                 Swal.fire('Error', error.message, 'error');
+            }
+        },
+
+        async cargarDepartamentos() {
+            try {
+                const result = await fetch('../backend/api/departamentos/listar.php', { credentials: 'same-origin' });
+                this.departamentos = await result.json();
+            } catch (error) {
+                Swal.fire('Error', 'No se han podido cargar los departamentos', 'error');
             }
         },
 
@@ -466,14 +501,28 @@ const ProgramacionesSeguimientoView = {
             this.modalVistaPrevia.show();
         },
 
-        // --- PDFs (pendientes Fase 8) ---
+        // --- PDFs de seguimiento (Fase 8) ---
+        // Replica de v3/pdf_programaciones_seguimiento.php: abre
+        // ../backend/pdf_programaciones_seguimiento.php con el curso actual
+        // (el que figuran en los escenarios actuales), la evaluación
+        // seleccionada, el departamento del usuario (o el elegido por el
+        // admin real) y la categoría ('FP' o 'ESO/BACH').
         generarPDF(categoria) {
             if (!this.idEvaluacion) return;
-            Swal.fire({
-                title: 'Pendiente',
-                text: `La generación del PDF de seguimiento (${categoria}) está pendiente (Fase 8)`,
-                icon: 'info'
-            });
+            if (!this.dptoParaPDF) {
+                Swal.fire({ title: 'Advertencia', text: 'Selecciona un departamento para generar el PDF', icon: 'warning' });
+                return;
+            }
+            const catParam = (categoria === 'Ciclos Formativos') ? 'FP' : 'ESO/BACH';
+            const dpto = this.dptoParaPDF;
+            window.open(
+                '../backend/pdf_programaciones_seguimiento.php'
+                + '?departamento=' + encodeURIComponent(dpto)
+                + '&curso=' + encodeURIComponent(this.cursoActual)
+                + '&evaluacion=' + this.idEvaluacion
+                + '&categoria=' + encodeURIComponent(catParam),
+                '_blank'
+            );
         }
     }
 };
