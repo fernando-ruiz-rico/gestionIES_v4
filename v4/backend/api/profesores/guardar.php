@@ -24,28 +24,22 @@ if (empty($_POST['nombre']) || empty($_POST['idDepartamento'])) {
 // Las consultas están parametrizadas, así que ya no hace falta escapar los datos
 $idDepartamento = intval($_POST['idDepartamento']);
 $nombre = $_POST['nombre'];
-$abreviatura = isset($_POST['abreviatura']) ? $_POST['abreviatura'] : null;
-$usuario = isset($_POST['usuario']) ? $_POST['usuario'] : null;
-$clave = isset($_POST['clave']) ? $_POST['clave'] : null;
-$telefono = isset($_POST['telefono']) && !empty($_POST['telefono']) ? $_POST['telefono'] : null;
-$email = isset($_POST['email']) && !empty($_POST['email']) ? $_POST['email'] : null;
-$idEspecialidad = isset($_POST['idEspecialidad']) && !empty($_POST['idEspecialidad']) ? $_POST['idEspecialidad'] : null;
-$observaciones = isset($_POST['observaciones']) ? $_POST['observaciones'] : null;
-$prefRojas = isset($_POST['prefRojas']) ? $_POST['prefRojas'] : '';
-$prefAmarillas = isset($_POST['prefAmarillas']) ? $_POST['prefAmarillas'] : '';
+
+// Campos opcionales: postOptimo devuelve el valor si llega no vacío, y null si no
+$abreviatura = postOptimo('abreviatura');
+$usuario = postOptimo('usuario');
+$clave = postOptimo('clave');
+$telefono = postOptimo('telefono');
+$email = postOptimo('email');
+$idEspecialidad = postOptimo('idEspecialidad');
+$observaciones = postOptimo('observaciones');
+$prefRojas = postOptimo('prefRojas');
+$prefAmarillas = postOptimo('prefAmarillas');
 
 // Clave encriptada con MD5 (como en v3)
 if (!empty($clave)) {
     $clave = md5($clave);
 }
-
-// Gestionar valores nulos
-$telefono = !empty($telefono) ? $telefono : null;
-$email = !empty($email) ? $email : null;
-$idEspecialidad = !empty($idEspecialidad) ? $idEspecialidad : null;
-$abreviatura = !empty($abreviatura) ? $abreviatura : null;
-$usuario = !empty($usuario) ? $usuario : null;
-$observaciones = !empty($observaciones) ? $observaciones : null;
 
 // Si no llega un "id" de profesor, es una inserción de nuevo profesor
 try {

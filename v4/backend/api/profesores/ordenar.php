@@ -15,11 +15,11 @@ if (!$permisos) {
     sendJSONError('No tiene permisos para realizar esta acción', 403);
 }
 
-if (empty($_POST['orden'])) {
+// Campo único del endpoint: postOptimo devuelve el valor si llega no vacío, y null si no
+$orden = postOptimo('orden');
+if ($orden === null) {
     sendJSONError('Orden no proporcionado', 400);
 }
-
-$orden = $_POST['orden'];
 
 // Lo que se recibe en el parámetro "orden" son los id de los profesores en el orden en que
 // se quieren asignar. Cada profesor en el listado viene con id "pr" seguido de su código.

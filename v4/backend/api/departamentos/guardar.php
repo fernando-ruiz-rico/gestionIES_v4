@@ -15,7 +15,8 @@ if (empty($_POST['nombre'])) {
 }
 
 $nombre = $_POST['nombre'];
-$id = isset($_POST['id']) && !empty($_POST['id']) ? intval($_POST['id']) : null;
+// id opcional: si llega no vacío es una actualización, si no es una inserción
+$id = postOptimoInt('id');
 
 try {
     $db = Db::open();

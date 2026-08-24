@@ -6,7 +6,8 @@ require_once '../../config.php';
 // Permiso fiel a v3: admin o jefe de departamento
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
-$orden = isset($_POST['orden']) ? $_POST['orden'] : '';
+// Campo único del endpoint: postOptimo devuelve el valor si llega no vacío, y null si no
+$orden = postOptimo('orden');
 
 if (empty($orden)) {
     sendJSONError('Orden no válido', 400);

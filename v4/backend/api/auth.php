@@ -25,8 +25,9 @@ switch ($action) {
 function handleLogin() {
     $db = Db::open();
 
-    $username = isset($_POST['username']) ? $_POST['username'] : '';
-    $password = isset($_POST['password']) ? $_POST['password'] : '';
+    // Campos opcionales: postOptimo devuelve el valor si llega no vacío, y null si no
+    $username = postOptimo('username');
+    $password = postOptimo('password');
 
     if (empty($username) || empty($password)) {
         sendJSONError('Usuario y contraseña son requeridos');

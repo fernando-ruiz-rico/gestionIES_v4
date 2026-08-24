@@ -87,6 +87,22 @@ function sendJSONSuccess($data, $message = 'Operación realizada correctamente')
     sendJSONResponse(array('success' => true, 'message' => $message, 'data' => $data));
 }
 
+// Lee un campo opcional de $_POST: devuelve el valor si llega no vacío, y null si no
+function postOptimo($campo) {
+    if (isset($_POST[$campo]) && !empty($_POST[$campo])) {
+        return $_POST[$campo];
+    }
+    return null;
+}
+
+// Como postOptimo, pero convertido a entero
+function postOptimoInt($campo) {
+    if (isset($_POST[$campo]) && !empty($_POST[$campo])) {
+        return intval($_POST[$campo]);
+    }
+    return null;
+}
+
 // Comprobar si hay sesión activa
 function checkSession() {
     @session_start();
