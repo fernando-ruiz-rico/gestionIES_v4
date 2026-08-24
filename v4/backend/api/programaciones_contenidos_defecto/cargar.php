@@ -1,7 +1,7 @@
 <?php
 // API endpoint para cargar contenido por defecto de un apartado
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $idApartado = getOptimoInt('idApartado');
 $idDepartamento = getOptimoInt('idDepartamento');

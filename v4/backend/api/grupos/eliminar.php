@@ -1,12 +1,12 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Permiso fiel a v3: solo admin
 checkPermission(array(ROLE_ADMIN));
 
-$datos = json_decode(file_get_contents('php://input'), true);
-$id = isset($datos['id']) ? intval($datos['id']) : 0;
+$datos = cuerpoJson();
+$id = datosOptimoInt($datos, 'id');
 
 if ($id <= 0) {
     sendJSONError('ID inválido', 400);

@@ -1,6 +1,6 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Filtro opcional por curso (fiel a v3: la vista principal de materias se
 // filtra por idCurso; sin idCurso se devuelven todas las materias).

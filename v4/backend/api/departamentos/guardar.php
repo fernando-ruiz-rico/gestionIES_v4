@@ -3,9 +3,9 @@
 // Requiere sesión iniciada y rol de admin
 // Recibe: nombre (requerido), id (opcional - si existe actualiza, si no inserta)
 
-header('Content-Type: application/json; charset=utf-8');
-session_start();
 require_once '../../config.php';
+cabeceraJson();
+session_start();
 
 // Solo admin (fiel a v3)
 checkPermission(array(ROLE_ADMIN));

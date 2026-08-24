@@ -1,27 +1,27 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Permiso fiel a v3 (insertar_materia.php): jefe de departamento o admin
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
-$datos = json_decode(file_get_contents('php://input'), true);
+$datos = cuerpoJson();
 if (!$datos) {
     sendJSONError('Datos inválidos', 400);
 }
 
 // --- Campos del formulario (nombres como en v3/modales/materias.php) ---
-$nombre = trim(isset($datos['nombre']) ? $datos['nombre'] : '');
-$idCurso = intval(isset($datos['idCurso']) ? $datos['idCurso'] : 0);
-$tipo = trim(isset($datos['tipo']) ? $datos['tipo'] : 'OTRA');
+$nombre = trim(datosOptimo($datos, 'nombre'));
+$idCurso = datosOptimoInt($datos, 'idCurso');
+$tipo = trim(datosOptimo($datos, 'tipo', 'OTRA'));
 if ($tipo !== 'TUTORIA' && $tipo !== 'INGLES') $tipo = 'OTRA';
 
 // Enteros de referencia (valor por defecto si no llega)
-$cantidad = intval(isset($datos['cantidad']) ? $datos['cantidad'] : 1);
-$horas = intval(isset($datos['horas']) ? $datos['horas'] : 0);
-$horasComplementarias = intval(isset($datos['horas_complementarias']) ? $datos['horas_complementarias'] : 0);
-$minNumProfesores = intval(isset($datos['min_num_profesores']) ? $datos['min_num_profesores'] : 0);
-$maxGruposProfesor = intval(isset($datos['max_grupos_profesor']) ? $datos['max_grupos_profesor'] : 0);
+$cantidad = datosOptimoInt($datos, 'cantidad', 1);
+$horas = datosOptimoInt($datos, 'horas');
+$horasComplementarias = datosOptimoInt($datos, 'horas_complementarias');
+$minNumProfesores = datosOptimoInt($datos, 'min_num_profesores');
+$maxGruposProfesor = datosOptimoInt($datos, 'max_grupos_profesor');
 
 // Casillas de verificación (vienen como true/false o 1/0; con default de v3)
 $computables = (isset($datos['computables_horas_grupo']) && $datos['computables_horas_grupo']) ? 1 : 0;
@@ -30,20 +30,20 @@ $tieneProgramacion = (isset($datos['tiene_programacion']) && $datos['tiene_progr
 $divisible = (isset($datos['divisible']) && $datos['divisible']) ? 1 : 0;
 
 // Campos nulos: 0 o cadena vacía => NULL (igual que v3)
-$idDepartamento = intval(isset($datos['idDepartamento']) ? $datos['idDepartamento'] : 0);
+$idDepartamento = datosOptimoInt($datos, 'idDepartamento');
 $idDepartamento = ($idDepartamento == 0) ? null : $idDepartamento;
-$idEspecialidad = trim(isset($datos['idEspecialidad']) ? $datos['idEspecialidad'] : '');
+$idEspecialidad = trim(datosOptimo($datos, 'idEspecialidad'));
 $idEspecialidad = ($idEspecialidad === '') ? null : $idEspecialidad;
-$codigoOficial = trim(isset($datos['codigoOficial']) ? $datos['codigoOficial'] : '');
+$codigoOficial = trim(datosOptimo($datos, 'codigoOficial'));
 $codigoOficial = ($codigoOficial === '') ? null : $codigoOficial;
-$nombreOficial = trim(isset($datos['nombreOficial']) ? $datos['nombreOficial'] : '');
+$nombreOficial = trim(datosOptimo($datos, 'nombreOficial'));
 $nombreOficial = ($nombreOficial === '') ? null : $nombreOficial;
-$creditosECTS = intval(isset($datos['creditosECTS']) ? $datos['creditosECTS'] : 0);
+$creditosECTS = datosOptimoInt($datos, 'creditosECTS');
 $creditosECTS = ($creditosECTS == 0) ? null : $creditosECTS;
-$horasAnuales = intval(isset($datos['horasAnuales']) ? $datos['horasAnuales'] : 0);
+$horasAnuales = datosOptimoInt($datos, 'horasAnuales');
 $horasAnuales = ($horasAnuales == 0) ? null : $horasAnuales;
 
-$id = isset($datos['id']) ? intval($datos['id']) : 0;
+$id = datosOptimoInt($datos, 'id');
 
 if (empty($nombre)) {
     sendJSONError('Nombre obligatorio', 400);

@@ -2,8 +2,8 @@
 // API: Cargar los datos de seguimiento de una programación de aula
 // (equivalente a v3 ajax/programaciones_seguimiento/cargar_datos_seguimiento_aula.php)
 // Curso: el actual, calculado en el servidor igual que cursoActual() de v3
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $session = checkSession();
 

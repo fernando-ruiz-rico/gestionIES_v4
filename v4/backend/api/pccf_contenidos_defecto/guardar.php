@@ -3,18 +3,17 @@
 // Inserta o actualiza el contenido del apartado para el departamento indicado.
 // Con texto vacío se elimina la fila (fiel a v3).
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Permiso fiel a v3: admin o jefe de departamento
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
-$data = json_decode(file_get_contents('php://input'), true);
-$data = $data ?: [];
+$data = cuerpoJson();
 
-$idApartado = isset($data['idApartado']) ? intval($data['idApartado']) : 0;
-$idDepartamento = isset($data['idDepartamento']) ? intval($data['idDepartamento']) : 0;
-$texto = isset($data['texto']) ? $data['texto'] : '';
+$idApartado = datosOptimoInt($data, 'idApartado');
+$idDepartamento = datosOptimoInt($data, 'idDepartamento');
+$texto = datosOptimo($data, 'texto');
 
 if ($idApartado <= 0 || $idDepartamento <= 0) {
     sendJSONError('Parámetros no válidos', 400);

@@ -15,10 +15,10 @@
  * Permisos: solo el rol admin.
  */
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
+cabeceraJson();
 @session_start();
- $datos = json_decode(file_get_contents("php://input"), true) ?: [];
+ $datos = cuerpoJson();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = getOptimo('action');
@@ -63,10 +63,10 @@ try {
             if (!isset($_SESSION['rol']) || $_SESSION['rol'] != 'admin') {
                 throw new Exception('No tiene permisos para realizar esta acción');
             }
-            $id = isset($datos['id']) && !empty($datos['id']) ? intval($datos['id']) : 0;
+            $id = datosOptimoInt($datos, 'id');
             $codigo = $datos['codigo'];
             $texto = $datos['texto'];
-            $tipo = intval(isset($datos['tipo']) ? $datos['tipo'] : 1);
+            $tipo = datosOptimoInt($datos, 'tipo', 1);
             $idCiclo = intval($datos['idCiclo']);
             if ($id > 0) {
                 $db->execute("UPDATE competencias_ciclos SET codigo=?, texto=?, tipo=? WHERE id=?", $codigo, $texto, $tipo, $id);
@@ -88,7 +88,7 @@ try {
             if (!isset($_SESSION['rol']) || $_SESSION['rol'] != 'admin') {
                 throw new Exception('No tiene permisos para realizar esta acción');
             }
-            $orden = isset($datos['orden']) ? $datos['orden'] : '';
+            $orden = datosOptimo($datos, 'orden');
             $ids = explode(",", $orden);
             foreach ($ids as $pos => $cod) {
                 $idComp = intval(substr($cod, 2));

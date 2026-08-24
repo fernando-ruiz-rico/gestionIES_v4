@@ -1,20 +1,20 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Permiso fiel a v3: solo admin
 checkPermission(array(ROLE_ADMIN));
 
-$datos = json_decode(file_get_contents('php://input'), true);
+$datos = cuerpoJson();
 if (!$datos) {
     sendJSONError('Datos inválidos', 400);
 }
 
-$id = trim(isset($datos['id']) ? $datos['id'] : '');
-$descripcion = trim(isset($datos['descripcion']) ? $datos['descripcion'] : '');
-$idDepartamento = intval(isset($datos['idDepartamento']) ? $datos['idDepartamento'] : 0);
-$horasTutoria = intval(isset($datos['horasTutoria']) ? $datos['horasTutoria'] : 0);
-$horasIngles = intval(isset($datos['horasIngles']) ? $datos['horasIngles'] : 0);
+$id = trim(datosOptimo($datos, 'id'));
+$descripcion = trim(datosOptimo($datos, 'descripcion'));
+$idDepartamento = datosOptimoInt($datos, 'idDepartamento');
+$horasTutoria = datosOptimoInt($datos, 'horasTutoria');
+$horasIngles = datosOptimoInt($datos, 'horasIngles');
 
 if (empty($id)) {
     sendJSONError('ID obligatorio', 400);

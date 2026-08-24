@@ -4,9 +4,9 @@
 // Recibe: orden (cadena con ids separados por comas, prefijo "pr")
 // Devuelve: success (true/false), mensaje
 
-header('Content-Type: application/json; charset=utf-8');
-session_start();
 require_once '../../config.php';
+cabeceraJson();
+session_start();
 
 // Verificar permisos (admin o jefe de departamento)
 $permisos = isset($_SESSION['rol']) && ($_SESSION['rol'] == 'jefeDepartamento' || $_SESSION['rol'] == 'admin');

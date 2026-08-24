@@ -3,8 +3,8 @@
 // Devuelve el contenido asociado a un ciclo y, opcionalmente, a un apartado concreto
 // desde la tabla contenidos_pccf (modelo fiel a v3).
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $idCiclo = getOptimoInt('idCiclo');
 $idApartado = getOptimoInt('idApartado');

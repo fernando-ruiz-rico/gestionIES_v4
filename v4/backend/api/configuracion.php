@@ -13,12 +13,12 @@
  * Permisos: solo el rol admin.
  */
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
+cabeceraJson();
 
 $action = getOptimo('action');
 
-$datos = json_decode(file_get_contents("php://input"), true) ?: [];
+$datos = cuerpoJson();
 
 // Permiso fiel a v3: solo admin
 checkPermission(array(ROLE_ADMIN));
@@ -52,9 +52,9 @@ try {
 
         // Cambia la contraseña del administrador
         case 'actualizar_password':
-            $antiguo = isset($datos['passwordActual']) ? $datos['passwordActual'] : '';
-            $nuevo = isset($datos['nuevaPassword']) ? $datos['nuevaPassword'] : '';
-            $repetirNuevo = isset($datos['passwordConfirmacion']) ? $datos['passwordConfirmacion'] : '';
+            $antiguo = datosOptimo($datos, 'passwordActual');
+            $nuevo = datosOptimo($datos, 'nuevaPassword');
+            $repetirNuevo = datosOptimo($datos, 'passwordConfirmacion');
             if ($nuevo !== $repetirNuevo) {
                 throw new Exception('La nueva contraseña y la repetición no coinciden');
             }
@@ -70,8 +70,8 @@ try {
         // El frontend envía "evaluacionRA" (fila programaciones) o "seleccion"
         // (fila desideratas); también aceptamos los nombres de las filas.
         case 'actualizar_activacion':
-            $clave = isset($datos['clave']) ? $datos['clave'] : '';
-            $valor = isset($datos['valor']) ? $datos['valor'] : '';
+            $clave = datosOptimo($datos, 'clave');
+            $valor = datosOptimo($datos, 'valor');
             $claves = array('evaluacionRA' => 'programaciones', 'seleccion' => 'desideratas', 'programaciones' => 'programaciones', 'desideratas' => 'desideratas');
             if (!isset($claves[$clave])) {
                 throw new Exception('Clave de activación no válida');

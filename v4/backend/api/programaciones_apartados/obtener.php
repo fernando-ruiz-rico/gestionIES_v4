@@ -1,7 +1,7 @@
 <?php
 // API endpoint para obtener un apartado específico
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $id = getOptimoInt('id');
 

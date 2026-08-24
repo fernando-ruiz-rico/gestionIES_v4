@@ -1,8 +1,8 @@
 <?php
 // API para listar los cursos (Fase 1)
 // Equivalente a v3/ajax/cursos/cargar_cursos.php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 try {
     $db = Db::open();

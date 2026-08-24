@@ -2,21 +2,20 @@
 // API para guardar un apartado del PCCF (Fase 3.2 - Apartados PCCF)
 // Inserta o actualiza el apartado recibido en la tabla apartados_pccf.
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Permiso fiel a v3: admin o jefe de departamento
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
-$data = json_decode(file_get_contents('php://input'), true);
-$data = $data ?: [];
+$data = cuerpoJson();
 
-$id = isset($data['id']) ? intval($data['id']) : 0;
-$titulo = isset($data['titulo']) ? $data['titulo'] : '';
-$subapartado = isset($data['subapartado']) ? (int)$data['subapartado'] : 0;
-$requerido = isset($data['requerido']) ? (int)$data['requerido'] : 1;
-$tipo = isset($data['tipo']) ? (int)$data['tipo'] : 0;
-$contenidoDefecto = isset($data['contenido_defecto']) ? (int)$data['contenido_defecto'] : 0;
+$id = datosOptimoInt($data, 'id');
+$titulo = datosOptimo($data, 'titulo');
+$subapartado = datosOptimoInt($data, 'subapartado');
+$requerido = datosOptimoInt($data, 'requerido', 1);
+$tipo = datosOptimoInt($data, 'tipo');
+$contenidoDefecto = datosOptimoInt($data, 'contenido_defecto');
 
 if ($titulo === '') {
     sendJSONError('El título es obligatorio', 400);

@@ -2,8 +2,8 @@
 // API: Listar materias con programación activa para un profesor (seguimiento de programaciones)
 // Solo las del CURSO ACTUAL: la asignación (seleccion) ha de apuntar a un
 // escenario de "desideratas" actual (e.actual = 1), fiel a v3.
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $session = checkSession();
 

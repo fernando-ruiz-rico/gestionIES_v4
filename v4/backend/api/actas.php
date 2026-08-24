@@ -15,10 +15,10 @@
  *   - Los profesores solo pueden revisar las actas de su departamento.
  */
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
+cabeceraJson();
 @session_start();
- $datos = json_decode(file_get_contents("php://input"), true) ?: [];
+ $datos = cuerpoJson();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = getOptimo('action');
@@ -73,7 +73,7 @@ try {
             if (!tienePermisoEdicion()) {
                 throw new Exception('No tiene permisos para realizar esta acción');
             }
-            $idActa = isset($datos['idActa']) && !empty($datos['idActa']) ? intval($datos['idActa']) : 0;
+            $idActa = datosOptimoInt($datos, 'idActa');
             $idDepartamento = intval($datos['idDepartamento']);
             $texto = $datos['texto'];
             $fecha = $datos['fecha'];

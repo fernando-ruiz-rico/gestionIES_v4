@@ -3,8 +3,8 @@
 // Recibe un parámetro "orden" con los códigos de los apartados en el nuevo orden.
 // Cada código puede venir con el prefijo "ap" (p. ej. ap1, ap12) o sin él.
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Permiso fiel a v3: admin o jefe de departamento
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));

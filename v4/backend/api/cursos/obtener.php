@@ -1,8 +1,8 @@
 <?php
 // API para obtener un curso por su id (Fase 1)
 // Equivalente a v3 (formulario de edición)
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $id = getOptimoInt('id');
 if ($id <= 0) {

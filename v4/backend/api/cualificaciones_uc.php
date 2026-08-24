@@ -22,10 +22,10 @@
  * Permisos: solo el rol admin.
  */
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
+cabeceraJson();
 @session_start();
- $datos = json_decode(file_get_contents("php://input"), true) ?: [];
+ $datos = cuerpoJson();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = getOptimo('action');
@@ -66,7 +66,7 @@ try {
             $texto = $datos['texto'];
             // Fiel a v3: "idCualificacion" es el código ANTERIOR (clave de edición),
             // no la llave primaria de la tabla.
-            $id = isset($datos['id']) && !empty($datos['id']) ? trim($datos['id']) : '';
+            $id = trim(datosOptimo($datos, 'id'));
             if (empty($codigo) || empty($texto)) {
                 throw new Exception('Datos incompletos para guardar la cualificación');
             }
@@ -89,7 +89,7 @@ try {
             if (!isset($_SESSION['rol']) || $_SESSION['rol'] != 'admin') {
                 throw new Exception('No tiene permisos para realizar esta acción');
             }
-            $codigo = isset($datos['codigo']) ? $datos['codigo'] : '';
+            $codigo = datosOptimo($datos, 'codigo');
             if (empty($codigo)) {
                 throw new Exception('Código de cualificación inválido');
             }
@@ -134,7 +134,7 @@ try {
             $codigo = $datos['codigo'];
             $texto = $datos['texto'];
             // Fiel a v3: "idUnidad" es el código ANTERIOR (clave de edición).
-            $id = isset($datos['id']) && !empty($datos['id']) ? trim($datos['id']) : '';
+            $id = trim(datosOptimo($datos, 'id'));
             if (empty($codigo) || empty($texto)) {
                 throw new Exception('Datos incompletos para guardar la unidad');
             }
@@ -157,7 +157,7 @@ try {
             if (!isset($_SESSION['rol']) || $_SESSION['rol'] != 'admin') {
                 throw new Exception('No tiene permisos para realizar esta acción');
             }
-            $codigo = isset($datos['codigo']) ? $datos['codigo'] : '';
+            $codigo = datosOptimo($datos, 'codigo');
             if (empty($codigo)) {
                 throw new Exception('Código de unidad inválido');
             }
@@ -192,8 +192,8 @@ try {
             if (!isset($_SESSION['rol']) || $_SESSION['rol'] != 'admin') {
                 throw new Exception('No tiene permisos para realizar esta acción');
             }
-            $codigoCualificacion = isset($datos['codigoCualificacion']) ? $datos['codigoCualificacion'] : '';
-            $codigoUnidad = isset($datos['codigoUnidad']) ? $datos['codigoUnidad'] : '';
+            $codigoCualificacion = datosOptimo($datos, 'codigoCualificacion');
+            $codigoUnidad = datosOptimo($datos, 'codigoUnidad');
             if (empty($codigoCualificacion) || empty($codigoUnidad)) {
                 throw new Exception('Datos incompletos para asociar la unidad');
             }
@@ -208,8 +208,8 @@ try {
             if (!isset($_SESSION['rol']) || $_SESSION['rol'] != 'admin') {
                 throw new Exception('No tiene permisos para realizar esta acción');
             }
-            $codigoCualificacion = isset($datos['codigoCualificacion']) ? $datos['codigoCualificacion'] : '';
-            $codigoUnidad = isset($datos['codigoUnidad']) ? $datos['codigoUnidad'] : '';
+            $codigoCualificacion = datosOptimo($datos, 'codigoCualificacion');
+            $codigoUnidad = datosOptimo($datos, 'codigoUnidad');
             if (empty($codigoCualificacion) || empty($codigoUnidad)) {
                 throw new Exception('Datos incompletos para disociar la unidad');
             }

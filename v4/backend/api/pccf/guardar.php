@@ -3,18 +3,17 @@
 // Inserta o actualiza el contenido de un ciclo y apartado concretos en la tabla
 // contenidos_pccf (modelo fiel a v3). Con texto vacío se elimina la fila.
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Permiso fiel a v3: admin o jefe de departamento
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
-$data = json_decode(file_get_contents('php://input'), true);
-$data = $data ?: [];
+$data = cuerpoJson();
 
-$idCiclo = isset($data['idCiclo']) ? intval($data['idCiclo']) : 0;
-$idApartado = isset($data['idApartado']) ? intval($data['idApartado']) : 0;
-$texto = isset($data['texto']) ? $data['texto'] : '';
+$idCiclo = datosOptimoInt($data, 'idCiclo');
+$idApartado = datosOptimoInt($data, 'idApartado');
+$texto = datosOptimo($data, 'texto');
 
 if ($idCiclo <= 0 || $idApartado <= 0) {
     sendJSONError('Parámetros no válidos', 400);

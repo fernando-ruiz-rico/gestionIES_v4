@@ -2,8 +2,8 @@
 // API para eliminar un apartado del PCCF (Fase 3.2 - Apartados PCCF)
 // Elimina el apartado indicado y sus conexiones en contenidos y contenidos por defecto.
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Permiso fiel a v3: admin o jefe de departamento
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));

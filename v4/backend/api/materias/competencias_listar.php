@@ -2,8 +2,8 @@
 // Lista las competencias profesionales asociadas a una materia y las del
 // ciclo al que pertenece (para el desplegable de "Añadir").
 // Fiel a v3: v3/ajax/materias/cargar_competencias_materia.php (lectura).
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $idMateria = getOptimoInt('idMateria');
 if ($idMateria <= 0) {

@@ -2,8 +2,8 @@
 // API para listar las unidades de competencia asociadas a un ciclo y las
 // disponibles para asociar (Fase 1).
 // Equivalente a v3/ajax/ciclos/cargar_asociaciones_unidades.php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $idCiclo = getOptimoInt('idCiclo');
 if ($idCiclo <= 0) {

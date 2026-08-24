@@ -1,8 +1,8 @@
 <?php
 // API para listar los cursos asociados a un ciclo y los cursos disponibles
 // para asociar (Fase 1). Equivalente a v3/ajax/ciclos/cargar_asociaciones_cursos.php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $idCiclo = getOptimoInt('idCiclo');
 if ($idCiclo <= 0) {

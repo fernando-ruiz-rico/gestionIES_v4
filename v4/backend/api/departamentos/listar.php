@@ -2,8 +2,8 @@
 // API endpoint para cargar todos los departamentos
 // Devuelve un array JSON con los departamentos ordenados por nombre
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 try {
     $db = Db::open();

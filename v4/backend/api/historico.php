@@ -11,8 +11,8 @@
  * Permisos: profesores, jefes de departamento y admins.
  */
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
+cabeceraJson();
 
 // Fiel a v3 (página con cabecera): requiere sesión iniciada
 checkSession();

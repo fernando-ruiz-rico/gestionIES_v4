@@ -13,19 +13,15 @@
 //   - repetir_evaluacion    : copiar el campo "evaluación" a toda la materia
 //   - actualizar_ra        : editar porcentaje/es_clave de un RA concreto
 // ============================================================================
-header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
+cabeceraJson();
 
 $session = checkSession();
 
 $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
 $body = [];
 if ($method === 'POST') {
-    $raw = file_get_contents('php://input');
-    $decoded = json_decode($raw, true);
-    if (is_array($decoded)) {
-        $body = $decoded;
-    }
+    $body = cuerpoJson();
 }
 $action = getOptimo('action');
 if ($action === '' && isset($body['action'])) {
@@ -274,9 +270,9 @@ try {
         // Insertar un nuevo tema (solo nº + título; resto por defecto)
         // ------------------------------------------------------------------
         if ($action === 'nuevo') {
-            $idMateria = isset($body['idMateria']) ? intval($body['idMateria']) : 0;
-            $orden     = isset($body['orden']) ? intval($body['orden']) : 0;
-            $titulo    = isset($body['titulo']) ? trim($body['titulo']) : '';
+            $idMateria = datosOptimoInt($body, 'idMateria');
+            $orden     = datosOptimoInt($body, 'orden');
+            $titulo    = trim(datosOptimo($body, 'titulo'));
 
             if ($idMateria <= 0 || $orden <= 0 || $titulo === '') {
                 sendJSONError('Indica el número y el título del tema', 400);
@@ -299,25 +295,25 @@ try {
         // Actualizar tema + reemplazar CE y competencias
         // ----------------------------------------------------------------------
         } elseif ($action === 'guardar') {
-            $idTema = isset($body['idTema']) ? intval($body['idTema']) : 0;
+            $idTema = datosOptimoInt($body, 'idTema');
             if ($idTema <= 0) {
                 sendJSONError('Debe indicar el tema a guardar', 400);
             }
 
-            $orden            = isset($body['orden']) ? intval($body['orden']) : 0;
-            $titulo           = isset($body['titulo']) ? trim($body['titulo']) : '';
-            $horas            = isset($body['horas']) ? intval($body['horas']) : 0;
-            $trimestre        = isset($body['trimestre']) ? intval($body['trimestre']) : 0;
-            $peso             = isset($body['peso_evaluacion']) ? intval($body['peso_evaluacion']) : 0;
-            $descripcion      = isset($body['descripcion']) ? $body['descripcion'] : '';
-            $justificacion    = isset($body['justificacion']) ? $body['justificacion'] : '';
-            $contexto         = isset($body['contexto']) ? $body['contexto'] : '';
-            $contenidos       = isset($body['contenidos']) ? $body['contenidos'] : '';
-            $secuenciacion    = isset($body['secuenciacion']) ? $body['secuenciacion'] : '';
-            $recursos         = isset($body['recursos']) ? $body['recursos'] : '';
-            $evaluacion       = isset($body['evaluacion']) ? $body['evaluacion'] : '';
-            $metodologia      = isset($body['metodologia']) ? $body['metodologia'] : '';
-            $adaptaciones     = isset($body['adaptaciones']) ? $body['adaptaciones'] : '';
+            $orden            = datosOptimoInt($body, 'orden');
+            $titulo           = trim(datosOptimo($body, 'titulo'));
+            $horas            = datosOptimoInt($body, 'horas');
+            $trimestre        = datosOptimoInt($body, 'trimestre');
+            $peso             = datosOptimoInt($body, 'peso_evaluacion');
+            $descripcion      = datosOptimo($body, 'descripcion');
+            $justificacion    = datosOptimo($body, 'justificacion');
+            $contexto         = datosOptimo($body, 'contexto');
+            $contenidos       = datosOptimo($body, 'contenidos');
+            $secuenciacion    = datosOptimo($body, 'secuenciacion');
+            $recursos         = datosOptimo($body, 'recursos');
+            $evaluacion       = datosOptimo($body, 'evaluacion');
+            $metodologia      = datosOptimo($body, 'metodologia');
+            $adaptaciones     = datosOptimo($body, 'adaptaciones');
             $contextoDefecto  = !empty($body['contexto_defecto']) ? 1 : 0;
             $recursosDefecto  = !empty($body['recursos_defecto']) ? 1 : 0;
             $metodologiaDefecto = !empty($body['metodologia_defecto']) ? 1 : 0;
@@ -372,7 +368,7 @@ try {
         // Borrar tema + relaciones
         // ----------------------------------------------------------------------
         } elseif ($action === 'borrar') {
-            $idTema = isset($body['id']) ? intval($body['id']) : 0;
+            $idTema = datosOptimoInt($body, 'id');
             if ($idTema <= 0) {
                 sendJSONError('Debe indicar el tema a borrar', 400);
             }
@@ -395,7 +391,7 @@ try {
         // Recalcular porcentajes de evaluación de los RA (v3 calcularPorcentajesRA)
         // ----------------------------------------------------------------------
         } elseif ($action === 'recalcular_porcentajes') {
-            $idMateria = isset($body['idMateria']) ? intval($body['idMateria']) : 0;
+            $idMateria = datosOptimoInt($body, 'idMateria');
             if ($idMateria <= 0) {
                 sendJSONError('Debe indicar una materia', 400);
             }
@@ -450,8 +446,8 @@ try {
         // Copiar el campo "evaluación" a todos los temas de la materia
         // ----------------------------------------------------------------------
         } elseif ($action === 'repetir_evaluacion') {
-            $idMateria  = isset($body['idMateria']) ? intval($body['idMateria']) : 0;
-            $evaluacion = isset($body['evaluacion']) ? $body['evaluacion'] : '';
+            $idMateria  = datosOptimoInt($body, 'idMateria');
+            $evaluacion = datosOptimo($body, 'evaluacion');
             if ($idMateria <= 0) {
                 sendJSONError('Debe indicar una materia', 400);
             }
@@ -466,8 +462,8 @@ try {
         // Editar porcentaje/es_clave de un RA concreto
         // ----------------------------------------------------------------------
         } elseif ($action === 'actualizar_ra') {
-            $idRA    = isset($body['idRA']) ? intval($body['idRA']) : 0;
-            $porcentaje = isset($body['porcentaje_evaluacion']) ? intval($body['porcentaje_evaluacion']) : 0;
+            $idRA    = datosOptimoInt($body, 'idRA');
+            $porcentaje = datosOptimoInt($body, 'porcentaje_evaluacion');
             $esClave   = !empty($body['es_clave']) ? 1 : 0;
 
             if ($idRA <= 0) {

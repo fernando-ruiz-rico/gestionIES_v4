@@ -1,6 +1,6 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // La tabla real para escenarios es 'escenarios_desideratas'
 try {

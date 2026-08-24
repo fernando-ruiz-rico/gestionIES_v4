@@ -1,8 +1,8 @@
 <?php
 // API: Listar todos los profesores para la selección en el seguimiento de programaciones
 // (equivalente a v3 includes/seleccion_profesor.php: todos los profesores, por nombre)
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $session = checkSession();
 

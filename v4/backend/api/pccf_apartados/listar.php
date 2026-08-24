@@ -2,8 +2,8 @@
 // API para listar los apartados del PCCF (Fase 3.2 - Apartados PCCF)
 // Devuelve el listado de apartados ordenados por su posición en la tabla.
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 try {
     $db = Db::open();

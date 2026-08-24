@@ -1,18 +1,18 @@
 <?php
 // API para crear o modificar un curso (Fase 1)
 // Equivalente a v3/ajax/cursos/insertar_curso.php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Solo admin
 checkPermission(array(ROLE_ADMIN));
 
-$datos = json_decode(file_get_contents('php://input'), true);
-$nombre      = isset($datos['nombre']) ? trim($datos['nombre']) : '';
-$abreviatura = isset($datos['abreviatura']) ? trim($datos['abreviatura']) : '';
-$horas       = isset($datos['horas_semana']) ? intval($datos['horas_semana']) : 0;
-$categoria   = isset($datos['categoria']) ? trim($datos['categoria']) : '';
-$id          = isset($datos['id']) ? intval($datos['id']) : 0;
+$datos = cuerpoJson();
+$nombre      = trim(datosOptimo($datos, 'nombre'));
+$abreviatura = trim(datosOptimo($datos, 'abreviatura'));
+$horas       = datosOptimoInt($datos, 'horas_semana');
+$categoria   = trim(datosOptimo($datos, 'categoria'));
+$id          = datosOptimoInt($datos, 'id');
 
 if ($nombre === '' || $abreviatura === '') {
     sendJSONError('Faltan datos obligatorios (nombre y abreviatura)', 400);

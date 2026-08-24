@@ -1,8 +1,8 @@
 <?php
 // API: Listar las evaluaciones disponibles (seguimiento de programaciones)
 // Equivalente a v3 includes/cargar_evaluaciones.php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $session = checkSession();
 

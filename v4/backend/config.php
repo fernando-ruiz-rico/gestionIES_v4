@@ -87,6 +87,13 @@ function sendJSONSuccess($data, $message = 'Operación realizada correctamente')
     sendJSONResponse(array('success' => true, 'message' => $message, 'data' => $data));
 }
 
+// Cabecera común de las respuestas JSON de la API: cada endpoint la declara
+// al principio (cabeceraJson()), para que el tipo de contenido se cambie
+// en un solo sitio
+function cabeceraJson() {
+    header('Content-Type: application/json; charset=utf-8');
+}
+
 // Lee un campo opcional de $_POST: devuelve el valor si llega no vacío, y null si no
 function postOptimo($campo) {
     if (isset($_POST[$campo]) && !empty($_POST[$campo])) {
@@ -118,6 +125,32 @@ function getOptimoInt($campo, $defecto = 0) {
         return intval($_GET[$campo]);
     }
     return $defecto;
+}
+
+// Lee un campo opcional de un array $datos (el cuerpo de la petición,
+// decodificado con cuerpoJson): devuelve el valor si el campo llega, y el
+// default (cadena vacía por defecto) si no
+function datosOptimo($datos, $campo, $defecto = '') {
+    if (isset($datos[$campo])) {
+        return $datos[$campo];
+    }
+    return $defecto;
+}
+
+// Como datosOptimo, pero convertido a entero (default 0 por defecto)
+function datosOptimoInt($datos, $campo, $defecto = 0) {
+    if (isset($datos[$campo])) {
+        return intval($datos[$campo]);
+    }
+    return $defecto;
+}
+
+// Lee y decodifica el cuerpo de la petición (php://input) como JSON.
+// Devuelve el array decodificado, o un array vacío si el cuerpo es vacío
+// o no es JSON válido
+function cuerpoJson() {
+    $datos = json_decode(file_get_contents('php://input'), true);
+    return is_array($datos) ? $datos : array();
 }
 
 // Comprobar si hay sesión activa

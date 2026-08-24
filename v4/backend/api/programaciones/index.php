@@ -1,6 +1,6 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = getOptimo('action');
@@ -205,8 +205,7 @@ try {
             if ($action === 'importar') {
                 // Permiso fiel a v3 (importar_programacion.php): solo admin
                 checkPermission(array(ROLE_ADMIN));
-                $input = file_get_contents('php://input');
-                $data = json_decode($input, true);
+                $data = cuerpoJson();
 
                 if (!isset($data['idMateriaOrigen']) || !isset($data['idMateriaDestino'])) {
                     throw new Exception('Debe especificar materia origen y destino');
@@ -278,16 +277,13 @@ try {
                 // Permiso: sesión válida (v3 lo permite a cualquier usuario con sesión, y la
                 // visibilidad del editor ya la controla la vista según rol/activación).
                 checkSession();
-                $input = json_decode(file_get_contents('php://input'), true);
-                if (!is_array($input)) {
-                    throw new Exception('Datos de entrada no válidos');
-                }
-                $idMateria = isset($input['idMateria']) ? intval($input['idMateria']) : 0;
-                $idApartado = isset($input['idApartado']) ? intval($input['idApartado']) : 0;
+                $input = cuerpoJson();
+                $idMateria = datosOptimoInt($input, 'idMateria');
+                $idApartado = datosOptimoInt($input, 'idApartado');
                 if ($idMateria <= 0 || $idApartado <= 0) {
                     throw new Exception('ID de materia o apartado inválido');
                 }
-                $texto = isset($input['texto']) ? $input['texto'] : '';
+                $texto = datosOptimo($input, 'texto');
 
                 $fila = $db->fetchOne(
                     "SELECT id FROM contenidos_programaciones WHERE idMateria = ? AND idApartado = ?",

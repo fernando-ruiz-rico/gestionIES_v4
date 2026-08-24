@@ -2,8 +2,8 @@
 // API endpoint para cargar un profesor específico por ID
 // Devuelve: objeto JSON con los datos del profesor
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 if (empty($_GET['id'])) {
     sendJSONError('ID de profesor no proporcionado', 400);

@@ -1,8 +1,8 @@
 <?php
 // API para obtener un ciclo formativo por su id (Fase 1)
 // Equivalente a v3/ajax/ciclos/cargar_ciclo.php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $idCiclo = getOptimoInt('id');
 if ($idCiclo <= 0) {

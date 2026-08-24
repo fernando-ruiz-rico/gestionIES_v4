@@ -1,21 +1,21 @@
 <?php
 // API para crear o modificar un ciclo formativo (Fase 1)
 // Equivalente a v3/ajax/ciclos/insertar_ciclo.php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Solo admin
 checkPermission(array(ROLE_ADMIN));
 
-$datos = json_decode(file_get_contents('php://input'), true);
+$datos = cuerpoJson();
 if (!$datos) {
     sendJSONError('Datos inválidos', 400);
 }
 
-$nombre   = isset($datos['nombre']) ? trim($datos['nombre']) : '';
-$familia  = isset($datos['familia']) ? trim($datos['familia']) : '';
-$nivel   = isset($datos['nivel']) ? trim($datos['nivel']) : '';
-$idCiclo = isset($datos['id']) ? intval($datos['id']) : 0;
+$nombre   = trim(datosOptimo($datos, 'nombre'));
+$familia  = trim(datosOptimo($datos, 'familia'));
+$nivel   = trim(datosOptimo($datos, 'nivel'));
+$idCiclo = datosOptimoInt($datos, 'id');
 
 if ($nombre === '' || $familia === '' || $nivel === '') {
     sendJSONError('Faltan datos obligatorios (nombre, familia y nivel)', 400);

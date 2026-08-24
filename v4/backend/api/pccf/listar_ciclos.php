@@ -2,8 +2,8 @@
 // API para listar los ciclos formativos disponibles (Fase 3.1 - PCCF)
 // Devuelve el listado de ciclos para el selector del PCCF
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $db = Db::open();
 

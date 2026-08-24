@@ -22,10 +22,10 @@
  * pueden crear/modificar/eliminar resultados.
  */
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
+cabeceraJson();
 @session_start();
- $datos = json_decode(file_get_contents("php://input"), true) ?: [];
+ $datos = cuerpoJson();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = getOptimo('action');
@@ -152,11 +152,11 @@ try {
             if (!tienePermisoEdicion()) {
                 throw new Exception('No tiene permisos para realizar esta acción');
             }
-            $id = isset($datos['id']) && !empty($datos['id']) ? intval($datos['id']) : 0;
+            $id = datosOptimoInt($datos, 'id');
             $idMateria = intval($datos['idMateria']);
             $texto = $datos['texto'];
             $orden = intval($datos['orden']);
-            $porcentajeEmpresa = intval(isset($datos['porcentaje_empresa']) ? $datos['porcentaje_empresa'] : 0);
+            $porcentajeEmpresa = datosOptimoInt($datos, 'porcentaje_empresa');
             if ($idMateria <= 0 || empty($texto)) {
                 throw new Exception('Datos incompletos para guardar el resultado');
             }
@@ -196,7 +196,7 @@ try {
         // Actualiza el % de evaluación y si un RA es clave
         case 'actualizar_evaluacion':
             $idResultado = intval($datos['idResultado']);
-            $porcentajeEvaluacion = intval(isset($datos['porcentaje_evaluacion']) ? $datos['porcentaje_evaluacion'] : 0);
+            $porcentajeEvaluacion = datosOptimoInt($datos, 'porcentaje_evaluacion');
             $esClave = isset($datos['es_clave']) ? 1 : 0;
             if ($idResultado <= 0) {
                 throw new Exception('ID de resultado inválido');

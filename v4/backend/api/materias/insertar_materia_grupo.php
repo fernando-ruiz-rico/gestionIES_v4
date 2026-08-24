@@ -1,29 +1,29 @@
 <?php
 // Inserta/Modifica los datos de una materia para un grupo determinado.
 // Fiel a v3: v3/ajax/materias/insertar_materia_grupo.php (jefe o admin).
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Permiso fiel a v3: jefe de departamento o admin
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
-$datos = json_decode(file_get_contents('php://input'), true);
+$datos = cuerpoJson();
 if (!$datos) {
     sendJSONError('Datos inválidos', 400);
 }
 
-$idMateria = intval(isset($datos['idMateria']) ? $datos['idMateria'] : 0);
-$idGrupo = intval(isset($datos['idGrupo']) ? $datos['idGrupo'] : 0);
+$idMateria = datosOptimoInt($datos, 'idMateria');
+$idGrupo = datosOptimoInt($datos, 'idGrupo');
 
 if ($idMateria <= 0 || $idGrupo <= 0) {
     sendJSONError('Parámetros inválidos', 400);
 }
 
-$cantidad = intval(isset($datos['cantidad']) ? $datos['cantidad'] : 1);
-$horas = intval(isset($datos['horas']) ? $datos['horas'] : 0);
-$horasComplementarias = intval(isset($datos['horas_complementarias']) ? $datos['horas_complementarias'] : 0);
-$minNumProfesores = intval(isset($datos['min_num_profesores']) ? $datos['min_num_profesores'] : 0);
-$maxGruposProfesor = intval(isset($datos['max_grupos_profesor']) ? $datos['max_grupos_profesor'] : 0);
+$cantidad = datosOptimoInt($datos, 'cantidad', 1);
+$horas = datosOptimoInt($datos, 'horas');
+$horasComplementarias = datosOptimoInt($datos, 'horas_complementarias');
+$minNumProfesores = datosOptimoInt($datos, 'min_num_profesores');
+$maxGruposProfesor = datosOptimoInt($datos, 'max_grupos_profesor');
 
 try {
     $db = Db::open();

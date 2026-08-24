@@ -3,8 +3,8 @@
 // (equivalente a v3 ajax/programaciones_seguimiento/insertar_seguimiento_programacion_aula.php)
 // Inserta o actualiza la fila del triplete materia+grupo+profesor en el curso actual;
 // con textos vacíos se guarda el texto vacío, idéntico al comportamiento de v3.
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $session = checkSession();
 
@@ -23,21 +23,21 @@ if (esUsuarioSuper($rol)) {
     }
 }
 
-$data = json_decode(file_get_contents('php://input'), true);
+$data = cuerpoJson();
 
-$idMateria      = isset($data['idMateria']) ? intval($data['idMateria']) : 0;
-$idGrupo        = isset($data['idGrupo']) ? intval($data['idGrupo']) : 0;
-$idEvaluacion   = isset($data['idEvaluacion']) ? intval($data['idEvaluacion']) : 0;
-$temporalizacion = isset($data['temporalizacion']) ? $data['temporalizacion'] : '';
-$resultados      = isset($data['resultados']) ? $data['resultados'] : '';
-$inclusion       = isset($data['inclusion']) ? $data['inclusion'] : '';
-$numAprobados   = isset($data['num_aprobados']) ? intval($data['num_aprobados']) : 0;
-$numSuspensos   = isset($data['num_suspensos']) ? intval($data['num_suspensos']) : 0;
-$numOtros       = isset($data['num_otros']) ? intval($data['num_otros']) : 0;
+$idMateria      = datosOptimoInt($data, 'idMateria');
+$idGrupo        = datosOptimoInt($data, 'idGrupo');
+$idEvaluacion   = datosOptimoInt($data, 'idEvaluacion');
+$temporalizacion = datosOptimo($data, 'temporalizacion');
+$resultados      = datosOptimo($data, 'resultados');
+$inclusion       = datosOptimo($data, 'inclusion');
+$numAprobados   = datosOptimoInt($data, 'num_aprobados');
+$numSuspensos   = datosOptimoInt($data, 'num_suspensos');
+$numOtros       = datosOptimoInt($data, 'num_otros');
 
 // Determinar idProfesor según rol
 if (esUsuarioSuper($rol)) {
-    $idProfesor = isset($data['idProfesor']) ? intval($data['idProfesor']) : $idUsuarioSesion;
+    $idProfesor = datosOptimoInt($data, 'idProfesor', $idUsuarioSesion);
 } else {
     $idProfesor = $idUsuarioSesion;
 }

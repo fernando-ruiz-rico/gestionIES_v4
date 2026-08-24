@@ -1,6 +1,6 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $id = getOptimoInt('id');
 if ($id <= 0) {

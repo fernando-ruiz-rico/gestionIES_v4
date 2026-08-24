@@ -1,6 +1,6 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Se trae el nombre del curso al que pertenece cada grupo (cursos.nombre)
 // para que la vista de grupos muestre el curso en conjunto con cada grupo.

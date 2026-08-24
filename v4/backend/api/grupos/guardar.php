@@ -1,21 +1,21 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Permiso fiel a v3: solo admin
 checkPermission(array(ROLE_ADMIN));
 
-$datos = json_decode(file_get_contents('php://input'), true);
+$datos = cuerpoJson();
 if (!$datos) {
     sendJSONError('Datos inválidos', 400);
 }
 
-$nombre = trim(isset($datos['nombre']) ? $datos['nombre'] : '');
-$abreviatura = trim(isset($datos['abreviatura']) ? $datos['abreviatura'] : '');
-$idCurso = intval(isset($datos['idCurso']) ? $datos['idCurso'] : 0);
-$mostrar = intval(isset($datos['mostrar']) ? $datos['mostrar'] : 1);
-$horas_complementarias_dual = intval(isset($datos['horas_complementarias_dual']) ? $datos['horas_complementarias_dual'] : 0);
-$id = isset($datos['id']) ? intval($datos['id']) : 0;
+$nombre = trim(datosOptimo($datos, 'nombre'));
+$abreviatura = trim(datosOptimo($datos, 'abreviatura'));
+$idCurso = datosOptimoInt($datos, 'idCurso');
+$mostrar = datosOptimoInt($datos, 'mostrar', 1);
+$horas_complementarias_dual = datosOptimoInt($datos, 'horas_complementarias_dual');
+$id = datosOptimoInt($datos, 'id');
 
 if (empty($nombre)) {
     sendJSONError('Nombre obligatorio', 400);

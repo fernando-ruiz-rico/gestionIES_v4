@@ -1,7 +1,7 @@
 <?php
 // API: Cargar el texto introductorio de una programación de aula (tema + grupo + profesor)
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $session = checkSession();
 

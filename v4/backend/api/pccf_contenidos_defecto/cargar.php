@@ -2,8 +2,8 @@
 // API para cargar el contenido por defecto de un apartado del PCCF (Fase 3.3)
 // Devuelve el texto asociado a un apartado y un departamento concretos.
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $idApartado = getOptimoInt('idApartado');
 $idDepartamento = getOptimoInt('idDepartamento');

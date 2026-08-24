@@ -1,7 +1,7 @@
 <?php
 // API: Listar temas (unidades) de una materia
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $session = checkSession();
 

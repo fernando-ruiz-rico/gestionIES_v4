@@ -2,8 +2,8 @@
 // API endpoint para cargar un departamento específico por ID
 // Devuelve un objeto JSON con los datos del departamento
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 if (empty($_GET['id'])) {
     sendJSONError('ID de departamento no proporcionado', 400);

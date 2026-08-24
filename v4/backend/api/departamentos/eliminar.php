@@ -4,9 +4,9 @@
 // Solo borra si no tiene profesores asociados
 // Devuelve: success (true/false), mensaje
 
-header('Content-Type: application/json; charset=utf-8');
-session_start();
 require_once '../../config.php';
+cabeceraJson();
+session_start();
 
 // Verificar permisos de administrador
 $permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';

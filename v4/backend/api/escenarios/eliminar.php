@@ -1,13 +1,13 @@
 <?php
 // API para eliminar un escenario (tabla real: escenarios_desideratas)
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Permiso fiel a v3: jefe de departamento o admin
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
-$datos = json_decode(file_get_contents('php://input'), true);
-$id = isset($datos['id']) ? intval($datos['id']) : 0;
+$datos = cuerpoJson();
+$id = datosOptimoInt($datos, 'id');
 if ($id <= 0) {
     sendJSONError('ID inválido', 400);
 }

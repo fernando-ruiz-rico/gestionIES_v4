@@ -2,8 +2,8 @@
 // Lista los grupos de un curso con los valores de materias_grupos de una
 // materia (para el formulario de datos por grupo). Fiel a v3:
 // v3/ajax/materias/cargar_forms_materias_grupos.php
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $idMateria = getOptimoInt('idMateria');
 $idCurso = getOptimoInt('idCurso');

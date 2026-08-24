@@ -11,8 +11,8 @@
 // fila, se actualiza si existe.
 // Compatible con PHP 5 (capa Db / sentencias preparadas).
 // ============================================================================
-header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
+cabeceraJson();
 
 $session = checkSession();
 $permisos = in_array($session['rol'], array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
@@ -23,10 +23,7 @@ if (!$permisos) {
 $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
 $body = array();
 if ($method === 'POST') {
-    $decoded = json_decode(file_get_contents('php://input'), true);
-    if (is_array($decoded)) {
-        $body = $decoded;
-    }
+    $body = cuerpoJson();
 }
 
 $action = getOptimo('action');
@@ -61,11 +58,11 @@ try {
     // Acción: guardar (POST {idDepartamento, contexto, recursos, metodologia, acciones})
     // ---------------------------------------------------------------------------
     if ($action === 'guardar') {
-        $idDepartamento = isset($body['idDepartamento']) ? intval($body['idDepartamento']) : 0;
-        $contexto = isset($body['contexto']) ? $body['contexto'] : '';
-        $recursos = isset($body['recursos']) ? $body['recursos'] : '';
-        $metodologia = isset($body['metodologia']) ? $body['metodologia'] : '';
-        $adaptaciones = isset($body['adaptaciones']) ? $body['adaptaciones'] : '';
+        $idDepartamento = datosOptimoInt($body, 'idDepartamento');
+        $contexto = datosOptimo($body, 'contexto');
+        $recursos = datosOptimo($body, 'recursos');
+        $metodologia = datosOptimo($body, 'metodologia');
+        $adaptaciones = datosOptimo($body, 'adaptaciones');
 
         // Un jefe de departamento solo puede editar su propio departamento
         if ($session['rol'] === ROLE_JEFE_DEPARTAMENTO && intval($session['idDepartamento']) !== $idDepartamento) {

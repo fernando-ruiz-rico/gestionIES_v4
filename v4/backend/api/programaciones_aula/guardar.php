@@ -1,7 +1,7 @@
 <?php
 // API: Guardar el texto introductorio de una programación de aula
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $session = checkSession();
 
@@ -20,15 +20,15 @@ if (esUsuarioSuper($rol)) {
     }
 }
 
-$data = json_decode(file_get_contents('php://input'), true);
+$data = cuerpoJson();
 
-$idTema     = isset($data['idTema']) ? intval($data['idTema']) : 0;
-$idGrupo    = isset($data['idGrupo']) ? intval($data['idGrupo']) : 0;
-$texto      = isset($data['texto']) ? $data['texto'] : '';
+$idTema     = datosOptimoInt($data, 'idTema');
+$idGrupo    = datosOptimoInt($data, 'idGrupo');
+$texto      = datosOptimo($data, 'texto');
 
 // Determinar idProfesor según rol
 if (esUsuarioSuper($rol)) {
-    $idProfesor = isset($data['idProfesor']) ? intval($data['idProfesor']) : $idUsuarioSesion;
+    $idProfesor = datosOptimoInt($data, 'idProfesor', $idUsuarioSesion);
 } else {
     $idProfesor = $idUsuarioSesion;
 }

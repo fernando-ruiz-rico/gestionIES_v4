@@ -18,10 +18,10 @@
  * profesores solo sobre sus propias elecciones (y no las asignadas por la directiva).
  */
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../config.php';
+cabeceraJson();
 @session_start();
- $datos = json_decode(file_get_contents("php://input"), true) ?: [];
+ $datos = cuerpoJson();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = getOptimo('action');
@@ -173,7 +173,7 @@ try {
         // Reordena las selecciones de un profesor para un escenario
         case 'ordenar_seleccion':
             $idEscenario = intval($datos['idEscenario']);
-            $orden = isset($datos['orden']) ? $datos['orden'] : '';
+            $orden = datosOptimo($datos, 'orden');
             $ids = explode(",", $orden);
             foreach ($ids as $pos => $cod) {
                 $idSel = intval(substr($cod, 3));

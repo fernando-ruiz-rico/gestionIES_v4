@@ -3,8 +3,8 @@
 // Recibe: idDepartamento (requerido)
 // Devuelve: array JSON con los profesores ordenados por campo 'orden'
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 if (empty($_GET['idDepartamento'])) {
     sendJSONError('ID de departamento no proporcionado', 400);

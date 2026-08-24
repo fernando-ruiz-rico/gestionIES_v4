@@ -2,8 +2,8 @@
 // API para obtener los datos de un apartado del PCCF (Fase 3.2 - Apartados PCCF)
 // Devuelve en formato JSON los datos del apartado solicitado.
 
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 $idApartado = getOptimoInt('id');
 if ($idApartado <= 0) {

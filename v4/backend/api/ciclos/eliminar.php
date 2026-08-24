@@ -2,14 +2,14 @@
 // API para eliminar un ciclo formativo (Fase 1)
 // Equivalente a v3/ajax/ciclos/borrar_ciclo.php
 // No se puede borrar un ciclo si tiene cursos asociados (tabla cursos_ciclos).
-header('Content-Type: application/json; charset=utf-8');
 require_once '../../config.php';
+cabeceraJson();
 
 // Solo admin
 checkPermission(array(ROLE_ADMIN));
 
-$datos = json_decode(file_get_contents('php://input'), true);
-$idCiclo = isset($datos['id']) ? intval($datos['id']) : 0;
+$datos = cuerpoJson();
+$idCiclo = datosOptimoInt($datos, 'id');
 if ($idCiclo <= 0) {
     sendJSONError('ID inválido', 400);
 }
