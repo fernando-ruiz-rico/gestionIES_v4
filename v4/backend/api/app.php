@@ -44,12 +44,7 @@ function getMenusAPI() {
 }
 
 function getActivaciones() {
-    $conn = getDBConnection();
-
-    if (!$conn) {
-        sendJSONError('Error de conexión a la base de datos');
-    }
-    $db = new Db($conn);
+    $db = Db::open();
 
     // Estado de las activaciones, igual que includes/comprobar_activaciones.php de v3:
     // la tabla real es 'config' con columnas 'clave' y 'valor' ('ON' / 'OFF').

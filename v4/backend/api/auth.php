@@ -23,12 +23,7 @@ switch ($action) {
 }
 
 function handleLogin() {
-    $conn = getDBConnection();
-
-    if (!$conn) {
-        sendJSONError('Error de conexión a la base de datos');
-    }
-    $db = new Db($conn);
+    $db = Db::open();
 
     $username = isset($_POST['username']) ? $_POST['username'] : '';
     $password = isset($_POST['password']) ? $_POST['password'] : '';

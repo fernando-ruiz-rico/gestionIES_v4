@@ -5,13 +5,7 @@ require_once '../../config.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-$conn = getDBConnection();
-if (!$conn) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error de conexión a la base de datos']);
-    exit;
-}
-$db = new Db($conn);
+$db = Db::open();
 
 // ---------------------------------------------------------------------------
 // FASE 2.1 — Edición de apartados (fiel a v3/programaciones.php + ajax/programaciones).
