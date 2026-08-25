@@ -12,9 +12,13 @@ if ($id <= 0) {
     sendJSONError('ID inválido', 400);
 }
 
+// Fiel a v3 (borrar_escenario.php): se borran también las selecciones
+// de materias que se hayan hecho sobre ese escenario
 try {
     $db = Db::open();
     $afectadas = $db->execute("DELETE FROM escenarios_desideratas WHERE id = ?", $id);
+    $db->execute("DELETE FROM seleccion WHERE idEscenario = ?", $id);
+    $db->close();
 } catch (DbException $e) {
     sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }

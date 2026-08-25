@@ -1,4 +1,6 @@
 <?php
+// API para crear o actualizar un escenario de desideratas, junto con los
+// departamentos asociados (fiel a v3/insertar_escenario.php)
 require_once '../../config.php';
 cabeceraJson();
 
@@ -8,22 +10,31 @@ checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 $datos = cuerpoJson();
 $nombre = trim(datosOptimo($datos, 'nombre'));
 $id = datosOptimoInt($datos, 'id');
-$actual = datosOptimoInt($datos, 'actual');
-$activo_desideratas = datosOptimoInt($datos, 'activo_desideratas');
-$modo_rueda = datosOptimoInt($datos, 'modo_rueda');
+// Departamentos elegidos en el formulario (array de ids)
+$departamentos = isset($datos['departamentos']) && is_array($datos['departamentos']) ? $datos['departamentos'] : array();
 
-if (empty($nombre)) {
-    sendJSONError('Nombre obligatorio', 400);
+if ($nombre === '') {
+    sendJSONError('El nombre es obligatorio', 400);
+}
+if (count($departamentos) === 0) {
+    sendJSONError('El escenario necesita al menos un departamento', 400);
 }
 
-// La tabla real para escenarios es 'escenarios_desideratas'
 try {
     $db = Db::open();
     if ($id > 0) {
-        $db->execute("UPDATE escenarios_desideratas SET nombre=?, actual=?, activo_desideratas=?, modo_rueda=? WHERE id=?", $nombre, $actual, $activo_desideratas, $modo_rueda, $id);
+        // Actualización: cambia el nombre y reasigna los departamentos
+        $db->execute("UPDATE escenarios_desideratas SET nombre=? WHERE id=?", $nombre, $id);
+        $db->execute("DELETE FROM departamentos_escenarios WHERE idEscenario=?", $id);
     } else {
-        $db->execute("INSERT INTO escenarios_desideratas (nombre, actual, activo_desideratas, modo_rueda) VALUES (?, ?, ?, ?)", $nombre, $actual, $activo_desideratas, $modo_rueda);
+        // Alta: crea el escenario (campos por defecto) y se rellenan los departamentos
+        $db->execute("INSERT INTO escenarios_desideratas (nombre) VALUES (?)", $nombre);
+        $id = $db->insertId();
     }
+    foreach ($departamentos as $idDepartamento) {
+        $db->execute("INSERT INTO departamentos_escenarios (idEscenario, idDepartamento) VALUES (?, ?)", $id, intval($idDepartamento));
+    }
+    $db->close();
 } catch (DbException $e) {
     sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }

@@ -1,95 +1,104 @@
 <?php
-/**
- * API para el Histórico de selecciones (Fase 7.1)
- * Fiel a v3: muestra para cada profesor del departamento las materias que
- * eligió en un escenario (desiderata) concreto, señalando las que tienen
- * conflictos con otros profesores.
- *
- * Acción:
- *   - listar : devuelve las selecciones de un departamento para un escenario
- *
- * Permisos: profesores, jefes de departamento y admins.
- */
-
+// API del módulo "Histórico" de Desideratas: para cada profesor, qué eligió en el
+// escenario indicado, marcando en rojo las materias con conflicto (fiel a v3/cargar_historico.php)
 require_once '../config.php';
 cabeceraJson();
 
-// Fiel a v3 (página con cabecera): requiere sesión iniciada
+// Fiel a v3: el módulo de Desideratas exige sesión iniciada
 checkSession();
 
 $action = getOptimo('action');
+$idDepartamento = getOptimoInt('idDepartamento');
+$idEscenario = getOptimoInt('idEscenario');
 
 try {
-    $db = Db::open();
-    switch ($action) {
-        // Devuelve el histórico de selecciones de un departamento para un escenario
-        case 'listar':
-            $idEscenario = getOptimoInt('idEscenario');
-            if ($idEscenario <= 0) {
-                throw new Exception('Escenario inválido');
-            }
-            // Solo se puede consultar el histórico de un departamento. Los jefes
-            // solo ven su propio departamento; los admins pueden elegir uno.
-            $idDepartamento = getOptimoInt('idDepartamento');
-            if ($idDepartamento <= 0) {
-                throw new Exception('ID de departamento inválido');
-            }
-            // Calculamos primero las materias con conflictos
-            $sqlMaterias = "SELECT m.id AS idMateria, m.divisible AS divisible, mg.idGrupo AS idGrupo, mg.cantidad AS cantidad, mg.horas AS horas
-                            FROM materias m
-                            JOIN materias_grupos mg ON mg.idMateria = m.id
-                            WHERE mg.idGrupo IN (SELECT DISTINCT idGrupo FROM seleccion WHERE idEscenario=?)
-                            AND m.idDepartamento=? AND mg.cantidad > 0";
-            $materiasConflictos = array();
-            $filas = $db->fetchAll($sqlMaterias, $idEscenario, $idDepartamento);
-            foreach ($filas as $fila) {
-                $materiasConflictos[$fila['idMateria']][$fila['idGrupo']] = $fila;
-            }
-
-            // Obtenemos todos los profesores que eligieron en ese escenario
-            $sql = "SELECT DISTINCT p.id AS id, p.nombre AS nombre, p.orden AS orden
-                    FROM profesores p
-                    WHERE (p.idDepartamento=? AND p.activo=1)
-                    OR p.id IN (SELECT idProfesor FROM seleccion WHERE idEscenario=?)
-                    ORDER BY p.orden";
-            $profesores = $db->fetchAll($sql, $idDepartamento, $idEscenario);
-            $historico = [];
-            foreach ($profesores as $fila) {
-                $idProf = $fila['id'];
-                // Materias elegidas por este profesor
-                $sqlProf = "SELECT s.id AS idSeleccion, s.horas AS horas, s.orden AS orden,
-                               m.nombre AS nombre, m.tipo AS tipo, s.idMateria AS idMateria,
-                               c.abreviatura AS abrevCurso, g.abreviatura AS abrevGrupo, g.mostrar
-                            FROM seleccion s
-                            JOIN materias m ON m.id = s.idMateria
-                            JOIN cursos c ON c.id = m.idCurso
-                            JOIN grupos g ON g.id = s.idGrupo
-                            WHERE s.idProfesor=? AND s.idEscenario=?
-                            ORDER BY s.orden";
-                $materias = [];
-                $selecciones = $db->fetchAll($sqlProf, $idProf, $idEscenario);
-                foreach ($selecciones as $filaProf) {
-                    $materia = $filaProf;
-                    // Marcamos si la materia tiene conflicto
-                    $conflicto = false;
-                    if (isset($materiasConflictos[$filaProf['idMateria']][$filaProf['idGrupo']])) {
-                        $conflicto = true;
-                    }
-                    $materia['conflicto'] = $conflicto;
-                    $materias[] = $materia;
-                }
-                $historico[] = array(
-                    'id' => $fila['id'],
-                    'nombre' => $fila['nombre'],
-                    'materias' => $materias
-                );
-            }
-            sendJSONSuccess($historico);
-            break;
-
-        default:
-            throw new Exception('Acción no válida: ' . $action);
+    if ($idDepartamento <= 0 || $idEscenario <= 0) {
+        throw new Exception('Faltan parámetros');
     }
+    $db = Db::open();
+
+    // ---- Precomputamos las materias con sobredemanda o conflicto ----
+    // (v3 recorre cursos y grupos; solo le importan las materias del
+    //  departamento con cantidad > 0, que son las que se consultan aquí)
+    $materias = $db->fetchAll("SELECT m.id, m.divisible, mg.idGrupo, mg.cantidad, mg.horas
+                                FROM materias m
+                                JOIN materias_grupos mg ON mg.idMateria = m.id
+                                WHERE m.idDepartamento = ? AND mg.cantidad > 0", $idDepartamento);
+    $materiasConflictos = array();
+    foreach ($materias as $materia) {
+        // Cuántos profesores la eligieron, y cuántas horas en total
+        $peticion = $db->fetchOne("SELECT COUNT(*) AS peticiones, COALESCE(SUM(horas), 0) AS sumHoras
+                                    FROM seleccion
+                                    WHERE idMateria = ? AND idGrupo = ? AND idEscenario = ?",
+                                   $materia['id'], $materia['idGrupo'], $idEscenario);
+        if ($peticion['peticiones'] > 0) {
+            // v3: si no es divisible y hay más peticiones que la cantidad, conflicto;
+            // si no, conflicto cuando la suma de horas supera las de la materia
+            if (!$materia['divisible'] && $peticion['peticiones'] > $materia['cantidad']) {
+                $materiasConflictos[] = array('idMateria' => $materia['id'], 'idGrupo' => $materia['idGrupo']);
+            } else if ($peticion['sumHoras'] > $materia['horas'] * $materia['cantidad']) {
+                $materiasConflictos[] = array('idMateria' => $materia['id'], 'idGrupo' => $materia['idGrupo']);
+            }
+        }
+    }
+
+    // ---- Profesores activos del departamento, y los que eligieron en el escenario ----
+    $profesores = $db->fetchAll("SELECT id, nombre
+                                  FROM profesores
+                                  WHERE (idDepartamento = ? AND activo = 1)
+                                     OR id IN (SELECT idProfesor FROM seleccion WHERE idEscenario = ?)
+                                  ORDER BY orden", $idDepartamento, $idEscenario);
+
+    $historico = array();
+    foreach ($profesores as $profesor) {
+        $filas = array();
+        $total = 0;
+        $contadorTutorias = 0;
+        $selecciones = $db->fetchAll("SELECT s.id AS idSeleccion, m.nombre, m.id AS idMateria,
+                                            m.tipo, s.horas, c.abreviatura AS abrevCurso,
+                                            g.abreviatura AS abrevGrupo, g.mostrar, g.id AS idGrupo
+                                      FROM seleccion s
+                                      JOIN materias m ON m.id = s.idMateria
+                                      JOIN cursos c ON c.id = m.idCurso
+                                      JOIN grupos g ON g.id = s.idGrupo
+                                      WHERE s.idProfesor = ? AND s.idEscenario = ?
+                                      ORDER BY s.orden", $profesor['id'], $idEscenario);
+        foreach ($selecciones as $seleccion) {
+            $total += $seleccion['horas'];
+            $conflicto = false;
+            // v3: la segunda tutoría en adelante es conflicto
+            if ($seleccion['tipo'] == 'TUTORIA') {
+                $contadorTutorias++;
+                if ($contadorTutorias > 1) {
+                    $conflicto = true;
+                }
+            }
+            foreach ($materiasConflictos as $mc) {
+                if ($mc['idMateria'] == $seleccion['idMateria'] && $mc['idGrupo'] == $seleccion['idGrupo']) {
+                    $conflicto = true;
+                }
+            }
+            $filas[] = array(
+                'idSeleccion' => $seleccion['idSeleccion'],
+                'nombre' => $seleccion['nombre'],
+                'tipo' => $seleccion['tipo'],
+                'abrevCurso' => $seleccion['abrevCurso'],
+                'abrevGrupo' => $seleccion['abrevGrupo'],
+                'mostrar' => $seleccion['mostrar'],
+                'horas' => $seleccion['horas'],
+                'conflicto' => $conflicto
+            );
+        }
+        $historico[] = array(
+            'id' => $profesor['id'],
+            'nombre' => $profesor['nombre'],
+            'total' => $total,
+            'filas' => $filas
+        );
+    }
+
+    $db->close();
+    sendJSONSuccess($historico);
 } catch (DbException $e) {
     sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 } catch (Exception $e) {

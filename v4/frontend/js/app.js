@@ -95,7 +95,6 @@ app.component('actas-view', ActasView);
 app.component('historico-view', HistoricoView);
 app.component('estadisticas-view', EstadisticasView);
 app.component('configuracion-view', ConfiguracionView);
-app.component('excel-view', ExcelView);
 
 // Montar la aplicación
 app.mount('#app');

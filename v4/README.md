@@ -54,15 +54,16 @@ v4/
 │       ├── historico.php               # Fase 7.1
 │       ├── estadisticas.php            # Fase 7.2
 │       ├── configuracion.php           # Fase 7.3
-│       └── excel.php                   # Fase 7.4
+│   ├── excel.php                     # Desideratas (XLS de la selección, PHPExcel)
 │   ├── pdf_acta.php                  # Fase 8 (PDF del acta, TCPDF)
 │   ├── pdf_programaciones_seguimiento.php # Fase 8 (PDFs de seguimiento de aula, TCPDF)
 │   ├── pdf_resultados_aprendizaje.php # Fase 8 (PDFs de RA/CE empresa, TCPDF)
-│   ├── pdf_seleccion.php             # Fase 8 (PDF de la selección, TCPDF)
+│   ├── pdf_desiderata.php            # Fase 8 (PDF de la desiderata: ficha de profesor o por especialidad, TCPDF+FPDI)
+│   ├── pdf_preferencias.php          # Fase 8 (PDF de preferencias de un profesor / departamento, TCPDF+FPDI)
 │   ├── pdf_programaciones.php        # Fase 2.1 (PDF completo de la programación, TCPDF)
 │   ├── pdf_programaciones_apartado.php # Fase 2.1 (PDF de un apartado, TCPDF)
 │   ├── pdf_unidades_programacion.php # Fase 2.1 (PDF de unidades/temas, TCPDF)
-│   └── lib/                          # lib/php/tcpdf (TCPDF, desde v3) + lib/programaciones_pdf.php
+│   └── lib/                          # lib/php/tcpdf (TCPDF, desde v3) + lib/php/fpdi (FPDI, desde v3) + lib/php/phpexcel (PHPExcel, desde v3) + lib/programaciones_pdf.php
 │
 └── frontend/          # Aplicación Vue 3 (desde CDN, sin compilación)
     ├── index.html     # Punto de entrada (acceder directamente)
@@ -259,7 +260,7 @@ Módulos de base del sistema:
 | 7.1 Histórico | `backend/api/historico.php` | `historico-view.js` + `api/historico.js` | `historico.php` |
 | 7.2 Estadísticas | `backend/api/estadisticas.php` | `estadisticas-view.js` + `api/historico.js` (EstadisticasAPI) | `estadisticas.php` |
 | 7.3 Configuración | `backend/api/configuracion.php` | `configuracion-view.js` + `api/configuracion.js` | `configuracion.php` |
-| 7.4 Exportación a Excel | `backend/api/excel.php` | `excel-view.js` | `excel.php` |
+| 7.4 Exportación a Excel | `backend/excel.php` | botón «Excel» de `seleccion-view.js` | `excel.php` |
 | 7.5 Ayuda | — | — | Pendiente (página estática de ayuda) |
 
 ### Fase 8: Generación de PDFs (Completado con matices)
@@ -267,7 +268,8 @@ Módulos de base del sistema:
 Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/php/tcpdf/`):
 
 - `backend/pdf_acta.php` — PDF del acta de departamento (`?idActa=X`), fiel a `v3/pdf_acta.php`. ✅ Verificado en vivo (≈27 KB, el de v3 hace 27 KB).
-- `backend/pdf_seleccion.php` — PDF de la selección de materias de un profesor (`?idProfesor=X&idEscenario=Y`), reimplantación funcional de `v3/pdf_desiderata.php`. ✅ Verificado en vivo (≈7,5 KB).
+- `backend/pdf_desiderata.php` — **Ficha de la desiderata** de un profesor (`?idProfesor=X&idEscenario=Y`, solo el propio, o `?selEsp=<esp|Todos>&idDepartamento=X&idEscenario=Y` para jefe/admin: todos los profesores de la especialidad), fiel a `v3/pdf_desiderata.php` (TCPDF+FPDI sobre la plantilla `backend/pdf/plantilla.pdf`). ✅ Verificado en vivo (200 `application/pdf`, cabecera `%PDF`).
+- `backend/pdf_preferencias.php` — **Preferencias** de un profesor (`?idProfesor=X`, solo el propio) o de todo un departamento/especialidad (`?selEsp=<esp|Todos>&idDepartamento=X` para jefe/admin), fiel a `v3/pdf_preferencias.php` (TCPDF+FPDI sobre la plantilla `backend/pdf/desiderata_horario.pdf`); sin permiso: «Acceso no permitido». ✅ Verificado en vivo.
 - `backend/api/pccf/generar.php` — PDF del PCCF (`modo=completo` / `modo=apartado`). ⚠️ Con MySQL 8 (`ONLY_FULL_GROUP_BY`) el modo `completo` genera siempre un PDF de una página con el error SQL 3087 (ver bug **B-3**); en `modo=apartado` funcionan los tipos 0/7/12 y falla el tipo 4.
 - `backend/pdf_programaciones.php` — **PDF completo** de la programación de una materia (`?idMateria=X`), Fase 2.1, fiel a `v3/pdf_programaciones.php` (portada + índice con TOC + apartados con `Bookmark`, FE en página propia, temas en su página). ✅ Verificado en vivo.
 - `backend/pdf_programaciones_apartado.php` — **PDF de un apartado** (`?idMateria=X&idApartado=Y`), el apartado pedido + sus subapartados hasta el siguiente principal, fiel a v3. ✅ Verificado en vivo.
@@ -289,6 +291,21 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 ## Historial de cambios
 
 > Registro cronológico (más reciente primero) de las entregas por versión.
+
+### Módulo Desideratas completo (Escenarios, Selección, Histórico, Estadísticas, Excel, PDFs) — «no funciona» resuelto, fiel a v3
+- 🐞 **El módulo «Desideratas» no funcionaba** (Escenarios, Selección, Histórico y Estadísticas sin backend/vidas y los PDFs/Excel sin portar). Entrega completa del módulo con el patrón v4 (una API JSON por módulo con `action`, `Db`, `cabeceraJson`, roles `ROLE_ADMIN`/`ROLE_JEFE_DEPARTAMENTO`/`ROLE_PROFESOR`), fiel a las páginas de v3.
+- 🔧 **Backend**:
+  - `backend/api/seleccion.php` (API única): `listar_escenarios` (al profesor solo los de `activo_desideratas`), `listar_especialidades`, `listar_profesores` (con horas de referencia), `listar_cursos` (al no-super solo `asignada_directiva = 0`, fiel a v3), `listar_seleccion`, `listar_profesores_materia`, `insertar_seleccion` (**orden fiel a v3**: `100` si la materia es asignada por el equipo directivo, `total+1` si no), `borrar_seleccion`, `borrar_toda_seleccion` (no-super sin las materias asignadas), `borrar_todas_selecciones` (solo super) y `ordenar_seleccion` (**modo rueda**: el no-super no puede reordenar → 400). PHP 5.4, sin `array_column`.
+  - `backend/api/historico.php` (`listar`): horas y conflictos por profesor del escenario (mismos criterios de `v3/historico.php`: conflictos por peticiones sobradas, divisibilidad, mínimos de profesores, tutorías múltiples…).
+  - `backend/api/estadisticas.php` (`listar`): horas por especialidad (impartidas vs nº profesores × 18), materias **sin escoger**, **conflictos** (demasiadas/pocas peticiones, no divisible, mín. profesores, máx. grupos/profesor, más de una tutoría) con `tuyo` para el profesor logueado (el admin nunca lo pone, fiel a v3) y `tienesConflictos`.
+  - `backend/excel.php`: XLS fiel a `v3/excel.php` (resumen de horas por especialidad/profesor del escenario; `application/vnd.ms-excel`, plantilla `desideratas.xls`), con `require` de PHPExcel y `GROUP BY …, profesores.orden` (MySQL 8 `ONLY_FULL_GROUP_BY`).
+  - `backend/pdf_desiderata.php` y `backend/pdf_preferencias.php`: **puertos fieles** de `v3/pdf_desiderata.php` (ficha del profesor `?idProfesor=X&idEscenario=Y` solo el propio; `?selEsp=<esp|Todos>&idDepartamento=X&idEscenario=Y` para jefe/admin) y de `v3/pdf_preferencias.php` (preference propio `?idProfesor=X`; departamento/especialidad para jefe/admin; «Acceso no permitido» sin permiso), con `@session_start();` (patrón de `pdf_programaciones_seguimiento.php`) y **FPDI** sobre las plantillas `backend/pdf/{plantilla.pdf,desiderata_horario.pdf}`.
+  - **Librerías copiadas de v3** a `backend/lib/php/{fpdi,phpexcel}`. ⚠️ El servidor actual sirve **PHP 8.3**: en esa runtime los endpoints propios de v3 (Excel/PDF) fallan (`each()` en FPDI; offsets `$var{N}` de PHPExcel, error de *parse*); la **copia de v4** se parcheó con mínimo para funcionar (offsets `$var[N]`, `foreach` en vez de `each`); **v3 queda intacto**.
+- 🧩 **Frontend** (Vue 3 + bootstrap.Modal + SweetAlert2, arrastre HTML5 nativo):
+  - `seleccion-view.js`: 3 paneles de v3 (especialidad/escenario, cursos por especialidad con horas y aviso `<17`/`>22`, selección con **arrastrar para reordenar**, papelera —oculta a no-super en las asignadas— y badge «asignada»), modal de horas (con confirmación de especialidad distinta), modales de profesores de la materia, botones **Estadísticas / Histórico / PDF ficha / PDF todos / Preferencias / Excel** y **Ayuda** (texto de v3). El jefe entra fijo a su departamento; el **admin** elige departamento (patrón v4 de `actas`/`historico`); el profesor, si la activación `desideratas` está OFF, ve el aviso y sin edición.
+  - `historico-view.js` y `estadisticas-view.js`: fieles a v3 (tarjetas por profesor con filas en **rojo** si hay conflicto y total de horas; paneles «Horas por especialidades» y «Conflictos» con el texto `tuyo` en **negrita** y el banner de conflictos propios solo para no-admin).
+  - **Eliminados**: `api/excel.php`, `excel-view.js` (la Excel ya es el botón de la vista de Selección, como en v3) y `pdf_seleccion.php` (la reimplantación funcional anterior, sustituida por los puertos fieles). `index.html`: `?v=2` en los scripts del módulo.
+- ✅ **Verificado en vivo** (HTTP/curl con sesión; **sin navegador** en el entorno, así que la verificación es de cabeceras/JSON/bytes, no de UI): login de los 3 roles; matriz de selección por rol (**jefe 212** cursos con las 10 asignadas vs **profesor 202**); `insertar` con orden v3 (asignada → `orden=100` en BD); `ordenar` por rol y bloqueo de modo-rueda; borrados con guardas super; **Escenarios**: duplicado del 28 («Curso 2025-2026 bis», **219 selecciones** copiadas), alternar `modo_rueda`/`actual`, guardar, `borrar_todas`, eliminar (sin restos); **Histórico**: 49 profesores, 11 conflictos reales; **Estadísticas**: INF **425/486** h, SAI **310/360**, 6 conflictos y `tuyo` comprobado con una selección temporal (y limpiada); **Excel**: 45 KB, CFB `d0cf11e0`, `application/vnd.ms-excel` (sin sesión → 401); **PDFs**: ficha propio (64 KB), ficha INF del depto (100 KB), preferencias propio (146 KB)/departamento (194 KB) y «Acceso no permitido» sin permiso. **BD restaurada**: escenario 28 con sus 219 selecciones originales, filas de prueba eliminadas, sin huérfanos y `config.admin`/`profesores.id=218` devueltos a sus valores originales y verificados. `php -l`/`node --check` limpios.
 
 ### PDFs de seguimiento de programaciones (Fase 8 — los botones «Pendiente» ya generan PDF, fieles a v3)
 - 📄 **Nuevo endpoint** `backend/pdf_programaciones_seguimiento.php` (`?departamento=X&curso=Y&evaluacion=Z&categoria=FP|ESO/BACH`): replica fiel de `v3/pdf_programaciones_seguimiento.php` — portada (I.E.S. San Vicente, título, curso/evaluación, departamento + categoría) y las 5 secciones de v3: 1. seguimiento de la programación (temporalización por grupo y materia), 2. valoración de resultados académicos (aprobados/suspensos/otros + % de aprobados + HTML de `resultados`), 3. inclusión del alumnado (solo inclusiones con contenido, con el filtro de «HTML vacío» de v3; si no hay ninguna, «No hay datos disponibles»), 4. valoración de las horas de atención a pendientes/desdobles… (datos comunes del departamento) y 5. actividades extraescolares programadas **para la evaluación siguiente** (los datos comunes siguen en `seguimiento_programaciones_departamento`, igual que v3). Cabecera/pie «I.E.S. San Vicente» + «Pág x/y» como en v3.

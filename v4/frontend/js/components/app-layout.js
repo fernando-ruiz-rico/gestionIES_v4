@@ -79,8 +79,7 @@ const AppLayout = {
                 'actas.php': 'actas-view',
                 'historico.php': 'historico-view',
                 'estadisticas.php': 'estadisticas-view',
-                'configuracion.php': 'configuracion-view',
-                'excel.php': 'excel-view'
+                'configuracion.php': 'configuracion-view'
             };
             
             this.vistaActual = vistaMap[link] || 'home-view';
