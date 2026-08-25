@@ -502,7 +502,7 @@ const ProgramacionesSeguimientoView = {
 
         // --- PDFs de seguimiento (Fase 8) ---
         // Replica de v3/pdf_programaciones_seguimiento.php: abre
-        // ../backend/pdf_programaciones_seguimiento.php con el curso actual
+        // ../backend/pdf/pdf_programaciones_seguimiento.php con el curso actual
         // (el que figuran en los escenarios actuales), la evaluación
         // seleccionada, el departamento del usuario (o el elegido por el
         // admin real) y la categoría ('FP' o 'ESO/BACH').
@@ -515,7 +515,7 @@ const ProgramacionesSeguimientoView = {
             const catParam = (categoria === 'Ciclos Formativos') ? 'FP' : 'ESO/BACH';
             const dpto = this.dptoParaPDF;
             window.open(
-                '../backend/pdf_programaciones_seguimiento.php'
+                '../backend/pdf/pdf_programaciones_seguimiento.php'
                 + '?departamento=' + encodeURIComponent(dpto)
                 + '&curso=' + encodeURIComponent(this.cursoActual)
                 + '&evaluacion=' + this.idEvaluacion

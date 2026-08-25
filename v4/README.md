@@ -55,14 +55,17 @@ v4/
 │       ├── estadisticas.php            # Fase 7.2
 │       ├── configuracion.php           # Fase 7.3
 │   ├── excel.php                     # Desideratas (XLS de la selección, PHPExcel)
-│   ├── pdf_acta.php                  # Fase 8 (PDF del acta, TCPDF)
-│   ├── pdf_programaciones_seguimiento.php # Fase 8 (PDFs de seguimiento de aula, TCPDF)
-│   ├── pdf_resultados_aprendizaje.php # Fase 8 (PDFs de RA/CE empresa, TCPDF)
-│   ├── pdf_desiderata.php            # Fase 8 (PDF de la desiderata: ficha de profesor o por especialidad, TCPDF+FPDI)
-│   ├── pdf_preferencias.php          # Fase 8 (PDF de preferencias de un profesor / departamento, TCPDF+FPDI)
-│   ├── pdf_programaciones.php        # Fase 2.1 (PDF completo de la programación, TCPDF)
-│   ├── pdf_programaciones_apartado.php # Fase 2.1 (PDF de un apartado, TCPDF)
-│   ├── pdf_unidades_programacion.php # Fase 2.1 (PDF de unidades/temas, TCPDF)
+│   ├── pdf/                          # Scripts que generan PDFs (TCPDF/FPDI)
+│   │   ├── plantilla.pdf             # Plantilla de la desiderata (FPDI)
+│   │   ├── desiderata_horario.pdf    # Plantilla de preferencias (FPDI)
+│   │   ├── pdf_acta.php                  # Fase 8 (PDF del acta, TCPDF)
+│   │   ├── pdf_programaciones_seguimiento.php # Fase 8 (PDFs de seguimiento de aula, TCPDF)
+│   │   ├── pdf_resultados_aprendizaje.php # Fase 8 (PDFs de RA/CE empresa, TCPDF)
+│   │   ├── pdf_desiderata.php            # Fase 8 (PDF de la desiderata: ficha de profesor o por especialidad, TCPDF+FPDI)
+│   │   ├── pdf_preferencias.php          # Fase 8 (PDF de preferencias de un profesor / departamento, TCPDF+FPDI)
+│   │   ├── pdf_programaciones.php        # Fase 2.1 (PDF completo de la programación, TCPDF)
+│   │   ├── pdf_programaciones_apartado.php # Fase 2.1 (PDF de un apartado, TCPDF)
+│   │   └── pdf_unidades_programacion.php # Fase 2.1 (PDF de unidades/temas, TCPDF)
 │   └── lib/                          # lib/php/tcpdf (TCPDF, desde v3) + lib/php/fpdi (FPDI, desde v3) + lib/php/phpexcel (PHPExcel, desde v3) + lib/programaciones_pdf.php
 │
 └── frontend/          # Aplicación Vue 3 (desde CDN, sin compilación)
@@ -267,14 +270,14 @@ Módulos de base del sistema:
 
 Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/php/tcpdf/`):
 
-- `backend/pdf_acta.php` — PDF del acta de departamento (`?idActa=X`), fiel a `v3/pdf_acta.php`. ✅ Verificado en vivo (≈27 KB, el de v3 hace 27 KB).
-- `backend/pdf_desiderata.php` — **Ficha de la desiderata** de un profesor (`?idProfesor=X&idEscenario=Y`, solo el propio, o `?selEsp=<esp|Todos>&idDepartamento=X&idEscenario=Y` para jefe/admin: todos los profesores de la especialidad), fiel a `v3/pdf_desiderata.php` (TCPDF+FPDI sobre la plantilla `backend/pdf/plantilla.pdf`). ✅ Verificado en vivo (200 `application/pdf`, cabecera `%PDF`).
-- `backend/pdf_preferencias.php` — **Preferencias** de un profesor (`?idProfesor=X`, solo el propio) o de todo un departamento/especialidad (`?selEsp=<esp|Todos>&idDepartamento=X` para jefe/admin), fiel a `v3/pdf_preferencias.php` (TCPDF+FPDI sobre la plantilla `backend/pdf/desiderata_horario.pdf`); sin permiso: «Acceso no permitido». ✅ Verificado en vivo.
+- `backend/pdf/pdf_acta.php` — PDF del acta de departamento (`?idActa=X`), fiel a `v3/pdf_acta.php`. ✅ Verificado en vivo (≈27 KB, el de v3 hace 27 KB).
+- `backend/pdf/pdf_desiderata.php` — **Ficha de la desiderata** de un profesor (`?idProfesor=X&idEscenario=Y`, solo el propio, o `?selEsp=<esp|Todos>&idDepartamento=X&idEscenario=Y` para jefe/admin: todos los profesores de la especialidad), fiel a `v3/pdf_desiderata.php` (TCPDF+FPDI sobre la plantilla `backend/pdf/plantilla.pdf`). ✅ Verificado en vivo (200 `application/pdf`, cabecera `%PDF`).
+- `backend/pdf/pdf_preferencias.php` — **Preferencias** de un profesor (`?idProfesor=X`, solo el propio) o de todo un departamento/especialidad (`?selEsp=<esp|Todos>&idDepartamento=X` para jefe/admin), fiel a `v3/pdf_preferencias.php` (TCPDF+FPDI sobre la plantilla `backend/pdf/desiderata_horario.pdf`); sin permiso: «Acceso no permitido». ✅ Verificado en vivo.
 - `backend/api/pccf/generar.php` — PDF del PCCF (`modo=completo` / `modo=apartado`). ⚠️ Con MySQL 8 (`ONLY_FULL_GROUP_BY`) el modo `completo` genera siempre un PDF de una página con el error SQL 3087 (ver bug **B-3**); en `modo=apartado` funcionan los tipos 0/7/12 y falla el tipo 4.
-- `backend/pdf_programaciones.php` — **PDF completo** de la programación de una materia (`?idMateria=X`), Fase 2.1, fiel a `v3/pdf_programaciones.php` (portada + índice con TOC + apartados con `Bookmark`, FE en página propia, temas en su página). ✅ Verificado en vivo.
-- `backend/pdf_programaciones_apartado.php` — **PDF de un apartado** (`?idMateria=X&idApartado=Y`), el apartado pedido + sus subapartados hasta el siguiente principal, fiel a v3. ✅ Verificado en vivo.
-- `backend/pdf_unidades_programacion.php` — **PDF de unidades/temas** (`?idMateria=X`, una página por tema), fiel a `v3/pdf_unidades_programacion.php`. El «PDF de Apartado» de la vista enruta aquí si el apartado es de temas (`tipo = 13`), igual que v3. ✅ Verificado en vivo.
-- `backend/pdf_programaciones_seguimiento.php` — **PDFs de seguimiento de aula** (`?departamento=X&curso=Y&evaluacion=Z&categoria=FP|ESO/BACH`), Fase 2.5, fiel a `v3/pdf_programaciones_seguimiento.php`: portada (curso + evaluación + departamento) y las 5 secciones (1. temporalización, 2. resultados académicos con % de aprobados, 3. inclusión del alumnado —con «No hay datos disponibles» si no hay inclusiones—, 4. valoración de las horas de atención a pendientes [datos comunes del departamento], 5. actividades extraescolares programadas para la evaluación siguiente). Los dos botones de la vista de seguimiento (`Ciclos Formativos` → `categoria=FP`; `ESO/BACH` → el resto) abren este endpoint con el curso actual, la evaluación elegida y el **departamento del usuario** (jefe/profesor: el suyo; **admin real: el que elige en el desplegable de la vista**, equivalente al `seleccion_departamento` de la cabecera de v3 — sin departamento el botón queda desactivado). ✅ Verificado en vivo.
+- `backend/pdf/pdf_programaciones.php` — **PDF completo** de la programación de una materia (`?idMateria=X`), Fase 2.1, fiel a `v3/pdf_programaciones.php` (portada + índice con TOC + apartados con `Bookmark`, FE en página propia, temas en su página). ✅ Verificado en vivo.
+- `backend/pdf/pdf_programaciones_apartado.php` — **PDF de un apartado** (`?idMateria=X&idApartado=Y`), el apartado pedido + sus subapartados hasta el siguiente principal, fiel a v3. ✅ Verificado en vivo.
+- `backend/pdf/pdf_unidades_programacion.php` — **PDF de unidades/temas** (`?idMateria=X`, una página por tema), fiel a `v3/pdf_unidades_programacion.php`. El «PDF de Apartado» de la vista enruta aquí si el apartado es de temas (`tipo = 13`), igual que v3. ✅ Verificado en vivo.
+- `backend/pdf/pdf_programaciones_seguimiento.php` — **PDFs de seguimiento de aula** (`?departamento=X&curso=Y&evaluacion=Z&categoria=FP|ESO/BACH`), Fase 2.5, fiel a `v3/pdf_programaciones_seguimiento.php`: portada (curso + evaluación + departamento) y las 5 secciones (1. temporalización, 2. resultados académicos con % de aprobados, 3. inclusión del alumnado —con «No hay datos disponibles» si no hay inclusiones—, 4. valoración de las horas de atención a pendientes [datos comunes del departamento], 5. actividades extraescolares programadas para la evaluación siguiente). Los dos botones de la vista de seguimiento (`Ciclos Formativos` → `categoria=FP`; `ESO/BACH` → el resto) abren este endpoint con el curso actual, la evaluación elegida y el **departamento del usuario** (jefe/profesor: el suyo; **admin real: el que elige en el desplegable de la vista**, equivalente al `seleccion_departamento` de la cabecera de v3 — sin departamento el botón queda desactivado). ✅ Verificado en vivo.
 
 > El botón PDF de `programaciones-aula` (Fase 2.4) sigue siendo un stub informativo, igual que en la entrega 2.4/2.5. Los PDFs de la Fase 2 se abren desde sus vistas (los de «Programaciones» son los 3 de arriba, el de «Resultados de aprendizaje» el de la empresa, y los de «Seguimiento» el de arriba).
 

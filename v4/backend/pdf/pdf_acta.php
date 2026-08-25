@@ -3,10 +3,10 @@
 // (parámetro "idActa"), usando la librería TCPDF incluida en la app.
 
 session_start();
-require_once 'config.php';
-require_once 'lib/php/tcpdf/examples/tcpdf_include.php';
-require_once 'lib/php/tcpdf/tcpdf.php';
-require_once 'lib/pdf_compartidas.php';
+require_once '../config.php';
+require_once '../lib/php/tcpdf/examples/tcpdf_include.php';
+require_once '../lib/php/tcpdf/tcpdf.php';
+require_once '../lib/pdf_compartidas.php';
 
 $idActa = isset($_REQUEST['idActa']) ? intval($_REQUEST['idActa']) : 0;
 if ($idActa <= 0)

@@ -23,10 +23,10 @@
 
 header('Content-Type: application/pdf; charset=utf-8');
 
-require_once 'config.php';
-require_once 'lib/php/tcpdf/examples/tcpdf_include.php';
-require_once 'lib/php/tcpdf/tcpdf.php';
-require_once 'lib/pdf_compartidas.php';
+require_once '../config.php';
+require_once '../lib/php/tcpdf/examples/tcpdf_include.php';
+require_once '../lib/php/tcpdf/tcpdf.php';
+require_once '../lib/pdf_compartidas.php';
 
 // ============================================================================
 // Consultas a la base de datos (capa Db de v4)

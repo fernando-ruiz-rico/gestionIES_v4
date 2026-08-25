@@ -27,10 +27,10 @@
 header('Content-Type: application/pdf; charset=utf-8');
 
 @session_start();
-require_once 'config.php';
-require_once 'lib/php/tcpdf/examples/tcpdf_include.php';
-require_once 'lib/php/tcpdf/tcpdf.php';
-require_once 'lib/pdf_compartidas.php';
+require_once '../config.php';
+require_once '../lib/php/tcpdf/examples/tcpdf_include.php';
+require_once '../lib/php/tcpdf/tcpdf.php';
+require_once '../lib/pdf_compartidas.php';
 
 // Endpoint no JSON: se conserva la apertura original, porque si la conexión
 // falla el error debe seguir saliendo igual que antes (die() en texto plano).

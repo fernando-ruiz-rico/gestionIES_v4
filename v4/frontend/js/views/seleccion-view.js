@@ -555,22 +555,22 @@ const SeleccionView = {
 
         // v3/imprimirSeleccion(true): ficha del profesor
         imprimirSeleccion() {
-            window.open('../backend/pdf_desiderata.php?idProfesor=' + this.idProfesor + '&idEscenario=' + this.idEscenario, '_blank');
+            window.open('../backend/pdf/pdf_desiderata.php?idProfesor=' + this.idProfesor + '&idEscenario=' + this.idEscenario, '_blank');
         },
 
         // v3/imprimirSeleccion(false): fichas de todos los profesores de la especialidad
         imprimirTodos() {
-            window.open('../backend/pdf_desiderata.php?selEsp=' + encodeURIComponent(this.idEspecialidad) + '&idDepartamento=' + this.idDepartamento + '&idEscenario=' + this.idEscenario, '_blank');
+            window.open('../backend/pdf/pdf_desiderata.php?selEsp=' + encodeURIComponent(this.idEspecialidad) + '&idDepartamento=' + this.idDepartamento + '&idEscenario=' + this.idEscenario, '_blank');
         },
 
         // v3/imprimirPreferenciasSeleccion(true)
         imprimirPreferencias() {
-            window.open('../backend/pdf_preferencias.php?idProfesor=' + this.idProfesor + '&idEscenario=' + this.idEscenario, '_blank');
+            window.open('../backend/pdf/pdf_preferencias.php?idProfesor=' + this.idProfesor + '&idEscenario=' + this.idEscenario, '_blank');
         },
 
         // v3/imprimirPreferenciasSeleccion(false)
         imprimirPreferenciasTodos() {
-            window.open('../backend/pdf_preferencias.php?selEsp=' + encodeURIComponent(this.idEspecialidad) + '&idDepartamento=' + this.idDepartamento, '_blank');
+            window.open('../backend/pdf/pdf_preferencias.php?selEsp=' + encodeURIComponent(this.idEspecialidad) + '&idDepartamento=' + this.idDepartamento, '_blank');
         },
 
         // v3/generarExcel

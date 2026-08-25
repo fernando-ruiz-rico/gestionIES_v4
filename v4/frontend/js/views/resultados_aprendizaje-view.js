@@ -324,7 +324,7 @@ const ResultadosArendizajeView = {
 
         // Abre el PDF generado en el backend (misma petición directa que v3)
         abrirPDF(modo) {
-            window.open('../backend/pdf_resultados_aprendizaje.php?modo=' + modo, '_blank');
+            window.open('../backend/pdf/pdf_resultados_aprendizaje.php?modo=' + modo, '_blank');
         },
 
         async actualizarHoras() {

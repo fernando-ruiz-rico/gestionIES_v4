@@ -19,11 +19,11 @@
 
 header('Content-Type: application/pdf; charset=utf-8');
 
-require_once 'config.php';
-require_once 'lib/php/tcpdf/examples/tcpdf_include.php';
-require_once 'lib/php/tcpdf/tcpdf.php';
-require_once 'lib/pdf_compartidas.php';
-require_once 'lib/programaciones_pdf.php';
+require_once '../config.php';
+require_once '../lib/php/tcpdf/examples/tcpdf_include.php';
+require_once '../lib/php/tcpdf/tcpdf.php';
+require_once '../lib/pdf_compartidas.php';
+require_once '../lib/programaciones_pdf.php';
 
 // Cabecera con el título del documento (como v3); el pie lo hereda de la base
 class MiPDFProgramacionesUnidades extends MiPDFBase

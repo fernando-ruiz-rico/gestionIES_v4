@@ -317,22 +317,22 @@ const ProgramacionesView = {
         // --- PDFs (endpoints autocontenidos, sin sesión) ---
         generarPDFCompleto() {
             if (this.idMateria <= 0) return;
-            window.open('../backend/pdf_programaciones.php?idMateria=' + this.idMateria, '_blank');
+            window.open('../backend/pdf/pdf_programaciones.php?idMateria=' + this.idMateria, '_blank');
         },
 
         generarPDFApartado() {
             if (this.idApartado <= 0) return;
             // Si el apartado es de tipo TEMAS (13), el PDF "por apartado" es el de unidades
             if (this.tipoApartado === 13) {
-                window.open('../backend/pdf_unidades_programacion.php?idMateria=' + this.idMateria, '_blank');
+                window.open('../backend/pdf/pdf_unidades_programacion.php?idMateria=' + this.idMateria, '_blank');
             } else {
-                window.open('../backend/pdf_programaciones_apartado.php?idMateria=' + this.idMateria + '&idApartado=' + this.idApartado, '_blank');
+                window.open('../backend/pdf/pdf_programaciones_apartado.php?idMateria=' + this.idMateria + '&idApartado=' + this.idApartado, '_blank');
             }
         },
 
         generarPDFUnidades() {
             if (this.idMateria <= 0) return;
-            window.open('../backend/pdf_unidades_programacion.php?idMateria=' + this.idMateria, '_blank');
+            window.open('../backend/pdf/pdf_unidades_programacion.php?idMateria=' + this.idMateria, '_blank');
         },
 
         // --- Importar ---

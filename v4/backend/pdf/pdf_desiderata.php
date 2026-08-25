@@ -11,11 +11,11 @@
 // NOTA: muchas de las constantes que aparecen en este código están definidas en el
 // fichero lib/php/tcpdf/examples/config/tcpdf_config_alt.php
 
-require_once 'config.php';
-require_once 'lib/php/tcpdf/examples/tcpdf_include.php';
-require_once 'lib/php/tcpdf/tcpdf.php';
-require_once 'lib/php/fpdi/fpdi.php';
-require_once 'lib/horarios_compartidas.php';
+require_once '../config.php';
+require_once '../lib/php/tcpdf/examples/tcpdf_include.php';
+require_once '../lib/php/tcpdf/tcpdf.php';
+require_once '../lib/php/fpdi/fpdi.php';
+require_once '../lib/horarios_compartidas.php';
 
 // La sesión trae el departamento por defecto (v3: cabecera común de la página)
 @session_start();

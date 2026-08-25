@@ -6,11 +6,11 @@
 //  - selEsp     : especialidad (o "Todos") si no se indica profesor
 //  - idDepartamento: departamento de los profesores (si no se pasa, el de la sesión)
 
-require_once 'config.php';
-require_once 'lib/php/tcpdf/examples/tcpdf_include.php';
-require_once 'lib/php/tcpdf/tcpdf.php';
-require_once 'lib/php/fpdi/fpdi.php';
-require_once 'lib/horarios_compartidas.php';
+require_once '../config.php';
+require_once '../lib/php/tcpdf/examples/tcpdf_include.php';
+require_once '../lib/php/tcpdf/tcpdf.php';
+require_once '../lib/php/fpdi/fpdi.php';
+require_once '../lib/horarios_compartidas.php';
 
 // La sesión trae los permisos y el departamento por defecto
 @session_start();
