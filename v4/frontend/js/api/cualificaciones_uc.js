@@ -3,88 +3,47 @@
 const CualificacionesUCAPI = {
     baseUrl: '../backend/api/cualificaciones_uc.php',
 
-    async listar_cualificaciones() {
-        const res = await fetch(this.baseUrl + '?action=listar_cualificaciones', { credentials: 'include' });
-        return res.json();
+    listar_cualificaciones() {
+        return Http.get(this.baseUrl + '?action=listar_cualificaciones', 'include');
     },
 
-    async obtener_cualificacion(codigo) {
-        const res = await fetch(this.baseUrl + '?action=obtener_cualificacion&codigo=' + encodeURIComponent(codigo), { credentials: 'include' });
-        return res.json();
+    obtener_cualificacion(codigo) {
+        return Http.get(this.baseUrl + '?action=obtener_cualificacion&codigo=' + encodeURIComponent(codigo), 'include');
     },
 
-    async guardar_cualificacion(data) {
-        const res = await fetch(this.baseUrl + '?action=guardar_cualificacion', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        return res.json();
+    guardar_cualificacion(data) {
+        return Http.post(this.baseUrl + '?action=guardar_cualificacion', data, 'include');
     },
 
-    async eliminar_cualificacion(codigo) {
-        const res = await fetch(this.baseUrl + '?action=eliminar_cualificacion', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ codigo: codigo })
-        });
-        return res.json();
+    eliminar_cualificacion(codigo) {
+        return Http.post(this.baseUrl + '?action=eliminar_cualificacion', { codigo: codigo }, 'include');
     },
 
-    async listar_unidades() {
-        const res = await fetch(this.baseUrl + '?action=listar_unidades', { credentials: 'include' });
-        return res.json();
+    listar_unidades() {
+        return Http.get(this.baseUrl + '?action=listar_unidades', 'include');
     },
 
-    async obtener_unidad(codigo) {
-        const res = await fetch(this.baseUrl + '?action=obtener_unidad&codigo=' + encodeURIComponent(codigo), { credentials: 'include' });
-        return res.json();
+    obtener_unidad(codigo) {
+        return Http.get(this.baseUrl + '?action=obtener_unidad&codigo=' + encodeURIComponent(codigo), 'include');
     },
 
-    async guardar_unidad(data) {
-        const res = await fetch(this.baseUrl + '?action=guardar_unidad', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        return res.json();
+    guardar_unidad(data) {
+        return Http.post(this.baseUrl + '?action=guardar_unidad', data, 'include');
     },
 
-    async eliminar_unidad(codigo) {
-        const res = await fetch(this.baseUrl + '?action=eliminar_unidad', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ codigo: codigo })
-        });
-        return res.json();
+    eliminar_unidad(codigo) {
+        return Http.post(this.baseUrl + '?action=eliminar_unidad', { codigo: codigo }, 'include');
     },
 
-    async listar_asociaciones(codigo) {
-        const res = await fetch(this.baseUrl + '?action=listar_asociaciones&codigo=' + encodeURIComponent(codigo), { credentials: 'include' });
-        return res.json();
+    listar_asociaciones(codigo) {
+        return Http.get(this.baseUrl + '?action=listar_asociaciones&codigo=' + encodeURIComponent(codigo), 'include');
     },
 
-    async guardar_asociacion(data) {
-        const res = await fetch(this.baseUrl + '?action=guardar_asociacion', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        return res.json();
+    guardar_asociacion(data) {
+        return Http.post(this.baseUrl + '?action=guardar_asociacion', data, 'include');
     },
 
-    async eliminar_asociacion(data) {
-        const res = await fetch(this.baseUrl + '?action=eliminar_asociacion', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        return res.json();
+    eliminar_asociacion(data) {
+        return Http.post(this.baseUrl + '?action=eliminar_asociacion', data, 'include');
     }
 };

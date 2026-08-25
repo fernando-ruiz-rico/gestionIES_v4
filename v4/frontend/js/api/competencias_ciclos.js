@@ -3,48 +3,27 @@
 const CompetenciasCiclosAPI = {
     baseUrl: '../backend/api/competencias_ciclos.php',
 
-    async listar_ciclos() {
-        const res = await fetch(this.baseUrl + '?action=listar_ciclos', { credentials: 'include' });
-        return res.json();
+    listar_ciclos() {
+        return Http.get(this.baseUrl + '?action=listar_ciclos', 'include');
     },
 
-    async listar(idCiclo) {
-        const res = await fetch(this.baseUrl + '?action=listar&idCiclo=' + idCiclo, { credentials: 'include' });
-        return res.json();
+    listar(idCiclo) {
+        return Http.get(this.baseUrl + '?action=listar&idCiclo=' + idCiclo, 'include');
     },
 
-    async obtener(id) {
-        const res = await fetch(this.baseUrl + '?action=obtener&id=' + id, { credentials: 'include' });
-        return res.json();
+    obtener(id) {
+        return Http.get(this.baseUrl + '?action=obtener&id=' + id, 'include');
     },
 
-    async guardar(data) {
-        const res = await fetch(this.baseUrl + '?action=guardar', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        return res.json();
+    guardar(data) {
+        return Http.post(this.baseUrl + '?action=guardar', data, 'include');
     },
 
-    async ordenar(orden) {
-        const res = await fetch(this.baseUrl + '?action=ordenar', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orden: orden })
-        });
-        return res.json();
+    ordenar(orden) {
+        return Http.post(this.baseUrl + '?action=ordenar', { orden: orden }, 'include');
     },
 
-    async eliminar(id) {
-        const res = await fetch(this.baseUrl + '?action=eliminar', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: id })
-        });
-        return res.json();
+    eliminar(id) {
+        return Http.post(this.baseUrl + '?action=eliminar', { id: id }, 'include');
     }
 };

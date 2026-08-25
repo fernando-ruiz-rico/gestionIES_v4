@@ -5,29 +5,14 @@ const TemasContenidosDefectoAPI = {
 
     // Carga los contenidos por defecto de un departamento (contexto, recursos,
     // metodología y acciones)
-    async cargar(idDepartamento) {
-        const response = await fetch(`${this.baseUrl}?action=cargar&idDepartamento=${idDepartamento}`, {
-            credentials: 'same-origin'
-        });
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al cargar contenidos por defecto');
-        }
-        return data.data;
+    cargar(idDepartamento) {
+        return Http.getOk(`${this.baseUrl}?action=cargar&idDepartamento=${idDepartamento}`, 'Error al cargar contenidos por defecto');
     },
 
     // Guarda (inserta o actualiza) los contenidos por defecto de un departamento
     async guardar(data) {
-        const response = await fetch(this.baseUrl, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.error || 'Error al guardar contenidos por defecto');
-        }
+        const result = await Http.post(this.baseUrl, data);
+        if (!result.success) throw new Error(result.error || 'Error al guardar contenidos por defecto');
         return result;
     }
 };

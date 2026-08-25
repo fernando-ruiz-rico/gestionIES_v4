@@ -2,31 +2,14 @@
 const PCCFContenidosDefectoAPI = {
     baseUrl: '../backend/api/pccf_contenidos_defecto/',
 
-    async cargar(idApartado, idDepartamento) {
-        const response = await fetch(`${this.baseUrl}cargar.php?idApartado=${idApartado}&idDepartamento=${idDepartamento}`);
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al cargar el contenido por defecto');
-        }
-        return data.data;
+    cargar(idApartado, idDepartamento) {
+        return Http.getOk(`${this.baseUrl}cargar.php?idApartado=${idApartado}&idDepartamento=${idDepartamento}`, 'Error al cargar el contenido por defecto');
     },
 
+    // Guarda (inserta o actualiza) el contenido por defecto de un apartado
     async guardar(idApartado, idDepartamento, texto) {
-        const response = await fetch(this.baseUrl + 'guardar.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                idApartado,
-                idDepartamento,
-                texto
-            })
-        });
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al guardar el contenido por defecto');
-        }
+        const data = await Http.post(this.baseUrl + 'guardar.php', { idApartado, idDepartamento, texto });
+        if (!data.success) throw new Error(data.error || 'Error al guardar el contenido por defecto');
         return data;
     }
 };

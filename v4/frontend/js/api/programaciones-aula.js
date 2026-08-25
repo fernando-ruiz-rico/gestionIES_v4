@@ -1,78 +1,41 @@
 const programacionesAulaAPI = {
     baseUrl: '../backend/api/programaciones_aula/',
 
-    async cargarProfesores() {
-        const response = await fetch(this.baseUrl + 'profesores.php');
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al cargar los profesores');
-        }
-        return data.data;
+    cargarProfesores() {
+        return Http.getOk(this.baseUrl + 'profesores.php', 'Error al cargar los profesores');
     },
 
-    async cargarMaterias(idProfesor) {
+    cargarMaterias(idProfesor) {
         let url = this.baseUrl + 'materias.php';
         if (idProfesor > 0) {
             url += `?idProfesor=${idProfesor}`;
         }
-        const response = await fetch(url);
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al cargar materias');
-        }
-        return data.data;
+        return Http.getOk(url, 'Error al cargar materias');
     },
 
-    async cargarGrupos(idMateria, idProfesor) {
+    cargarGrupos(idMateria, idProfesor) {
         let url = `${this.baseUrl}grupos.php?idMateria=${idMateria}`;
         if (idProfesor > 0) {
             url += `&idProfesor=${idProfesor}`;
         }
-        const response = await fetch(url);
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al cargar grupos');
-        }
-        return data.data;
+        return Http.getOk(url, 'Error al cargar grupos');
     },
 
-    async cargarTemas(idMateria) {
-        const response = await fetch(`${this.baseUrl}temas.php?idMateria=${idMateria}`);
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al cargar temas');
-        }
-        return data.data;
+    cargarTemas(idMateria) {
+        return Http.getOk(`${this.baseUrl}temas.php?idMateria=${idMateria}`, 'Error al cargar temas');
     },
 
-    async cargarContenido(idTema, idGrupo, idProfesor) {
+    cargarContenido(idTema, idGrupo, idProfesor) {
         let url = `${this.baseUrl}contenido.php?idTema=${idTema}&idGrupo=${idGrupo}`;
         if (idProfesor > 0) {
             url += `&idProfesor=${idProfesor}`;
         }
-        const response = await fetch(url);
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al cargar el contenido');
-        }
-        return data.data;
+        return Http.getOk(url, 'Error al cargar el contenido');
     },
 
     async guardar(idTema, idGrupo, idProfesor, texto) {
-        const response = await fetch(this.baseUrl + 'guardar.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                idTema,
-                idGrupo,
-                idProfesor,
-                texto
-            })
-        });
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al guardar el contenido');
-        }
+        const data = await Http.post(this.baseUrl + 'guardar.php', { idTema, idGrupo, idProfesor, texto });
+        if (!data.success) throw new Error(data.error || 'Error al guardar el contenido');
         return data;
     }
 };

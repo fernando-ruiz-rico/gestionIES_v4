@@ -3,28 +3,15 @@
 const ConfiguracionAPI = {
     baseUrl: '../backend/api/configuracion.php',
 
-    async obtener() {
-        const res = await fetch(this.baseUrl + '?action=obtener', { credentials: 'include' });
-        return res.json();
+    obtener() {
+        return Http.get(this.baseUrl + '?action=obtener', 'include');
     },
 
-    async actualizar_password(data) {
-        const res = await fetch(this.baseUrl + '?action=actualizar_password', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        return res.json();
+    actualizar_password(data) {
+        return Http.post(this.baseUrl + '?action=actualizar_password', data, 'include');
     },
 
-    async actualizar_activacion(clave, valor) {
-        const res = await fetch(this.baseUrl + '?action=actualizar_activacion', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ clave: clave, valor: valor })
-        });
-        return res.json();
+    actualizar_activacion(clave, valor) {
+        return Http.post(this.baseUrl + '?action=actualizar_activacion', { clave: clave, valor: valor }, 'include');
     }
 };

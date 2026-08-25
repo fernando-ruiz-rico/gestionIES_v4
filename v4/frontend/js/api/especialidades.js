@@ -5,82 +5,33 @@ const EspecialidadesAPI = {
 
     // Listar todas las especialidades
     async listar() {
-        try {
-            const response = await fetch(this.baseUrl + 'listar.php', {
-                method: 'GET',
-                credentials: 'include'
-            });
-            const data = await response.json();
-            if (!data.success) {
-                return { success: false, error: data.error || 'Error de conexión', data: [] };
-            }
-            // Mismo formato de respuesta que el resto de clientes de la app
-            return { success: true, data: Array.isArray(data.data) ? data.data : [] };
-        } catch (error) {
-            console.error('Error al listar especialidades:', error);
-            return { success: false, error: 'Error de conexión', data: [] };
-        }
+        const data = await Http.get(this.baseUrl + 'listar.php', 'include');
+        return data.success
+            ? { success: true, data: Array.isArray(data.data) ? data.data : [] }
+            : { success: false, error: data.error || 'Error de conexión', data: [] };
     },
 
     // Obtener una especialidad por ID
     async obtener(idEspecialidad) {
-        try {
-            const response = await fetch(this.baseUrl + `obtener.php?id=${idEspecialidad}`, {
-                method: 'GET',
-                credentials: 'include'
-            });
-            const data = await response.json();
-            if (!data.success) {
-                return { success: false, error: data.error || null };
-            }
-            return { success: true, data: data.data };
-        } catch (error) {
-            console.error('Error al obtener especialidad:', error);
-            return null;
-        }
+        const data = await Http.get(this.baseUrl + `obtener.php?id=${idEspecialidad}`, 'include');
+        return data.success
+            ? { success: true, data: data.data }
+            : { success: false, error: data.error };
     },
 
     // Guardar especialidad (crear o editar)
     async guardar(especialidad) {
-        try {
-            const response = await fetch(this.baseUrl + 'guardar.php', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(especialidad)
-            });
-            const data = await response.json();
-            if (!data.success) {
-                return { success: false, error: data.error || 'Error de conexión' };
-            }
-            return { success: true, message: data.message, data: data.data };
-        } catch (error) {
-            console.error('Error al guardar especialidad:', error);
-            return { success: false, error: 'Error de conexión' };
-        }
+        const data = await Http.post(this.baseUrl + 'guardar.php', especialidad, 'include');
+        return data.success
+            ? { success: true, message: data.message, data: data.data }
+            : { success: false, error: data.error || 'Error de conexión' };
     },
 
     // Eliminar especialidad
     async eliminar(idEspecialidad) {
-        try {
-            const response = await fetch(this.baseUrl + 'eliminar.php', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ id: idEspecialidad })
-            });
-            const data = await response.json();
-            if (!data.success) {
-                return { success: false, error: data.error || 'Error de conexión' };
-            }
-            return { success: true, message: data.message, data: data.data };
-        } catch (error) {
-            console.error('Error al eliminar especialidad:', error);
-            return { success: false, error: 'Error de conexión' };
-        }
+        const data = await Http.post(this.baseUrl + 'eliminar.php', { id: idEspecialidad }, 'include');
+        return data.success
+            ? { success: true, message: data.message, data: data.data }
+            : { success: false, error: data.error || 'Error de conexión' };
     }
 };

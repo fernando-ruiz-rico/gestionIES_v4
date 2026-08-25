@@ -4,12 +4,10 @@ const HistoricoAPI = {
     baseUrl: '../backend/api/historico.php',
 
     async listar(idDepartamento, idEscenario) {
-        const res = await fetch(this.baseUrl + '?action=listar&idDepartamento=' + idDepartamento + '&idEscenario=' + idEscenario, { credentials: 'include' });
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-            return { success: false, error: data.error || 'Error desconocido' };
-        }
-        return { success: true, data: data.data };
+        const data = await Http.get(this.baseUrl + '?action=listar&idDepartamento=' + idDepartamento + '&idEscenario=' + idEscenario, 'include');
+        return data.success
+            ? { success: true, data: data.data }
+            : { success: false, error: data.error || 'Error desconocido' };
     }
 };
 
@@ -17,11 +15,9 @@ const EstadisticasAPI = {
     baseUrl: '../backend/api/estadisticas.php',
 
     async listar(idDepartamento, idEscenario) {
-        const res = await fetch(this.baseUrl + '?action=listar&idDepartamento=' + idDepartamento + '&idEscenario=' + idEscenario, { credentials: 'include' });
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-            return { success: false, error: data.error || 'Error desconocido' };
-        }
-        return { success: true, data: data.data };
+        const data = await Http.get(this.baseUrl + '?action=listar&idDepartamento=' + idDepartamento + '&idEscenario=' + idEscenario, 'include');
+        return data.success
+            ? { success: true, data: data.data }
+            : { success: false, error: data.error || 'Error desconocido' };
     }
 };

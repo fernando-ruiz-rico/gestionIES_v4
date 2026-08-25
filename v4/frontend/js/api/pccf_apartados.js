@@ -3,50 +3,26 @@ const PCCFApartadosAPI = {
     baseUrl: '../backend/api/pccf_apartados/',
 
     // Lista los apartados del PCCF
-    async listar() {
-        const response = await fetch(`${this.baseUrl}listar.php`);
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al listar los apartados');
-        }
-        return data.data;
+    listar() {
+        return Http.getOk(`${this.baseUrl}listar.php`, 'Error al listar los apartados');
     },
 
     // Devuelve los datos de un apartado concreto
-    async obtener(id) {
-        const response = await fetch(`${this.baseUrl}obtener.php?id=${id}`);
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al obtener el apartado');
-        }
-        return data.data;
+    obtener(id) {
+        return Http.getOk(`${this.baseUrl}obtener.php?id=${id}`, 'Error al obtener el apartado');
     },
 
     // Inserta o actualiza un apartado
     async guardar(apartado) {
-        const response = await fetch(this.baseUrl + 'guardar.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(apartado)
-        });
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al guardar el apartado');
-        }
+        const data = await Http.post(this.baseUrl + 'guardar.php', apartado);
+        if (!data.success) throw new Error(data.error || 'Error al guardar el apartado');
         return data;
     },
 
     // Elimina un apartado (y sus contenidos)
     async eliminar(id) {
-        const response = await fetch(`${this.baseUrl}borrar.php?id=${id}`, {
-            method: 'DELETE'
-        });
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al eliminar el apartado');
-        }
+        const data = await Http.del(`${this.baseUrl}borrar.php?id=${id}`);
+        if (!data.success) throw new Error(data.error || 'Error al eliminar el apartado');
         return data;
     },
 
@@ -54,14 +30,8 @@ const PCCFApartadosAPI = {
     async ordenar(orden) {
         const formData = new FormData();
         formData.append('orden', orden);
-        const response = await fetch(this.baseUrl + 'ordenar.php', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await response.json();
-        if (!data.success) {
-            throw new Error(data.error || 'Error al ordenar los apartados');
-        }
+        const data = await Http.post(this.baseUrl + 'ordenar.php', formData);
+        if (!data.success) throw new Error(data.error || 'Error al ordenar los apartados');
         return data;
     }
 };

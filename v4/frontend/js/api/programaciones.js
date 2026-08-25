@@ -7,132 +7,49 @@
 const API_URL = '../backend/api/programaciones/index.php';
 
 const programacionesAPI = {
-    async listar(idMateria = null) {
-        try {
-            let url = `${API_URL}?action=listar`;
-            if (idMateria) {
-                url += `&idMateria=${idMateria}`;
-            }
-            const response = await fetch(url);
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Error al listar programaciones');
-            }
-            return data.data;
-        } catch (error) {
-            console.error('Error en listar programaciones:', error);
-            throw error;
+    listar(idMateria = null) {
+        let url = `${API_URL}?action=listar`;
+        if (idMateria) {
+            url += `&idMateria=${idMateria}`;
         }
+        return Http.getOk(url, 'Error al listar programaciones');
     },
 
-    async obtener(idMateria) {
-        try {
-            const response = await fetch(`${API_URL}?action=obtener&idMateria=${idMateria}`);
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Error al obtener programación');
-            }
-            return data.data;
-        } catch (error) {
-            console.error('Error en obtener programación:', error);
-            throw error;
-        }
+    obtener(idMateria) {
+        return Http.getOk(`${API_URL}?action=obtener&idMateria=${idMateria}`, 'Error al obtener programación');
     },
 
     // --- Edición de apartados (fiel a v3) ---
     // Materias con programación activa, ya filtradas por rol (v3/cargar_materias_programaciones.php).
-    async cargarMaterias() {
-        try {
-            const response = await fetch(`${API_URL}?action=cargar_materias`);
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Error al cargar las materias');
-            }
-            return data.data;
-        } catch (error) {
-            console.error('Error en cargar materias:', error);
-            throw error;
-        }
+    cargarMaterias() {
+        return Http.getOk(`${API_URL}?action=cargar_materias`, 'Error al cargar las materias');
     },
 
     // Apartados de una materia (v3/cargar_apartados.php).
-    async cargarApartados(idMateria) {
-        try {
-            const response = await fetch(`${API_URL}?action=cargar_apartados&idMateria=${idMateria}`);
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Error al cargar los apartados');
-            }
-            return data.data;
-        } catch (error) {
-            console.error('Error en cargar apartados:', error);
-            throw error;
-        }
+    cargarApartados(idMateria) {
+        return Http.getOk(`${API_URL}?action=cargar_apartados&idMateria=${idMateria}`, 'Error al cargar los apartados');
     },
 
     // Texto de un apartado de una materia (v3/cargar_contenido_programacion.php).
-    async cargarContenido(idMateria, idApartado) {
-        try {
-            const response = await fetch(`${API_URL}?action=cargar_contenido&idMateria=${idMateria}&idApartado=${idApartado}`);
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Error al cargar el contenido');
-            }
-            return data.data;
-        } catch (error) {
-            console.error('Error en cargar contenido:', error);
-            throw error;
-        }
+    cargarContenido(idMateria, idApartado) {
+        return Http.getOk(`${API_URL}?action=cargar_contenido&idMateria=${idMateria}&idApartado=${idApartado}`, 'Error al cargar el contenido');
     },
 
     // Guardar el texto de un apartado editable (v3/insertar_contenido_programacion.php).
     async guardarContenido(idMateria, idApartado, texto) {
-        try {
-            const response = await fetch(`${API_URL}?action=guardar_contenido`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    idMateria: idMateria,
-                    idApartado: idApartado,
-                    texto: texto
-                })
-            });
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Error al guardar el contenido');
-            }
-            // Contrato unificado: sin_cambios viaja dentro de data.data
-            return {
-                success: true,
-                sin_cambios: !!(data.data && data.data.sin_cambios),
-                message: data.message
-            };
-        } catch (error) {
-            console.error('Error en guardar contenido:', error);
-            throw error;
-        }
+        const data = await Http.post(`${API_URL}?action=guardar_contenido`, { idMateria, idApartado, texto });
+        if (!data.success) throw new Error(data.error || 'Error al guardar el contenido');
+        // Contrato unificado: sin_cambios viaja dentro de data.data
+        return {
+            success: true,
+            sin_cambios: !!(data.data && data.data.sin_cambios),
+            message: data.message
+        };
     },
 
     async importar(idMateriaOrigen, idMateriaDestino) {
-        try {
-            const response = await fetch(`${API_URL}?action=importar`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    idMateriaOrigen: idMateriaOrigen,
-                    idMateriaDestino: idMateriaDestino
-                })
-            });
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Error al importar programación');
-            }
-            return data;
-        } catch (error) {
-            console.error('Error en importar programación:', error);
-            throw error;
-        }
+        const data = await Http.post(`${API_URL}?action=importar`, { idMateriaOrigen, idMateriaDestino });
+        if (!data.success) throw new Error(data.error || 'Error al importar programación');
+        return data;
     }
 };

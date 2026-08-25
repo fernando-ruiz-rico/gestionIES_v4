@@ -3,92 +3,58 @@
 const SeleccionAPI = {
     baseUrl: '../backend/api/seleccion.php',
 
-    async listar_escenarios(idDepartamento) {
-        const res = await fetch(this.baseUrl + '?action=listar_escenarios&idDepartamento=' + idDepartamento, { credentials: 'include' });
-        return res.json();
+    listar_escenarios(idDepartamento) {
+        return Http.get(this.baseUrl + '?action=listar_escenarios&idDepartamento=' + idDepartamento, 'include');
     },
 
-    async listar_especialidades(idDepartamento) {
-        const res = await fetch(this.baseUrl + '?action=listar_especialidades&idDepartamento=' + idDepartamento, { credentials: 'include' });
-        return res.json();
+    listar_especialidades(idDepartamento) {
+        return Http.get(this.baseUrl + '?action=listar_especialidades&idDepartamento=' + idDepartamento, 'include');
     },
 
-    async listar_profesores(idDepartamento, idEspecialidad, idEscenario) {
+    listar_profesores(idDepartamento, idEspecialidad, idEscenario) {
         let params = 'idDepartamento=' + idDepartamento;
         if (idEspecialidad) params += '&idEspecialidad=' + encodeURIComponent(idEspecialidad);
-        const res = await fetch(this.baseUrl + '?action=listar_profesores&idEscenario=' + idEscenario + '&' + params, { credentials: 'include' });
-        return res.json();
+        return Http.get(this.baseUrl + '?action=listar_profesores&idEscenario=' + idEscenario + '&' + params, 'include');
     },
 
-    async listar_cursos(idDepartamento, idEscenario) {
-        const res = await fetch(this.baseUrl + '?action=listar_cursos&idDepartamento=' + idDepartamento + '&idEscenario=' + idEscenario, { credentials: 'include' });
-        return res.json();
+    listar_cursos(idDepartamento, idEscenario) {
+        return Http.get(this.baseUrl + '?action=listar_cursos&idDepartamento=' + idDepartamento + '&idEscenario=' + idEscenario, 'include');
     },
 
-    async listar_seleccion(idProfesor, idEscenario) {
-        const res = await fetch(this.baseUrl + '?action=listar_seleccion&idProfesor=' + idProfesor + '&idEscenario=' + idEscenario, { credentials: 'include' });
-        return res.json();
+    listar_seleccion(idProfesor, idEscenario) {
+        return Http.get(this.baseUrl + '?action=listar_seleccion&idProfesor=' + idProfesor + '&idEscenario=' + idEscenario, 'include');
     },
 
     // Nombres de los profesores que ya eligieron una materia
-    async listar_profesores_materia(idMateria, idGrupo, idEscenario) {
-        const res = await fetch(this.baseUrl + '?action=listar_profesores_materia&idMateria=' + idMateria + '&idGrupo=' + idGrupo + '&idEscenario=' + idEscenario, { credentials: 'include' });
-        return res.json();
+    listar_profesores_materia(idMateria, idGrupo, idEscenario) {
+        return Http.get(this.baseUrl + '?action=listar_profesores_materia&idMateria=' + idMateria + '&idGrupo=' + idGrupo + '&idEscenario=' + idEscenario, 'include');
     },
 
-    async insertar_seleccion(data) {
-        const res = await fetch(this.baseUrl + '?action=insertar_seleccion&idEscenario=' + data.idEscenario, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                idProfesor: data.idProfesor,
-                idMateria: data.idMateria,
-                idGrupo: data.idGrupo,
-                horas: data.horas,
-                idEscenario: data.idEscenario
-            })
-        });
-        return res.json();
+    insertar_seleccion(data) {
+        return Http.post(this.baseUrl + '?action=insertar_seleccion&idEscenario=' + data.idEscenario, {
+            idProfesor: data.idProfesor,
+            idMateria: data.idMateria,
+            idGrupo: data.idGrupo,
+            horas: data.horas,
+            idEscenario: data.idEscenario
+        }, 'include');
     },
 
-    async borrar_seleccion(id) {
-        const res = await fetch(this.baseUrl + '?action=borrar_seleccion', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: id })
-        });
-        return res.json();
+    borrar_seleccion(id) {
+        return Http.post(this.baseUrl + '?action=borrar_seleccion', { id: id }, 'include');
     },
 
-    async borrar_toda_seleccion(idProfesor, idEscenario) {
-        const res = await fetch(this.baseUrl + '?action=borrar_toda_seleccion', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idProfesor: idProfesor, idEscenario: idEscenario })
-        });
-        return res.json();
+    borrar_toda_seleccion(idProfesor, idEscenario) {
+        return Http.post(this.baseUrl + '?action=borrar_toda_seleccion', { idProfesor: idProfesor, idEscenario: idEscenario }, 'include');
     },
 
     // Vacía todas las selecciones del escenario (solo jefe de departamento o admin)
-    async borrar_todas_selecciones(idEscenario) {
-        const res = await fetch(this.baseUrl + '?action=borrar_todas_selecciones&idEscenario=' + idEscenario, {
-            method: 'POST',
-            credentials: 'include'
-        });
-        return res.json();
+    borrar_todas_selecciones(idEscenario) {
+        return Http.post(this.baseUrl + '?action=borrar_todas_selecciones&idEscenario=' + idEscenario, null, 'include');
     },
 
     // Reordena las selecciones del profesor; "ids" son los ids de la selección en el orden nuevo
-    async ordenar_seleccion(ids, idEscenario) {
-        const res = await fetch(this.baseUrl + '?action=ordenar_seleccion&idEscenario=' + idEscenario, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: ids })
-        });
-        return res.json();
+    ordenar_seleccion(ids, idEscenario) {
+        return Http.post(this.baseUrl + '?action=ordenar_seleccion&idEscenario=' + idEscenario, { ids: ids }, 'include');
     }
 };
