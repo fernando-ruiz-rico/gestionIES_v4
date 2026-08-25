@@ -149,7 +149,7 @@ const ProfesoresView = {
                                             <label class="form-label fw-bold" for="idEspecialidadPerfil">Especialidad</label>
                                             <select class="form-select" name="idEspecialidad" id="idEspecialidadPerfil" v-model="formulario.idEspecialidad" required>
                                                 <option value="">-- Seleccionar especialidad --</option>
-                                                <option v-for="esp in especialidades" :key="esp.id" :value="esp.id">{{ esp.nombre }}</option>
+                                                <option v-for="esp in especialidades" :key="esp.id" :value="esp.id">{{ esp.descripcion }}</option>
                                             </select>
                                         </div>
                                         <div class="mb-3">
@@ -237,9 +237,11 @@ const ProfesoresView = {
                 prefRojas: '',
                 prefAmarillas: ''
             },
+            // Las horas de la rejilla salen de la tabla "horas" (se
+            // cargan al montar), no van duras, igual que en v3
             dias: ['L', 'M', 'X', 'J', 'V'],
-            horasManana: ['8:00', '9:00', '10:00', '11:00', '12:00', '13:00'],
-            horasTarde: ['15:00', '16:00', '17:00', '18:00', '19:00', '20:00'],
+            horasManana: [],
+            horasTarde: [],
             maxRojas: 3,
             contRojas: 0,
             modalInstance: null
@@ -249,12 +251,25 @@ const ProfesoresView = {
     async mounted() {
         await this.cargarDepartamentos();
         await this.cargarEspecialidades();
+        await this.cargarHoras();
         
         // Inicializar modal Bootstrap
         this.modalInstance = new bootstrap.Modal(document.getElementById('formprofesor'));
     },
     
     methods: {
+        // Horas de la rejilla: las devuelve el endpoint preferencias
+        // (tabla "horas" separada en manana/tarde), como la generaba v3
+        async cargarHoras() {
+            try {
+                const h = await ProfesoresAPI.preferencias();
+                this.horasManana = h.horasManana || [];
+                this.horasTarde = h.horasTarde || [];
+            } catch (error) {
+                Avisos.error(error.message);
+            }
+        },
+        
         async cargarDepartamentos() {
             try {
                 this.departamentos = await DepartamentosAPI.listar() || [];
@@ -329,15 +344,20 @@ const ProfesoresView = {
         },
         
         async cargarPreferenciasHorarias(idProfesor) {
-            // En una implementación completa, esto cargaría las preferencias desde el backend
-            // Por ahora, inicializamos vacías
-            this.formulario.prefRojas = '';
-            this.formulario.prefAmarillas = '';
-            this.contRojas = 0;
+            try {
+                const prefs = await ProfesoresAPI.preferencias(idProfesor);
+                this.formulario.prefRojas = prefs.rojas || '';
+                this.formulario.prefAmarillas = prefs.amarillas || '';
+                this.contRojas = Math.floor(this.formulario.prefRojas.length / 6);
+            } catch (error) {
+                Avisos.error(error.message);
+            }
         },
         
         obtenerClaseCelda(dia, hora) {
-            const idCelda = dia + '_' + hora.replace(':', '_');
+            // Codigo de celda igual que v3: dia + hora con '_' en vez de
+            // ':' (p. ej. L07_55), siempre de 6 caracteres
+            const idCelda = dia + hora.replace(':', '_');
             if (this.formulario.prefRojas.includes(idCelda)) {
                 return 'bg-danger text-white';
             } else if (this.formulario.prefAmarillas.includes(idCelda)) {
@@ -347,7 +367,7 @@ const ProfesoresView = {
         },
         
         togglePreferencia(dia, hora) {
-            const idCelda = dia + '_' + hora.replace(':', '_');
+            const idCelda = dia + hora.replace(':', '_');
             
             // Si está roja, pasar a amarilla
             if (this.formulario.prefRojas.includes(idCelda)) {

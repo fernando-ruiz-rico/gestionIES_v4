@@ -61,6 +61,7 @@ const AppLayout = {
                 'cursos.php': 'cursos-view',
                 'grupos.php': 'grupos-view',
                 'materias.php': 'materias-view',
+                'perfil.php': 'perfil-view',
                 'escenarios.php': 'escenarios-view',
                 'programaciones.php': 'programaciones-view',
                 'programaciones_apartados.php': 'programaciones-apartados-view',

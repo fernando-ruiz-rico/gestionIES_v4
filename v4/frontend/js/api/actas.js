@@ -16,6 +16,12 @@ const ActasAPI = {
         return Http.getOk(this.baseUrl + 'obtener.php?idActa=' + idActa, 'Error al cargar el acta', 'include');
     },
 
+    // Devuelve el texto inicial de un acta nueva (profesores del
+    // departamento en «Asistentes», fiel a v3 nueva_acta_departamento.php)
+    nueva(idDepartamento) {
+        return Http.getOk(this.baseUrl + 'nueva.php?idDepartamento=' + idDepartamento, 'Error al crear el acta', 'include');
+    },
+
     // Inserta o actualiza un acta de departamento
     async guardar(data) {
         const parsed = await Http.post(this.baseUrl + 'guardar.php', data, 'include');

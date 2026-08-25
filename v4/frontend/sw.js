@@ -16,13 +16,13 @@
  *
  * Al añadir/eliminar archivos, sube NIVEL para forzar la re-caché.
  */
-const NIVEL = 'v4-pwa-1';
+const NIVEL = 'v4-pwa-2';
 const PRECACHE = [
     'index.html',
     'manifest.webmanifest',
     'css/app.css',
     'css/estilos_tiny.css',
-    'js/app.js?v=1', // mismo querystring que index.html
+    'js/app.js?v=2', // mismo querystring que index.html
     'js/avisos.js',
     'js/tinymce-helpers.js',
     'icons/icon-192.png',

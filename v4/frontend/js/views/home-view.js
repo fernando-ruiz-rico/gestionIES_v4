@@ -49,7 +49,7 @@ const HomeView = {
                                         </button>
                                     </div>
                                     <div class="col-6 col-md-4">
-                                        <button type="button" class="btn btn-outline-primary w-100 py-3" @click="irA('configuracion.php')">
+                                        <button type="button" class="btn btn-outline-primary w-100 py-3" @click="irA('perfil.php')">
                                             <i class="bi bi-person-badge fs-4 d-block mb-1"></i>
                                             <small>Perfil</small>
                                         </button>

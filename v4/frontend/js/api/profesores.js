@@ -14,6 +14,18 @@ const ProfesoresAPI = {
         return Http.getOk(`../backend/api/profesores/obtener.php?id=${id}`, 'Error al cargar profesor', 'include');
     },
 
+    // Preferencias horarias (rejilla de la opción «Perfil» y del modal del
+    // módulo «Profesores»): horas de la tabla "horas" (manana/tarde) +
+    // cadenas de códigos R/A (día + hora con '_', p. ej. L07_55).
+    // Sin idProfesor, el endpoint devuelve las del propio profesor de la
+    // sesión (o las horas vacías si es admin).
+    preferencias(idProfesor) {
+        const url = (idProfesor === undefined || idProfesor === null || idProfesor === '')
+            ? '../backend/api/profesores/preferencias.php'
+            : `../backend/api/profesores/preferencias.php?idProfesor=${idProfesor}`;
+        return Http.getOk(url, 'Error al cargar las preferencias horarias', 'include');
+    },
+
     // Guardar profesor (crear o actualizar) — el cuerpo es un objeto plano (JSON)
     async guardar(datos) {
         const data = await Http.post('../backend/api/profesores/guardar.php', datos, 'include');

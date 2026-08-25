@@ -74,6 +74,7 @@ app.component('app-layout', AppLayout);
 app.component('sidebar', Sidebar);
 app.component('header-bar', HeaderBar);
 app.component('home-view', HomeView);
+app.component('perfil-view', PerfilView);
 app.component('departamentos-view', DepartamentosView);
 app.component('profesores-view', ProfesoresView);
 app.component('especialidades-view', EspecialidadesView);
