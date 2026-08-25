@@ -6,17 +6,13 @@
 
 require_once '../../config.php';
 cabeceraJson();
-session_start();
 
 // Verificar permisos (admin o jefe de departamento)
-$permisos = isset($_SESSION['rol']) && ($_SESSION['rol'] == 'jefeDepartamento' || $_SESSION['rol'] == 'admin');
+checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
-if (!$permisos) {
-    sendJSONError('No tiene permisos para realizar esta acción', 403);
-}
-
-// Campo único del endpoint: postOptimo devuelve el valor si llega no vacío, y null si no
-$orden = postOptimo('orden');
+// Campo único del endpoint: datosOptimo devuelve el valor si llega no vacío, y null si no
+$datos = cuerpoJson();
+$orden = datosOptimo($datos, 'orden');
 if ($orden === null) {
     sendJSONError('Orden no proporcionado', 400);
 }

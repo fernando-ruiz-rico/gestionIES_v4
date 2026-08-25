@@ -6,20 +6,16 @@
 
 require_once '../../config.php';
 cabeceraJson();
-session_start();
 
 // Verificar permisos de administrador
-$permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';
+checkPermission(array(ROLE_ADMIN));
 
-if (!$permisos) {
-    sendJSONError('No tiene permisos para realizar esta acción', 403);
-}
-
-if (empty($_POST['id'])) {
+$datos = cuerpoJson();
+if (empty($datos['id'])) {
     sendJSONError('ID de profesor no proporcionado', 400);
 }
 
-$id = intval($_POST['id']);
+$id = datosOptimoInt($datos, 'id');
 
 try {
     $db = Db::open();

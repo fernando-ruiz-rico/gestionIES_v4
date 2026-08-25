@@ -292,6 +292,14 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 
 > Registro cronológico (más reciente primero) de las entregas por versión.
 
+### Refactor del backend (monolitos → endpoints por acción) y limpieza del frontend — fiel a v3, listo para editar a mano
+- 🔧 **Backend — los 12 monolitos `api/*.php` (más el `programaciones/index.php`) divididos en 71 endpoints por acción** (149 en total en `api/`), cada uno un fichero fino `api/{módulo}/{acción}.php` con `require` de `config.php`, `cabeceraJson()` y `try { Db::open() … } catch (DbException) catch (Exception)`; comentarios en español y sin `call_user_func_array`.
+- 📚 **Lógica en compartidos** (`lib/`): `programaciones_compartidas.php` (grupos/materias/profesores aula↔seguimiento), `contenidos.php` (guardar texto PCCF/cont. defecto), `pdf_compartidas.php` (clase `MiPDFBase` con cabecera/pie), `horarios_compartidas.php` (`xDia` + `MiPDF` de FPDI), `resultados_aprendizaje.php` y `temas.php`.
+- 🔒 **Permisos unificados** en `checkPermission()` (p. ej. `profesores/*`, `departamentos/*`) y **entrada unificada a JSON** (`cuerpoJson()`/`datosOptimo(Int)` en vez de `$_POST`), con `Db::close()` siempre.
+- 🐞 **2 arreglos de bug** (aprobados): el typo `datasOptimoInt` → `datosOptimoInt` en `ciclos/borrar_asociacion_curso.php` (función inexistente: el endpoint fallaba), y el **desacople JSON/`$_POST`** de `departamentos/guardar` y `departamentos/eliminar` (leían `$_POST` pero el frontend envía JSON: `guardar` leía `id` en vez de `idDepartamento` y siempre hacía INSERT). Arreglo extra: se **restaura** el `guardar` de `temas_contenidos_defecto` (borrado por un refactor anterior).
+- 🧩 **Frontend**: `Avisos` en vez de `Swal.fire` directo, `*Ok` de `http.js` en vez del envoltorio, constantes API con mayúscula y `departamentos.js` fusionado en su vista (7 avisos quedan **crudos** a propósito — info/toast/ayuda que `Avisos` no cubre). Sin cambiar comportamiento.
+- 📄 **Excel/PDF sin cambio de comportamiento**: `excel.php` usa la clase `DesiderataExcel` (mismo XLS); los 6 `MiPDF*` heredan de `MiPDFBase` y `xDia`/`MiPDF`(FPDI) se comparten en `horarios_compartidas.php` (`yHora` se queda en cada fichero: dos implementaciones distintas). `api/pccf/generar.php` sigue monolito y `PHPExcel` se conserva (EOL).
+
 ### Módulo Desideratas completo (Escenarios, Selección, Histórico, Estadísticas, Excel, PDFs) — «no funciona» resuelto, fiel a v3
 - 🐞 **El módulo «Desideratas» no funcionaba** (Escenarios, Selección, Histórico y Estadísticas sin backend/vidas y los PDFs/Excel sin portar). Entrega completa del módulo con el patrón v4 (una API JSON por módulo con `action`, `Db`, `cabeceraJson`, roles `ROLE_ADMIN`/`ROLE_JEFE_DEPARTAMENTO`/`ROLE_PROFESOR`), fiel a las páginas de v3.
 - 🔧 **Backend**:

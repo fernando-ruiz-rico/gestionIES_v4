@@ -188,7 +188,7 @@ const ProgramacionesContenidosDefectoView = {
             if (!this.idDepartamento) return;
 
             try {
-                const data = await programacionesApartadosAPI.listar();
+                const data = await ProgramacionesApartadosAPI.listar();
                 if (data) {
                     this.apartados = data;
                     // Calcular numeración (los valores llegan como texto desde la API)
@@ -206,7 +206,7 @@ const ProgramacionesContenidosDefectoView = {
                     });
                 }
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -218,10 +218,10 @@ const ProgramacionesContenidosDefectoView = {
                 const apto = this.apartados.find(a => a.id === this.idApartado);
                 this.apartadoActual = apto ? apto.tituloMostrar : '';
 
-                const data = await programacionesContenidosDefectoAPI.cargar(this.idApartado, this.idDepartamento);
+                const data = await ProgramacionesContenidosDefectoAPI.cargar(this.idApartado, this.idDepartamento);
                 this.contenido = data.texto || '';
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.cargando = false;
             }
@@ -239,10 +239,10 @@ const ProgramacionesContenidosDefectoView = {
             }
             this.guardando = true;
             try {
-                await programacionesContenidosDefectoAPI.guardar(this.idApartado, this.idDepartamento, this.contenido);
-                Swal.fire('Éxito', 'Contenido guardado correctamente', 'success');
+                await ProgramacionesContenidosDefectoAPI.guardar(this.idApartado, this.idDepartamento, this.contenido);
+                Avisos.exito('Éxito', 'Contenido guardado correctamente');
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.guardando = false;
             }

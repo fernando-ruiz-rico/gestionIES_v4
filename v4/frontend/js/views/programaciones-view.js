@@ -230,9 +230,9 @@ const ProgramacionesView = {
         // --- Carga ---
         async cargarMaterias() {
             try {
-                this.materias = await programacionesAPI.cargarMaterias() || [];
+                this.materias = await ProgramacionesAPI.cargarMaterias() || [];
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -244,9 +244,9 @@ const ProgramacionesView = {
             if (this.idMateria <= 0) return;
 
             try {
-                this.apartados = await programacionesAPI.cargarApartados(this.idMateria) || [];
+                this.apartados = await ProgramacionesAPI.cargarApartados(this.idMateria) || [];
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -264,13 +264,13 @@ const ProgramacionesView = {
 
             if (this.tipoApartado === 0) {
                 try {
-                    const data = await programacionesAPI.cargarContenido(this.idMateria, this.idApartado);
+                    const data = await ProgramacionesAPI.cargarContenido(this.idMateria, this.idApartado);
                     this.contenido = (data && data.texto) || '';
                     this.$nextTick(() => {
                         this.inicializarEditor(this.contenido);
                     });
                 } catch (error) {
-                    Swal.fire('Error', error.message, 'error');
+                    Avisos.error(error.message);
                 }
             }
         },
@@ -288,15 +288,15 @@ const ProgramacionesView = {
 
             this.guardando = true;
             try {
-                const res = await programacionesAPI.guardarContenido(this.idMateria, this.idApartado, texto);
+                const res = await ProgramacionesAPI.guardarContenido(this.idMateria, this.idApartado, texto);
                 if (res && res.sin_cambios) {
                     // Fiel a v3: si no hubo cambios, se avisa sin marcar error
-                    Swal.fire('Atención', 'El contenido ya estaba guardado así (no se han realizado cambios).', 'warning');
+                    Avisos.aviso('El contenido ya estaba guardado así (no se han realizado cambios).');
                 } else {
-                    Swal.fire('Éxito', 'Contenido guardado correctamente', 'success');
+                    Avisos.exito('Éxito', 'Contenido guardado correctamente');
                 }
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.guardando = false;
             }
@@ -343,12 +343,12 @@ const ProgramacionesView = {
 
         async ejecutarImportar() {
             if (!this.importarForm.idMateriaOrigen || !this.importarForm.idMateriaDestino) {
-                Swal.fire('Error', 'Debe seleccionar ambas materias', 'error');
+                Avisos.error('Debe seleccionar ambas materias');
                 return;
             }
 
             if (this.importarForm.idMateriaOrigen === this.importarForm.idMateriaDestino) {
-                Swal.fire('Error', 'Las materias origen y destino deben ser diferentes', 'error');
+                Avisos.error('Las materias origen y destino deben ser diferentes');
                 return;
             }
 
@@ -363,14 +363,14 @@ const ProgramacionesView = {
 
             if (result.isConfirmed) {
                 try {
-                    await programacionesAPI.importar(
+                    await ProgramacionesAPI.importar(
                         this.importarForm.idMateriaOrigen,
                         this.importarForm.idMateriaDestino
                     );
-                    Swal.fire('Éxito', 'Programación importada correctamente', 'success');
+                    Avisos.exito('Éxito', 'Programación importada correctamente');
                     this.modalImportar.hide();
                 } catch (error) {
-                    Swal.fire('Error', error.message, 'error');
+                    Avisos.error(error.message);
                 }
             }
         }

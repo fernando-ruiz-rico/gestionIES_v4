@@ -31,27 +31,16 @@ define('PG_TIPO_APARTADO_EVALUACION_RA', 10);
 define('PG_TIPO_APARTADO_TEMAS', 13);
 
 // ---------------------------------------------------------------------------
-// Cabecera y pie de página (igual que el resto de PDFs de la app / v3)
+// Cabecera y pie de página (igual que el resto de PDFs de la app / v3): se
+// heredan de la base compartida MiPDFBase (lib/pdf_compartidas.php)
 // ---------------------------------------------------------------------------
-class MiPDFProgramaciones extends TCPDF
+require_once __DIR__ . '/pdf_compartidas.php';
+class MiPDFProgramaciones extends MiPDFBase
 {
-    public function Header()
-    {
-        $this->setY(15);
-        $this->SetFont('helvetica', 'I', 12);
-        $this->Cell(0, 10, "I.E.S. San Vicente", 0, false, 'L', 0, '', 0, false, 'M', 'M');
-    }
-
-    public function Footer()
-    {
-        $this->SetY(-15);
-        $this->SetFont('helvetica', 'I', 10);
-        $this->Cell(0, 10, 'Pág ' . $this->getAliasNumPage() . '/' . $this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
-    }
 }
 
 // ---------------------------------------------------------------------------
-// Consulta a BD a través de la clase Db (v4), PHP 5 compatible.
+// Consulta a BD a través de la clase Db (v4).
 // Acepta un objeto Db; si le llega la conexión mysqli cruda (pendiente de
 // migrar el endpoint que la pasa), se envuelve sola en un Db.
 // ---------------------------------------------------------------------------
@@ -60,8 +49,8 @@ function pgConsultar($db, $sql, $params = [])
     if (!$db instanceof Db) {
         $db = new Db($db);
     }
-    $args = array_merge([$sql], $params);
-    return call_user_func_array([$db, 'fetchAll'], $args);
+    // La capa Db usa argumentos variables; se expande la lista de parámetros
+    return $db->fetchAll(...array_merge([$sql], $params));
 }
 
 function pgConsultarUna($db, $sql, $params = [])

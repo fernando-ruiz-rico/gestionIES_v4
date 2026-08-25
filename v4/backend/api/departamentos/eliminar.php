@@ -6,20 +6,16 @@
 
 require_once '../../config.php';
 cabeceraJson();
-session_start();
 
-// Verificar permisos de administrador
-$permisos = isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin';
+// Solo admin
+checkPermission(array(ROLE_ADMIN));
 
-if (!$permisos) {
-    sendJSONError('No tiene permisos para realizar esta acción', 403);
-}
-
-if (empty($_POST['id'])) {
+// El cuerpo llega en JSON (cuerpoJson); la sesión la gestiona checkPermission
+$datos = cuerpoJson();
+$id = datosOptimoInt($datos, 'id');
+if ($id <= 0) {
     sendJSONError('ID de departamento no proporcionado', 400);
 }
-
-$id = intval($_POST['id']);
 
 try {
     $db = Db::open();

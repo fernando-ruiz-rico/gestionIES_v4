@@ -1,4 +1,4 @@
-const programacionesContenidosDefectoAPI = {
+const ProgramacionesContenidosDefectoAPI = {
     baseUrl: '../backend/api/programaciones_contenidos_defecto/',
 
     cargar(idApartado, idDepartamento) {

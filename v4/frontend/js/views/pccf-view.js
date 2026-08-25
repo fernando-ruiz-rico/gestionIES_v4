@@ -126,7 +126,7 @@ const PCCFView = {
         try {
             this.ciclos = await PCCFAPI.listarCiclos();
         } catch (error) {
-            Swal.fire('Error', error.message, 'error');
+            Avisos.error(error.message);
         }
     },
 

@@ -9,7 +9,7 @@ checkPermission(array(ROLE_ADMIN));
 
 $datos = cuerpoJson();
 $idCiclo = datosOptimoInt($datos, 'idCiclo');
-$idCurso = datasOptimoInt($datos, 'idCurso');
+$idCurso = datosOptimoInt($datos, 'idCurso');
 if ($idCiclo <= 0 || $idCurso <= 0) {
     sendJSONError('Parámetros no válidos', 400);
 }

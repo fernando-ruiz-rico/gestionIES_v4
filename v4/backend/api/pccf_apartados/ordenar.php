@@ -9,8 +9,9 @@ cabeceraJson();
 // Permiso fiel a v3: admin o jefe de departamento
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
-$orden = isset($_POST['orden']) ? $_POST['orden'] : (isset($_GET['orden']) ? $_GET['orden'] : '');
-if ($orden === '') {
+$datos = cuerpoJson();
+$orden = datosOptimo($datos, 'orden');
+if ($orden === null) {
     sendJSONError('No se recibió el orden', 400);
 }
 

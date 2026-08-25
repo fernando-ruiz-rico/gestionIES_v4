@@ -6,10 +6,11 @@ cabeceraJson();
 // Permiso fiel a v3: admin o jefe de departamento
 checkPermission(array(ROLE_ADMIN, ROLE_JEFE_DEPARTAMENTO));
 
-// Campo único del endpoint: postOptimo devuelve el valor si llega no vacío, y null si no
-$orden = postOptimo('orden');
+// Campo único del endpoint: datosOptimo devuelve el valor si llega no vacío, y null si no
+$datos = cuerpoJson();
+$orden = datosOptimo($datos, 'orden');
 
-if (empty($orden)) {
+if ($orden === null) {
     sendJSONError('Orden no válido', 400);
 }
 

@@ -9,23 +9,20 @@ const AuthAPI = {
 
     // Login de usuario (acción)
     async login(username, password) {
-        const formData = new FormData();
-        formData.append('username', username);
-        formData.append('password', password);
-        const data = await Http.post(this.baseURL + 'auth.php?action=login', formData);
+        const data = await Http.post(this.baseURL + 'auth/login.php', { username, password });
         if (!data.success) throw new Error(data.error || 'Error al iniciar sesión');
         return data;
     },
 
     // Logout de usuario (acción)
     async logout() {
-        const data = await Http.get(this.baseURL + 'auth.php?action=logout');
+        const data = await Http.get(this.baseURL + 'auth/logout.php');
         if (!data.success) throw new Error(data.error || 'Error al cerrar la sesión');
         return data;
     },
 
     // Comprobar sesión activa: resuelve con el usuario (data.data)
     checkAuth() {
-        return Http.getOk(this.baseURL + 'auth.php?action=check', 'No hay sesión activa');
+        return Http.getOk(this.baseURL + 'auth/check.php', 'No hay sesión activa');
     }
 };

@@ -478,9 +478,9 @@ const TemasView = {
         // --- Carga de datos ---
         async cargarMaterias() {
             try {
-                this.materias = await temasAPI.listarMaterias() || [];
+                this.materias = await TemasAPI.listarMaterias() || [];
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -504,23 +504,23 @@ const TemasView = {
 
         async refrescarListado() {
             try {
-                const data = await temasAPI.listarTemas(this.idMateria);
+                const data = await TemasAPI.listarTemas(this.idMateria);
                 this.temas = data.temas || [];
                 this.horasAnuales = data.horas_anuales || 0;
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
         async cargarAccordion() {
             try {
-                const data = await temasAPI.cargarAccordionRAyCE(this.idMateria);
+                const data = await TemasAPI.cargarAccordionRAyCE(this.idMateria);
                 this.idCiclo = data.idCiclo || 0;
                 this.ra = data.ra || [];
                 this.totalRA = data.total || 0;
                 this.competencias = data.competencias || [];
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -528,7 +528,7 @@ const TemasView = {
         async editarTema(id) {
             if (id <= 0) return;
             try {
-                const data = await temasAPI.obtenerTema(id);
+                const data = await TemasAPI.obtenerTema(id);
                 const t = data.tema;
                 this.tema = {
                     orden: t.orden,
@@ -570,7 +570,7 @@ const TemasView = {
                 // Subir al editor
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -588,17 +588,17 @@ const TemasView = {
 
         async guardarNuevo() {
             if (!this.nuevaForm.orden || !this.nuevaForm.titulo) {
-                Swal.fire('Error', 'Indica el número y el título del tema', 'warning');
+                Avisos.aviso('Indica el número y el título del tema');
                 return;
             }
             try {
-                const res = await temasAPI.nuevo(this.idMateria, this.nuevaForm.orden, this.nuevaForm.titulo);
+                const res = await TemasAPI.nuevo(this.idMateria, this.nuevaForm.orden, this.nuevaForm.titulo);
                 this.modalNueva.hide();
                 this.nuevaForm = { orden: 0, titulo: '' };
                 await this.refrescarListado();
                 this.editarTema(res.data.id);
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -616,7 +616,7 @@ const TemasView = {
             });
             const competencias = Object.keys(this.selCom).filter(k => this.selCom[k]).map(k => parseInt(k));
 
-            return await temasAPI.guardar({
+            return await TemasAPI.guardar({
                 idTema: this.idTema,
                 orden: this.tema.orden,
                 titulo: this.tema.titulo,
@@ -646,17 +646,17 @@ const TemasView = {
             try {
                 const res = await this._guardarTema();
                 if (!res.errorTema && !res.errorCriterios && !res.errorCompetencias) {
-                    Swal.fire('Éxito', 'Tema guardado correctamente', 'success');
+                    Avisos.exito('Éxito', 'Tema guardado correctamente');
                 } else {
                     let msg = '';
                     if (res.errorTema) msg += 'Los datos generales del tema no se guardaron correctamente\n';
                     if (res.errorCriterios) msg += 'Los criterios de evaluación no se guardaron correctamente\n';
                     if (res.errorCompetencias) msg += 'Las competencias no se guardaron correctamente\n';
-                    Swal.fire('Error', msg.trim(), 'error');
+                    Avisos.error(msg.trim());
                 }
                 await this.refrescarListado();
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.guardando = false;
             }
@@ -664,36 +664,28 @@ const TemasView = {
 
         // --- Borrar ---
         async borrarTema(t) {
-            const confirmacion = await Swal.fire({
-                title: '¿Borrar tema?',
-                text: `¿Confirmas el borrado del tema '${t.titulo}'?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, borrar',
-                cancelButtonText: 'Cancelar'
+            const confirmacion = await Avisos.confirmar('¿Borrar tema?', `¿Confirmas el borrado del tema '${t.titulo}'?`, {
+                icono: 'warning',
+                boton: 'Sí, borrar'
             });
             if (!confirmacion.isConfirmed) return;
             try {
-                await temasAPI.borrar(t.id);
+                await TemasAPI.borrar(t.id);
                 if (this.idTema === t.id) {
                     this.cerrarEdicion();
                 }
                 await this.refrescarListado();
-                Swal.fire('Éxito', 'Tema eliminado correctamente', 'success');
+                Avisos.exito('Éxito', 'Tema eliminado correctamente');
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
         // --- Repetir campo "Evaluación" en toda la materia ---
         async repetirEvaluacion() {
-            const confirmacion = await Swal.fire({
-                title: 'Copiar campo Evaluación',
-                text: 'Al copiar el campo "Evaluación" en todos los temas de la materia, se sobreescribirá el contenido actual de los demás temas.',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, copiar',
-                cancelButtonText: 'Cancelar'
+            const confirmacion = await Avisos.confirmar('Copiar campo Evaluación', 'Al copiar el campo "Evaluación" en todos los temas de la materia, se sobreescribirá el contenido actual de los demás temas.', {
+                icono: 'question',
+                boton: 'Sí, copiar'
             });
             if (!confirmacion.isConfirmed) return;
 
@@ -704,22 +696,18 @@ const TemasView = {
                 evaluacion = editor.getContent();
             }
             try {
-                await temasAPI.repetirEvaluacion(this.idMateria, evaluacion);
-                Swal.fire('Éxito', 'El campo "Evaluación" se ha copiado en todos los temas de la materia', 'success');
+                await TemasAPI.repetirEvaluacion(this.idMateria, evaluacion);
+                Avisos.exito('Éxito', 'El campo "Evaluación" se ha copiado en todos los temas de la materia');
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
         // --- Recalcular porcentajes de los RA ---
         async calcularPorcentajes() {
-            const confirmacion = await Swal.fire({
-                title: 'Recalcular porcentajes',
-                text: '¿Deseas recalcular y actualizar los porcentajes de evaluación de los RA asociados a esta materia? Se sobreescribirán los valores actuales.',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, recalcular',
-                cancelButtonText: 'Cancelar'
+            const confirmacion = await Avisos.confirmar('Recalcular porcentajes', '¿Deseas recalcular y actualizar los porcentajes de evaluación de los RA asociados a esta materia? Se sobreescribirán los valores actuales.', {
+                icono: 'question',
+                boton: 'Sí, recalcular'
             });
             if (!confirmacion.isConfirmed) return;
 
@@ -727,11 +715,11 @@ const TemasView = {
             try {
                 // Como en v3: primero se guarda el tema (con sus CE) y después se recalcula
                 await this._guardarTema();
-                await temasAPI.recalcularPorcentajes(this.idMateria);
+                await TemasAPI.recalcularPorcentajes(this.idMateria);
                 await this.cargarAccordion();
-                Swal.fire('Éxito', 'Porcentajes de evaluación recalculados', 'success');
+                Avisos.exito('Éxito', 'Porcentajes de evaluación recalculados');
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.guardando = false;
             }
@@ -773,12 +761,12 @@ const TemasView = {
 
         async guardarRA() {
             try {
-                await temasAPI.actualizarRA(this.raEdit.id, this.raEdit.porcentaje, this.raEdit.esClave);
+                await TemasAPI.actualizarRA(this.raEdit.id, this.raEdit.porcentaje, this.raEdit.esClave);
                 this.modalRA.hide();
                 await this.cargarAccordion();
-                Swal.fire('Éxito', 'Resultado de aprendizaje actualizado', 'success');
+                Avisos.exito('Éxito', 'Resultado de aprendizaje actualizado');
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         }
     }

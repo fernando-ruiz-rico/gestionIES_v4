@@ -178,9 +178,9 @@ const ProgramacionesAulaView = {
         // --- Carga de datos ---
         async cargarProfesores() {
             try {
-                this.profesores = await programacionesAulaAPI.cargarProfesores() || [];
+                this.profesores = await ProgramacionesAulaAPI.cargarProfesores() || [];
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -193,10 +193,10 @@ const ProgramacionesAulaView = {
         async cargarMaterias() {
             if (this.esAdmin && this.idProfesor <= 0) return;
             try {
-                const data = await programacionesAulaAPI.cargarMaterias(this.idProfesor);
+                const data = await ProgramacionesAulaAPI.cargarMaterias(this.idProfesor);
                 this.materias = data || [];
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -206,10 +206,10 @@ const ProgramacionesAulaView = {
             if (this.idMateria <= 0) return;
 
             try {
-                const data = await programacionesAulaAPI.cargarGrupos(this.idMateria, this.idProfesor);
+                const data = await ProgramacionesAulaAPI.cargarGrupos(this.idMateria, this.idProfesor);
                 this.grupos = data || [];
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -217,13 +217,13 @@ const ProgramacionesAulaView = {
             if (this.idMateria <= 0 || this.idGrupo <= 0) return;
 
             try {
-                const data = await programacionesAulaAPI.cargarContenido(this.idTema, this.idGrupo, this.idProfesor);
+                const data = await ProgramacionesAulaAPI.cargarContenido(this.idTema, this.idGrupo, this.idProfesor);
                 this.contenido = data.texto || '';
                 this.$nextTick(() => {
                     this.inicializarEditor(this.contenido);
                 });
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -239,10 +239,10 @@ const ProgramacionesAulaView = {
 
             this.guardando = true;
             try {
-                await programacionesAulaAPI.guardar(this.idTema, this.idGrupo, this.idProfesor, texto);
-                Swal.fire('Éxito', 'Contenido guardado correctamente', 'success');
+                await ProgramacionesAulaAPI.guardar(this.idTema, this.idGrupo, this.idProfesor, texto);
+                Avisos.exito('Éxito', 'Contenido guardado correctamente');
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.guardando = false;
             }

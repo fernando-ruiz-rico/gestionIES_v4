@@ -9,13 +9,10 @@ $session = checkSession();
 $rol = $session['rol'];
 $idUsuarioSesion = intval($session['idUsuario']);
 
-if (esUsuarioSuper($rol)) {
-    // Admin puede guardar para cualquier profesor
-} else {
-    // Un profesor solo puede guardar el contenido de sí mismo
-    if (isset($session['activo']) && $session['activo'] == 1) {
-        // Ok, continuar
-    } else {
+// Un superusuario (admin/jefe) puede guardar para cualquier profesor; un
+// profesor solo puede guardarlo para sí mismo y debe estar activo.
+if (!esUsuarioSuper($rol)) {
+    if (!isset($session['activo']) || $session['activo'] != 1) {
         sendJSONError('No tiene permisos para realizar esta acción', 403);
     }
 }

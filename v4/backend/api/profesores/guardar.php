@@ -1,40 +1,43 @@
 <?php
 // API endpoint para insertar o actualizar un profesor
 // Requiere sesión iniciada y rol de admin (o el propio profesor si es su perfil)
-// Recibe: nombre, idDepartamento, idEspecialidad (requeridos), abreviatura, usuario, clave, telefono, email, observaciones, prefRojas, prefAmarillas (opcionales)
+// Recibe (JSON): nombre, idDepartamento, idEspecialidad (requeridos), abreviatura,
+//                usuario, clave, telefono, email, observaciones, prefRojas, prefAmarillas
 // Devuelve: success (true/false), mensaje
 
 require_once '../../config.php';
 cabeceraJson();
-session_start();
 
-// Verificar permisos
-$permisos = (isset($_SESSION['rol']) && $_SESSION['rol'] == 'admin') ||
-            (!empty($_SESSION['idUsuario']) && !empty($_POST['id']) && $_SESSION['idUsuario'] == $_POST['id']);
+$session = checkSession();
+$datos = cuerpoJson();
+
+// Verificar permisos: un admin, o el propio profesor editando su perfil
+$permisos = ($_SESSION['rol'] == ROLE_ADMIN) ||
+            (!empty($session['idUsuario']) && !empty($datos['id']) && $session['idUsuario'] == $datos['id']);
 
 if (!$permisos) {
     sendJSONError('No tiene permisos para realizar esta acción', 403);
 }
 
 // Validar datos requeridos
-if (empty($_POST['nombre']) || empty($_POST['idDepartamento'])) {
+if (empty($datos['nombre']) || empty($datos['idDepartamento'])) {
     sendJSONError('Nombre y departamento son requeridos', 400);
 }
 
 // Las consultas están parametrizadas, así que ya no hace falta escapar los datos
-$idDepartamento = intval($_POST['idDepartamento']);
-$nombre = $_POST['nombre'];
+$idDepartamento = datosOptimoInt($datos, 'idDepartamento');
+$nombre = $datos['nombre'];
 
-// Campos opcionales: postOptimo devuelve el valor si llega no vacío, y null si no
-$abreviatura = postOptimo('abreviatura');
-$usuario = postOptimo('usuario');
-$clave = postOptimo('clave');
-$telefono = postOptimo('telefono');
-$email = postOptimo('email');
-$idEspecialidad = postOptimo('idEspecialidad');
-$observaciones = postOptimo('observaciones');
-$prefRojas = postOptimo('prefRojas');
-$prefAmarillas = postOptimo('prefAmarillas');
+// Campos opcionales: datosOptimo devuelve el valor si llega no vacío, y null si no
+$abreviatura = datosOptimo($datos, 'abreviatura');
+$usuario = datosOptimo($datos, 'usuario');
+$clave = datosOptimo($datos, 'clave');
+$telefono = datosOptimo($datos, 'telefono');
+$email = datosOptimo($datos, 'email');
+$idEspecialidad = datosOptimo($datos, 'idEspecialidad');
+$observaciones = datosOptimo($datos, 'observaciones');
+$prefRojas = datosOptimo($datos, 'prefRojas');
+$prefAmarillas = datosOptimo($datos, 'prefAmarillas');
 
 // Clave encriptada con MD5 (como en v3)
 if (!empty($clave)) {
@@ -45,7 +48,7 @@ if (!empty($clave)) {
 try {
     $db = Db::open();
 
-    if (empty($_POST['id'])) {
+    if (empty($datos['id'])) {
         // Si no ha puesto clave le ponemos como clave su propio login
         if (empty($clave)) {
             $clave = md5($usuario);
@@ -66,20 +69,23 @@ try {
         sendJSONSuccess(array('id' => $id_nuevo, 'mensaje' => 'Profesor creado correctamente'));
     } else {
         // Actualizar profesor existente
-        $idProfesor = intval($_POST['id']);
+        $idProfesor = datosOptimoInt($datos, 'id');
 
-        // Distinguimos si hay que cambiar también la clave o se deja la que está
-        if (empty($clave)) {
-            $db->execute("UPDATE profesores SET nombre=?, abreviatura=?, usuario=?,
-                          idEspecialidad=?, observaciones_horario=?,
-                          telefono=?, email=? WHERE id=?",
-                $nombre, $abreviatura, $usuario, $idEspecialidad, $observaciones, $telefono, $email, $idProfesor);
-        } else {
-            $db->execute("UPDATE profesores SET nombre=?, abreviatura=?, usuario=?,
-                          clave=?, idEspecialidad=?, observaciones_horario=?,
-                          telefono=?, email=? WHERE id=?",
-                $nombre, $abreviatura, $usuario, $clave, $idEspecialidad, $observaciones, $telefono, $email, $idProfesor);
+        // Distinguimos si hay que cambiar también la clave o se deja la que está:
+        // la columna "clave" solo se actualiza si ha llegado una nueva.
+        $campos = array('nombre', 'abreviatura', 'usuario', 'idEspecialidad', 'observaciones_horario', 'telefono', 'email');
+        $valores = array($nombre, $abreviatura, $usuario, $idEspecialidad, $observaciones, $telefono, $email);
+        if (!empty($clave)) {
+            $campos[] = 'clave';
+            $valores[] = $clave;
         }
+        $asignaciones = array();
+        for ($i = 0; $i < count($campos); $i++) {
+            $asignaciones[] = $campos[$i] . ' = ?';
+        }
+        $sql = "UPDATE profesores SET " . implode(', ', $asignaciones) . " WHERE id = ?";
+        $parametros = array_merge($valores, array($idProfesor));
+        $db->execute($sql, ...$parametros);
 
         // Actualizar preferencias horarias
         // Borramos viejas preferencias
@@ -92,7 +98,7 @@ try {
         sendJSONSuccess(array('mensaje' => 'Profesor actualizado correctamente'));
     }
 } catch (DbException $e) {
-    $error = empty($_POST['id']) ? 'Error al insertar el profesor' : 'Error al actualizar el profesor';
+    $error = empty($datos['id']) ? 'Error al insertar el profesor' : 'Error al actualizar el profesor';
     sendJSONError($error . ': ' . $e->getMessage(), 500);
 }
 

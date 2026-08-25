@@ -22,23 +22,17 @@ header('Content-Type: application/pdf; charset=utf-8');
 require_once 'config.php';
 require_once 'lib/php/tcpdf/examples/tcpdf_include.php';
 require_once 'lib/php/tcpdf/tcpdf.php';
+require_once 'lib/pdf_compartidas.php';
 require_once 'lib/programaciones_pdf.php';
 
-// Cabecera/pie con el título del documento (como v3)
-class MiPDFProgramacionesUnidades extends TCPDF
+// Cabecera con el título del documento (como v3); el pie lo hereda de la base
+class MiPDFProgramacionesUnidades extends MiPDFBase
 {
     public function Header()
     {
         $this->setY(15);
         $this->SetFont('helvetica', 'I', 12);
         $this->Cell(0, 10, "I.E.S. San Vicente - " . $this->title, 0, false, 'L', 0, '', 0, false, 'M', 'M');
-    }
-
-    public function Footer()
-    {
-        $this->SetY(-15);
-        $this->SetFont('helvetica', 'I', 10);
-        $this->Cell(0, 10, 'Pág ' . $this->getAliasNumPage() . '/' . $this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
     }
 }
 

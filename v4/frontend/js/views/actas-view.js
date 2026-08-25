@@ -122,14 +122,7 @@ const ActasView = {
 
         nuevaActa() {
             const hoy = new Date().toISOString().split('T')[0].replace(/-/g, '/');
-            Swal.fire({
-                title: 'Nueva acta',
-                text: '¿Quieres crear una acta nueva para la fecha actual?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, crear',
-                cancelButtonText: 'Cancelar'
-            }).then(async res => {
+            Avisos.confirmar('Nueva acta', '¿Quieres crear una acta nueva para la fecha actual?', { icono: 'question', boton: 'Sí, crear' }).then(async res => {
                 if (res.isConfirmed) {
                     const form = {
                         idActa: 0,
@@ -139,13 +132,13 @@ const ActasView = {
                     };
                     try {
                         const guardada = await ActasAPI.guardar(form);
-                        Swal.fire({ icon: 'success', title: 'Acta creada', timer: 1000, showConfirmButton: false });
+                        Avisos.exito('Acta creada');
                         this.cargar();
                         // Seleccionamos la nueva acta
                         this.idActa = guardada.data.id;
                         this.cargarActa();
                     } catch (error) {
-                        Swal.fire('Error', error.message, 'error');
+                        Avisos.error(error.message);
                     }
                 }
             });
@@ -160,9 +153,9 @@ const ActasView = {
             };
             try {
                 await ActasAPI.guardar(form);
-                Swal.fire({ icon: 'success', title: 'Acta guardada', timer: 1000, showConfirmButton: false });
+                Avisos.exito('Acta guardada');
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         }
     }

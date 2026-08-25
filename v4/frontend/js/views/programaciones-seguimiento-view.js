@@ -373,9 +373,9 @@ const ProgramacionesSeguimientoView = {
         // --- Carga de datos ---
         async cargarProfesores() {
             try {
-                this.profesores = await programacionesSeguimientoAPI.cargarProfesores() || [];
+                this.profesores = await ProgramacionesSeguimientoAPI.cargarProfesores() || [];
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -383,7 +383,7 @@ const ProgramacionesSeguimientoView = {
             try {
                 this.departamentos = await DepartamentosAPI.listar() || [];
             } catch (error) {
-                Swal.fire('Error', 'No se han podido cargar los departamentos', 'error');
+                Avisos.error('No se han podido cargar los departamentos');
             }
         },
 
@@ -398,19 +398,19 @@ const ProgramacionesSeguimientoView = {
 
         async cargarEvaluaciones() {
             try {
-                this.evaluaciones = await programacionesSeguimientoAPI.cargarEvaluaciones() || [];
+                this.evaluaciones = await ProgramacionesSeguimientoAPI.cargarEvaluaciones() || [];
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
         async cargarMaterias() {
             if (this.esAdmin && this.idProfesor <= 0) return;
             try {
-                const data = await programacionesSeguimientoAPI.cargarMaterias(this.idProfesor);
+                const data = await ProgramacionesSeguimientoAPI.cargarMaterias(this.idProfesor);
                 this.materias = data || [];
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -420,10 +420,10 @@ const ProgramacionesSeguimientoView = {
             if (this.idMateria <= 0) return;
 
             try {
-                const data = await programacionesSeguimientoAPI.cargarGrupos(this.idMateria, this.idProfesor);
+                const data = await ProgramacionesSeguimientoAPI.cargarGrupos(this.idMateria, this.idProfesor);
                 this.grupos = data || [];
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
 
             await this.alCambiarSelector();
@@ -452,7 +452,7 @@ const ProgramacionesSeguimientoView = {
             if (!this.completa) return;
 
             try {
-                const data = await programacionesSeguimientoAPI.cargar(this.idMateria, this.idGrupo, this.idEvaluacion, this.idProfesor);
+                const data = await ProgramacionesSeguimientoAPI.cargar(this.idMateria, this.idGrupo, this.idEvaluacion, this.idProfesor);
                 this.temporalizacion = data.temporalizacion || '';
                 this.resultados = data.resultados || '';
                 this.inclusion = data.inclusion || '';
@@ -464,7 +464,7 @@ const ProgramacionesSeguimientoView = {
                     this.inicializarEditores();
                 });
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -474,7 +474,7 @@ const ProgramacionesSeguimientoView = {
 
             this.guardando = true;
             try {
-                await programacionesSeguimientoAPI.guardar({
+                await ProgramacionesSeguimientoAPI.guardar({
                     idMateria: this.idMateria,
                     idGrupo: this.idGrupo,
                     idEvaluacion: this.idEvaluacion,
@@ -486,9 +486,9 @@ const ProgramacionesSeguimientoView = {
                     num_suspensos: this.numSuspensos,
                     num_otros: this.numOtros
                 });
-                Swal.fire('Éxito', 'Seguimiento guardado correctamente', 'success');
+                Avisos.exito('Éxito', 'Seguimiento guardado correctamente');
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.guardando = false;
             }
@@ -509,7 +509,7 @@ const ProgramacionesSeguimientoView = {
         generarPDF(categoria) {
             if (!this.idEvaluacion) return;
             if (!this.dptoParaPDF) {
-                Swal.fire({ title: 'Advertencia', text: 'Selecciona un departamento para generar el PDF', icon: 'warning' });
+                Avisos.aviso('Selecciona un departamento para generar el PDF');
                 return;
             }
             const catParam = (categoria === 'Ciclos Formativos') ? 'FP' : 'ESO/BACH';

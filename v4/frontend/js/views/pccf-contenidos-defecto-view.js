@@ -114,7 +114,7 @@ const PCCFContenidosDefectoView = {
         try {
             this.departamentos = await DepartamentosAPI.listar() || [];
         } catch (error) {
-            Swal.fire('Error', error.message, 'error');
+            Avisos.error(error.message);
         }
     },
 
@@ -169,7 +169,7 @@ const PCCFContenidosDefectoView = {
             try {
                 this.apartados = await PCCFApartadosAPI.listar();
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -180,7 +180,7 @@ const PCCFContenidosDefectoView = {
                 const data = await PCCFContenidosDefectoAPI.cargar(this.idApartado, this.idDepartamento);
                 this.contenido = data.texto || '';
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.cargando = false;
             }
@@ -198,9 +198,9 @@ const PCCFContenidosDefectoView = {
             this.guardando = true;
             try {
                 await PCCFContenidosDefectoAPI.guardar(this.idApartado, this.idDepartamento, this.contenido);
-                Swal.fire('Éxito', 'Contenido guardado correctamente', 'success');
+                Avisos.exito('Éxito', 'Contenido guardado correctamente');
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.guardando = false;
             }

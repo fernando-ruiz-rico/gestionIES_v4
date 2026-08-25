@@ -154,7 +154,7 @@ const PCCFApartadosView = {
             try {
                 this.apartados = await PCCFApartadosAPI.listar();
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.cargando = false;
             }
@@ -186,13 +186,9 @@ const PCCFApartadosView = {
 
         // Borra un apartado, previa confirmación (fiel a v3)
         async borrarApartado(apartado) {
-            const result = await Swal.fire({
-                title: '¿Borrar este apartado?',
-                text: `Se eliminará el apartado "${apartado.titulo}" y todos sus contenidos.`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, borrar',
-                cancelButtonText: 'Cancelar',
+            const result = await Avisos.confirmar('¿Borrar este apartado?', `Se eliminará el apartado "${apartado.titulo}" y todos sus contenidos.`, {
+                icono: 'warning',
+                boton: 'Sí, borrar',
                 confirmButtonColor: '#d81b60',
                 reverseButtons: true
             });
@@ -201,10 +197,10 @@ const PCCFApartadosView = {
             }
             try {
                 await PCCFApartadosAPI.eliminar(apartado.id);
-                Swal.fire('Éxito', 'Apartado eliminado correctamente', 'success');
+                Avisos.exito('Éxito', 'Apartado eliminado correctamente');
                 await this.cargar();
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -214,16 +210,16 @@ const PCCFApartadosView = {
 
         async guardarApartado() {
             if (!this.formulario.titulo.trim()) {
-                Swal.fire('Error', 'Debes indicar un título', 'warning');
+                Avisos.aviso('Debes indicar un título');
                 return;
             }
             try {
                 await PCCFApartadosAPI.guardar(this.formulario);
-                Swal.fire('Éxito', 'Apartado guardado correctamente', 'success');
+                Avisos.exito('Éxito', 'Apartado guardado correctamente');
                 this.cerrarModal();
                 await this.cargar();
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
@@ -254,7 +250,7 @@ const PCCFApartadosView = {
                 await PCCFApartadosAPI.ordenar(orden);
                 await this.cargar();
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
                 await this.cargar();
             }
         }

@@ -15,6 +15,7 @@ require_once 'config.php';
 require_once 'lib/php/tcpdf/examples/tcpdf_include.php';
 require_once 'lib/php/tcpdf/tcpdf.php';
 require_once 'lib/php/fpdi/fpdi.php';
+require_once 'lib/horarios_compartidas.php';
 
 // La sesión trae el departamento por defecto (v3: cabecera común de la página)
 @session_start();
@@ -30,16 +31,6 @@ define ('TOTAL_HORAS', 25);  // Total de horas entre lectivas, RD, AP, guardias 
 define ('TOTAL_HORAS_LECTIVAS', 18);
 define ('GUARDIAS_POR_DEFECTO', 3); // Número de horas de guardia si se tienen las horas lectivas estipuladas, sin reducción por horas complementarias
 define ('DESCUENTO_TUTORIAS', 0);   // Horas complementarias reales por tutoria, en lugar de las oficiales
-
-// Devuelve un código numérico asociado al día de la semana (Lunes => 0, Viernes => 4)
-function xDia($dia)
-{
-    if ($dia == 'L') return 0;
-    elseif ($dia == 'M') return 1;
-    elseif ($dia == 'X') return 2;
-    elseif ($dia == 'J') return 3;
-    else return 4;
-}
 
 // Devuelve un índice numérico asociado a la franja horaria seleccionada:
 // 0 => primera hora, 1 => segunda hora, etc.
@@ -62,29 +53,9 @@ function yHora($hora)
     return $resultado;
 }
 
-class MiPDF extends FPDI
-{
-    var $_tplIdx;
-
-    // Cabecera de las páginas
-    public function Header()
-    {
-        if (is_null($this->_tplIdx))
-        {
-            $this->setSourceFile('pdf/plantilla.pdf');
-            $this->_tplIdx = $this->importPage(1);
-        }
-        $this->useTemplate($this->_tplIdx);
-    }
-
-    // Pie de las páginas
-    public function Footer()
-    {
-    }
-}
-
 // Creamos el PDF a partir de la plantilla con parámetros por defecto
 $pdf = new MiPDF();
+$pdf->plantilla = 'pdf/plantilla.pdf';
 $pdf->SetFont('Helvetica', '', '10');
 $pdf->SetTextColor(0, 0, 0);
 

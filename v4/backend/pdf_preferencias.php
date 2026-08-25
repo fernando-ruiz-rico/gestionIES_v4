@@ -10,21 +10,12 @@ require_once 'config.php';
 require_once 'lib/php/tcpdf/examples/tcpdf_include.php';
 require_once 'lib/php/tcpdf/tcpdf.php';
 require_once 'lib/php/fpdi/fpdi.php';
+require_once 'lib/horarios_compartidas.php';
 
 // La sesión trae los permisos y el departamento por defecto
 @session_start();
 
 $db = Db::open();
-
-// Devuelve un código numérico asociado al día de la semana (Lunes => 0, Viernes => 4)
-function xDia($dia)
-{
-    if ($dia == 'L') return 0;
-    elseif ($dia == 'M') return 1;
-    elseif ($dia == 'X') return 2;
-    elseif ($dia == 'J') return 3;
-    else return 4;
-}
 
 // Devuelve un índice numérico asociado a la franja horaria seleccionada:
 // 0 => primera hora, 1 => segunda hora, etc.
@@ -47,27 +38,6 @@ function yHora($hora)
     else return 12;
 }
 
-class MiPDF extends FPDI
-{
-    var $_tplIdx;
-
-    // Cabecera de las páginas
-    public function Header()
-    {
-        if (is_null($this->_tplIdx))
-        {
-            $this->setSourceFile('pdf/desiderata_horario.pdf');
-            $this->_tplIdx = $this->importPage(1);
-        }
-        $this->useTemplate($this->_tplIdx);
-    }
-
-    // Pie de las páginas
-    public function Footer()
-    {
-    }
-}
-
 // Solo lo ven los permisos superiores, o el propio profesor
 $super = isset($_SESSION['rol']) && ($_SESSION['rol'] == 'admin' || $_SESSION['rol'] == 'jefeDepartamento');
 $esPropio = !empty($_REQUEST['idProfesor']) && isset($_SESSION['idUsuario']) && $_SESSION['idUsuario'] == $_REQUEST['idProfesor'];
@@ -76,6 +46,7 @@ if ($super || $esPropio)
 {
     // Creamos el PDF a partir de la plantilla con parámetros por defecto
     $pdf = new MiPDF();
+    $pdf->plantilla = 'pdf/desiderata_horario.pdf';
 
     if (empty($_REQUEST['idProfesor']))
     {

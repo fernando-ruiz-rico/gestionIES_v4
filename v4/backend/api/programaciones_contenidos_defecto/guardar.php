@@ -1,6 +1,10 @@
 <?php
 // API endpoint para guardar contenido por defecto de un apartado
+// Inserta o actualiza la fila de la tabla contenidos_defecto_programaciones.
+// Con texto vacío se elimina la fila (fiel a v3).
+
 require_once '../../config.php';
+require_once '../../lib/contenidos.php';
 cabeceraJson();
 
 // Permiso fiel a v3: admin o jefe de departamento
@@ -16,33 +20,13 @@ if ($idApartado <= 0 || $idDepartamento <= 0) {
     sendJSONError('Parámetros no válidos', 400);
 }
 
-$db = Db::open();
-
 try {
-    $texto = trim($texto);
-
-    // Si no hay texto, eliminamos el contenido por defecto
-    if ($texto === '') {
-        $db->execute("DELETE FROM contenidos_defecto_programaciones WHERE idApartado = ? AND idDepartamento = ?", $idApartado, $idDepartamento);
-        $db->close();
-        sendJSONSuccess(null, 'Contenido eliminado correctamente');
-    } else {
-        // Verificar si ya existe
-        $n = $db->count("SELECT id FROM contenidos_defecto_programaciones WHERE idApartado = ? AND idDepartamento = ?", $idApartado, $idDepartamento);
-
-        if ($n > 0) {
-            // Actualizar
-            $db->execute("UPDATE contenidos_defecto_programaciones SET texto = ? WHERE idApartado = ? AND idDepartamento = ?", $texto, $idApartado, $idDepartamento);
-        } else {
-            // Insertar
-            $db->execute("INSERT INTO contenidos_defecto_programaciones (idApartado, idDepartamento, texto) VALUES (?, ?, ?)", $idApartado, $idDepartamento, $texto);
-        }
-
-        $db->close();
-        sendJSONSuccess(null, 'Contenido guardado correctamente');
-    }
+    $db = Db::open();
+    // Este endpoint no avisa si no había nada que eliminar ($avisaSinFila = false)
+    contenidos_guardarTexto($db, 'contenimientos_defecto_programaciones',
+        array(array('idApartado', $idApartado), array('idDepartamento', $idDepartamento)),
+        $texto, 'Contenido eliminado correctamente', 'Contenido guardado correctamente', false);
 } catch (DbException $e) {
-    $db->close();
     sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
 }
 ?>

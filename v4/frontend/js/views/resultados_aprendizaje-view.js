@@ -300,7 +300,7 @@ const ResultadosArendizajeView = {
             this.resultados = [];
             this.permisos = false;
             try {
-                this.materias = await ResultadosArendizajeAPI.listar_materias(this.idDepartamento) || [];
+                this.materias = await ResultadosAprendizajeAPI.listar_materias(this.idDepartamento) || [];
             } catch (e) {
                 this.materias = [];
             }
@@ -310,7 +310,7 @@ const ResultadosArendizajeView = {
             if (!this.idMateriaSeleccionada) return;
             this.cargando = true;
             try {
-                const data = await ResultadosArendizajeAPI.cargar(this.idMateriaSeleccionada);
+                const data = await ResultadosAprendizajeAPI.cargar(this.idMateriaSeleccionada);
                 this.resultados = data.resultados;
                 this.permisos = data.permisos;
                 this.horasEmpresa = data.horas_empresa;
@@ -330,7 +330,7 @@ const ResultadosArendizajeView = {
         async actualizarHoras() {
             if (!this.idMateriaSeleccionada) return;
             try {
-                await ResultadosArendizajeAPI.actualizar_horas({
+                await ResultadosAprendizajeAPI.actualizar_horas({
                     idMateria: this.idMateriaSeleccionada,
                     horas: this.horasEmpresa
                 });
@@ -359,7 +359,7 @@ const ResultadosArendizajeView = {
 
         async guardar() {
             try {
-                await ResultadosArendizajeAPI.guardar({
+                await ResultadosAprendizajeAPI.guardar({
                     id: this.form.id,
                     idMateria: this.idMateriaSeleccionada,
                     texto: this.form.texto,
@@ -385,7 +385,7 @@ const ResultadosArendizajeView = {
 
         async actualizarEvaluar() {
             try {
-                await ResultadosArendizajeAPI.actualizar_evaluacion(this.evalForm);
+                await ResultadosAprendizajeAPI.actualizar_evaluacion(this.evalForm);
                 Avisos.exito('Evaluación actualizada');
                 this.modalEvaluar.hide();
                 this.cargar();
@@ -403,7 +403,7 @@ const ResultadosArendizajeView = {
 
         async cargarCriterios() {
             try {
-                this.criterios = await ResultadosArendizajeAPI.cargar_criterios(this.idRAActual) || [];
+                this.criterios = await ResultadosAprendizajeAPI.cargar_criterios(this.idRAActual) || [];
             } catch (error) {
                 // Si falla, se mantiene el listado anterior
             }
@@ -413,7 +413,7 @@ const ResultadosArendizajeView = {
             const conf = await Avisos.confirmar('¿Eliminar resultado?', r.texto);
             if (conf.isConfirmed) {
                 try {
-                    await ResultadosArendizajeAPI.eliminar(r.id);
+                    await ResultadosAprendizajeAPI.eliminar(r.id);
                     Avisos.exito('Eliminado');
                     this.cargar();
                 } catch (error) {
@@ -424,7 +424,7 @@ const ResultadosArendizajeView = {
 
         async guardarCriterio() {
             try {
-                await ResultadosArendizajeAPI.guardar_criterio({
+                await ResultadosAprendizajeAPI.guardar_criterio({
                     idResultado: this.idRAActual,
                     codigo: this.nuevoCriterio.codigo,
                     texto: this.nuevoCriterio.texto
@@ -439,7 +439,7 @@ const ResultadosArendizajeView = {
 
         async actualizarCriterio(c) {
             try {
-                await ResultadosArendizajeAPI.actualizar_criterio({
+                await ResultadosAprendizajeAPI.actualizar_criterio({
                     idResultado: c.idRA,
                     codigo: c.codigo,
                     nuevoCodigo: c.codigo,
@@ -454,7 +454,7 @@ const ResultadosArendizajeView = {
 
         async eliminarCriterio(c) {
             try {
-                await ResultadosArendizajeAPI.eliminar_criterio({
+                await ResultadosAprendizajeAPI.eliminar_criterio({
                     idResultado: c.idRA,
                     codigo: c.codigo
                 });

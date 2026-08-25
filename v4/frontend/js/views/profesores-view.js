@@ -371,22 +371,24 @@ const ProfesoresView = {
         },
         
         async guardarProfesor() {
-            const formData = new FormData();
-            formData.append('id', this.formulario.id || '');
-            formData.append('nombre', this.formulario.nombre);
-            formData.append('abreviatura', this.formulario.abreviatura);
-            formData.append('usuario', this.formulario.usuario);
-            formData.append('clave', this.formulario.clave);
-            formData.append('email', this.formulario.email);
-            formData.append('telefono', this.formulario.telefono);
-            formData.append('idEspecialidad', this.formulario.idEspecialidad);
-            formData.append('observaciones', this.formulario.observaciones);
-            formData.append('idDepartamento', this.idDepartamentoSeleccionado);
-            formData.append('prefRojas', this.formulario.prefRojas);
-            formData.append('prefAmarillas', this.formulario.prefAmarillas);
-            
+            // Cuerpo plano (JSON), igual que el resto de la app
+            const datos = {
+                id: this.formulario.id || '',
+                nombre: this.formulario.nombre,
+                abreviatura: this.formulario.abreviatura,
+                usuario: this.formulario.usuario,
+                clave: this.formulario.clave,
+                email: this.formulario.email,
+                telefono: this.formulario.telefono,
+                idEspecialidad: this.formulario.idEspecialidad,
+                observaciones: this.formulario.observaciones,
+                idDepartamento: this.idDepartamentoSeleccionado,
+                prefRojas: this.formulario.prefRojas,
+                prefAmarillas: this.formulario.prefAmarillas
+            };
+
             try {
-                const result = await ProfesoresAPI.guardar(formData);
+                const result = await ProfesoresAPI.guardar(datos);
                 this.modalInstance.hide();
                 Avisos.exito('Éxito', result.data.mensaje);
                 await this.cargarProfesores();
@@ -401,7 +403,7 @@ const ProfesoresView = {
             if (confirmed.isConfirmed) {
                 try {
                     const result = await ProfesoresAPI.eliminar(id);
-                    Swal.fire('Eliminado', result.data.mensaje, 'success');
+                    Avisos.exito('Eliminado', result.data.mensaje);
                     await this.cargarProfesores();
                 } catch (error) {
                     Avisos.error(error.message);
@@ -412,12 +414,7 @@ const ProfesoresView = {
         async cambiarJefe(idProfesor) {
             try {
                 await ProfesoresAPI.actualizarJefe(idProfesor, this.idDepartamentoSeleccionado);
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Jefe actualizado',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                Avisos.exito('Jefe actualizado');
                 await this.cargarProfesores();
             } catch (error) {
                 Avisos.error(error.message);
@@ -427,12 +424,7 @@ const ProfesoresView = {
         async cambiarActivo(idProfesor) {
             try {
                 await ProfesoresAPI.actualizarActivo(idProfesor);
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Estado actualizado',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                Avisos.exito('Estado actualizado');
                 await this.cargarProfesores();
             } catch (error) {
                 Avisos.error(error.message);

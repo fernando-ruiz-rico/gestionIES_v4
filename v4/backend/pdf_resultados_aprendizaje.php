@@ -26,39 +26,15 @@ header('Content-Type: application/pdf; charset=utf-8');
 require_once 'config.php';
 require_once 'lib/php/tcpdf/examples/tcpdf_include.php';
 require_once 'lib/php/tcpdf/tcpdf.php';
-
-// ============================================================================
-// Cabecera y pie de página (misma que usa el resto de PDFs de la app)
-// ============================================================================
-class MiPDFResultados extends TCPDF
-{
-    public function Header()
-    {
-        $this->setY(15);
-        $this->SetFont('helvetica', 'I', 12);
-        $this->Cell(0, 10, "I.E.S. San Vicente", 0, false, 'L', 0, '', 0, false, 'M', 'M');
-    }
-
-    public function Footer()
-    {
-        $this->SetY(-15);
-        $this->SetFont('helvetica', 'I', 10);
-        $this->Cell(0, 10, 'Pág ' . $this->getAliasNumPage() . '/' . $this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
-    }
-}
+require_once 'lib/pdf_compartidas.php';
 
 // ============================================================================
 // Consultas a la base de datos (capa Db de v4)
 // ============================================================================
 function consultar($db, $sql, $params = array())
 {
-    // Compatible con PHP 5: sin "..." en la llamada (PHP 5.6+);
-    // se rellenan los argumentos por copia.
-    $args = array($sql);
-    foreach ($params as $p) {
-        $args[] = $p;
-    }
-    return call_user_func_array(array($db, 'fetchAll'), $args);
+    // La capa Db usa argumentos variables; se expande la lista de parámetros
+    return $db->fetchAll(...array_merge(array($sql), $params));
 }
 
 // Ciclos de la familia de Informática (misma consulta que las vistas de v3)
@@ -298,7 +274,7 @@ if (!$db) {
 $db = new Db($db);
 
 try {
-    $pdf = new MiPDFResultados();
+    $pdf = new MiPDFBase();
     $pdf->SetCreator('GestionIES v4');
     $pdf->SetMargins(15, 20, 15, '');
     $pdf->SetAutoPageBreak(true, 15);
@@ -315,7 +291,7 @@ try {
     $pdf->Output('ResultadosAprendizaje_' . $modo . '.pdf', 'I');
     exit;
 } catch (Exception $e) {
-    $pdf = new MiPDFResultados();
+    $pdf = new MiPDFBase();
     $pdf->AddPage();
     $pdf->SetFont('helvetica', '', 12);
     $pdf->writeHTML('<p style="color: red; padding: 20px;">Error: ' . e($e->getMessage()) . '</p>');

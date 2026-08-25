@@ -14,46 +14,37 @@ const ProfesoresAPI = {
         return Http.getOk(`../backend/api/profesores/obtener.php?id=${id}`, 'Error al cargar profesor', 'include');
     },
 
-    // Guardar profesor (crear o actualizar)
-    async guardar(formData) {
-        const data = await Http.post('../backend/api/profesores/guardar.php', formData, 'include');
+    // Guardar profesor (crear o actualizar) — el cuerpo es un objeto plano (JSON)
+    async guardar(datos) {
+        const data = await Http.post('../backend/api/profesores/guardar.php', datos, 'include');
         if (!data.success) throw new Error(data.error || 'Error al guardar profesor');
         return data;
     },
 
     // Eliminar profesor
     async eliminar(id) {
-        const formData = new FormData();
-        formData.append('id', id);
-        const data = await Http.post('../backend/api/profesores/eliminar.php', formData, 'include');
+        const data = await Http.post('../backend/api/profesores/eliminar.php', { id: id }, 'include');
         if (!data.success) throw new Error(data.error || 'Error al eliminar profesor');
         return data;
     },
 
     // Actualizar jefe de departamento
     async actualizarJefe(idProfesor, idDepartamento) {
-        const formData = new FormData();
-        formData.append('idProfesor', idProfesor);
-        formData.append('idDepartamento', idDepartamento);
-        const data = await Http.post('../backend/api/profesores/actualizar_jefe.php', formData, 'include');
+        const data = await Http.post('../backend/api/profesores/actualizar_jefe.php', { idProfesor: idProfesor, idDepartamento: idDepartamento }, 'include');
         if (!data.success) throw new Error(data.error || 'Error al actualizar jefe de departamento');
         return data;
     },
 
     // Activar/desactivar profesor
     async actualizarActivo(idProfesor) {
-        const formData = new FormData();
-        formData.append('idProfesor', idProfesor);
-        const data = await Http.post('../backend/api/profesores/actualizar_activo.php', formData, 'include');
+        const data = await Http.post('../backend/api/profesores/actualizar_activo.php', { idProfesor: idProfesor }, 'include');
         if (!data.success) throw new Error(data.error || 'Error al actualizar el estado del profesor');
         return data;
     },
 
     // Ordenar profesores
     async ordenar(orden) {
-        const formData = new FormData();
-        formData.append('orden', orden);
-        const data = await Http.post('../backend/api/profesores/ordenar.php', formData, 'include');
+        const data = await Http.post('../backend/api/profesores/ordenar.php', { orden: orden }, 'include');
         if (!data.success) throw new Error(data.error || 'Error al ordenar profesores');
         return data;
     }

@@ -255,7 +255,7 @@ const TemasContenidosDefectoView = {
                     acciones: data.adaptaciones || ''
                 };
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.cargando = false;
             }
@@ -290,9 +290,9 @@ const TemasContenidosDefectoView = {
                     metodologia: this.editores.metodologia,
                     acciones: this.editores.adaptaciones
                 });
-                Swal.fire('Éxito', 'Contenidos guardados correctamente', 'success');
+                Avisos.exito('Éxito', 'Contenidos guardados correctamente');
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.guardando = false;
             }

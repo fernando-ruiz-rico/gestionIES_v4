@@ -30,24 +30,7 @@ header('Content-Type: application/pdf; charset=utf-8');
 require_once 'config.php';
 require_once 'lib/php/tcpdf/examples/tcpdf_include.php';
 require_once 'lib/php/tcpdf/tcpdf.php';
-
-// Subclase de TCPDF: cabecera y pie de página (igual que v3)
-class MiPDFSeguimiento extends TCPDF
-{
-    public function Header()
-    {
-        $this->setY(15);
-        $this->SetFont('helvetica', 'I', 12);
-        $this->Cell(0, 10, "I.E.S. San Vicente", 0, false, 'L', 0, '', 0, false, 'M', 'M');
-    }
-
-    public function Footer()
-    {
-        $this->SetY(-15);
-        $this->SetFont('helvetica', 'I', 10);
-        $this->Cell(0, 10, 'Pág ' . $this->getAliasNumPage() . '/' . $this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
-    }
-}
+require_once 'lib/pdf_compartidas.php';
 
 // Endpoint no JSON: se conserva la apertura original, porque si la conexión
 // falla el error debe seguir saliendo igual que antes (die() en texto plano).
@@ -134,7 +117,7 @@ function sp_buscarFilas($db, $filaGrupo, $idDepartamento, $curso, $idEvaluacion,
         . ' ORDER BY m.nombre, p.nombre';
     $params = array(intval($filaGrupo['id']), intval($idDepartamento), $curso, intval($idEvaluacion));
     try {
-        return call_user_func_array(array($db, 'fetchAll'), array_merge(array($sql), $params));
+        return $db->fetchAll(...array_merge(array($sql), $params));
     } catch (DbException $e) {
         // Mismo flujo de error que antes: die() con el error de la consulta.
         die('Error consultando la base de datos: ' . $e->getMessage());
@@ -144,7 +127,7 @@ function sp_buscarFilas($db, $filaGrupo, $idDepartamento, $curso, $idEvaluacion,
 // ---------------------------------------------------------------------------
 // Preparar el documento PDF
 // ---------------------------------------------------------------------------
-$pdf = new MiPDFSeguimiento();
+$pdf = new MiPDFBase();
 $pdf->SetAuthor('I.E.S. San Vicente');
 $pdf->SetTitle("Seguimiento programaciones " . $categoriaTexto . ". Departamento de " . $nomDepartamento . ". Curso " . $curso . ", " . $evaluacion);
 $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);

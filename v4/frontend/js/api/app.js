@@ -9,11 +9,11 @@ const AppAPI = {
 
     // Obtener menús
     getMenus() {
-        return Http.getOk(this.baseURL + 'app.php?action=menus', 'Error al cargar los menús');
+        return Http.getOk(this.baseURL + 'app/menus.php', 'Error al cargar los menús');
     },
 
     // Obtener activaciones
     getActivaciones() {
-        return Http.getOk(this.baseURL + 'app.php?action=activaciones', 'Error al cargar las activaciones');
+        return Http.getOk(this.baseURL + 'app/activaciones.php', 'Error al cargar las activaciones');
     }
 };

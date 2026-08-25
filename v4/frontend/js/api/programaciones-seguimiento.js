@@ -1,4 +1,4 @@
-const programacionesSeguimientoAPI = {
+const ProgramacionesSeguimientoAPI = {
     baseUrl: '../backend/api/programaciones_seguimiento/',
 
     cargarProfesores() {

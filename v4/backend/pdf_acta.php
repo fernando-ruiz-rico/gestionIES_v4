@@ -6,24 +6,7 @@ session_start();
 require_once 'config.php';
 require_once 'lib/php/tcpdf/examples/tcpdf_include.php';
 require_once 'lib/php/tcpdf/tcpdf.php';
-
-// Subclase de TCPDF para el PDF del acta: cabecera y pie de página
-class MiPDFActa extends TCPDF
-{
-    public function Header()
-    {
-        $this->setY(15);
-        $this->SetFont('helvetica', 'I', 12);
-        $this->Cell(0, 10, "I.E.S. San Vicente", 0, false, 'L', 0, '', 0, false, 'M', 'M');
-    }
-
-    public function Footer()
-    {
-        $this->SetY(-15);
-        $this->SetFont('helvetica', 'I', 10);
-        $this->Cell(0, 10, 'Pág '.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), 0, false, 'C', 0, '', 0, false, 'T', 'M');
-    }
-}
+require_once 'lib/pdf_compartidas.php';
 
 $idActa = isset($_REQUEST['idActa']) ? intval($_REQUEST['idActa']) : 0;
 if ($idActa <= 0)
@@ -47,7 +30,7 @@ if ($fila)
     $fecha = date('d/m/Y', strtotime($fila['fecha']));
     $texto = $fila['texto'];
 
-    $pdf = new MiPDFActa();
+    $pdf = new MiPDFBase();
     $pdf->SetAuthor('I.E.S. San Vicente');
     $pdf->SetTitle("Acta de departamento de " . $departamento);
     $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);

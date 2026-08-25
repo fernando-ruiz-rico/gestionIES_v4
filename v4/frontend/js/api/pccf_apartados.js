@@ -28,9 +28,7 @@ const PCCFApartadosAPI = {
 
     // Reordena los apartados según el nuevo orden recibido
     async ordenar(orden) {
-        const formData = new FormData();
-        formData.append('orden', orden);
-        const data = await Http.post(this.baseUrl + 'ordenar.php', formData);
+        const data = await Http.post(this.baseUrl + 'ordenar.php', { orden: orden });
         if (!data.success) throw new Error(data.error || 'Error al ordenar los apartados');
         return data;
     }

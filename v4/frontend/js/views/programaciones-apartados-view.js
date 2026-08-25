@@ -147,9 +147,9 @@ const ProgramacionesApartadosView = {
         async cargar() {
             this.cargando = true;
             try {
-                this.apartados = await programacionesApartadosAPI.listar();
+                this.apartados = await ProgramacionesApartadosAPI.listar();
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             } finally {
                 this.cargando = false;
             }
@@ -204,11 +204,11 @@ const ProgramacionesApartadosView = {
 
         async guardar() {
             if (!this.formulario.titulo.trim()) {
-                Swal.fire('Error', 'Debes indicar un título', 'warning');
+                Avisos.aviso('Debes indicar un título');
                 return;
             }
             if (!this.formulario.categoria) {
-                Swal.fire('Error', 'Debes seleccionar una categoría', 'warning');
+                Avisos.aviso('Debes seleccionar una categoría');
                 return;
             }
 
@@ -218,32 +218,28 @@ const ProgramacionesApartadosView = {
             const apartadoGuardado = { ...this.formulario, tipo };
 
             try {
-                await programacionesApartadosAPI.guardar(apartadoGuardado);
-                Swal.fire('Éxito', 'Apartado guardado correctamente', 'success');
+                await ProgramacionesApartadosAPI.guardar(apartadoGuardado);
+                Avisos.exito('Éxito', 'Apartado guardado correctamente');
                 this.modal.hide();
                 await this.cargar();
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
             }
         },
 
         async eliminarApartado(apartado) {
-            const result = await Swal.fire({
-                title: '¿Eliminar apartado?',
-                text: `Confirmas el borrado del apartado '${apartado.titulo}'? Se eliminarán todos los contenidos de las programaciones relativos a dicho apartado.`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
+            const result = await Avisos.confirmar('¿Eliminar apartado?', `Confirmas el borrado del apartado '${apartado.titulo}'? Se eliminarán todos los contenidos de las programaciones relativos a dicho apartado.`, {
+                icono: 'warning',
+                boton: 'Sí, eliminar'
             });
 
             if (result.isConfirmed) {
                 try {
-                    await programacionesApartadosAPI.eliminar(apartado.id);
-                    Swal.fire('Eliminada', 'Apartado eliminado correctamente', 'success');
+                    await ProgramacionesApartadosAPI.eliminar(apartado.id);
+                    Avisos.exito('Eliminada', 'Apartado eliminado correctamente');
                     await this.cargar();
                 } catch (error) {
-                    Swal.fire('Error', error.message, 'error');
+                    Avisos.error(error.message);
                 }
             }
         },
@@ -267,7 +263,7 @@ const ProgramacionesApartadosView = {
             const orden = this.apartados.map(a => 'ap' + a.id).join(',');
             
             try {
-                await programacionesApartadosAPI.ordenar(orden);
+                await ProgramacionesApartadosAPI.ordenar(orden);
                 Swal.fire({
                     icon: 'success',
                     title: 'Orden actualizado',
@@ -277,7 +273,7 @@ const ProgramacionesApartadosView = {
                     timer: 2000
                 });
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Avisos.error(error.message);
                 await this.cargar(); // Recargar para restaurar orden original
             }
             
