@@ -6,9 +6,10 @@
 const EscenariosAPI = {
     baseUrl: '../backend/api/escenarios/',
 
-    // Listar escenarios
-    listar() {
-        return Http.getOk(this.baseUrl + 'listar.php', 'Error al cargar los escenarios', 'include');
+    // Listar escenarios de un departamento
+    listar(idDepartamento) {
+        const url = this.baseUrl + 'listar.php' + ((idDepartamento > 0) ? `?idDepartamento=${idDepartamento}` : '');
+        return Http.getOk(url, 'Error al cargar los escenarios', 'include');
     },
 
     // Obtener un escenario
