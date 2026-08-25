@@ -235,11 +235,7 @@ const TemasContenidosDefectoView = {
         // -- Departamento / contenido ----------------------------------------------
         async cargarDepartamentos() {
             try {
-                const response = await fetch('../backend/api/departamentos/listar.php');
-                const data = await response.json();
-                if (data && data.success) {
-                    this.departamentos = data.data || [];
-                }
+                this.departamentos = await DepartamentosAPI.listar() || [];
             } catch (error) {
                 console.error('Error al cargar departamentos:', error);
             }

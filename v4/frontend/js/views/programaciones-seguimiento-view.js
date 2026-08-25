@@ -381,9 +381,7 @@ const ProgramacionesSeguimientoView = {
 
         async cargarDepartamentos() {
             try {
-                const result = await fetch('../backend/api/departamentos/listar.php', { credentials: 'same-origin' });
-                const data = await result.json();
-                if (data.success) this.departamentos = data.data || [];
+                this.departamentos = await DepartamentosAPI.listar() || [];
             } catch (error) {
                 Swal.fire('Error', 'No se han podido cargar los departamentos', 'error');
             }

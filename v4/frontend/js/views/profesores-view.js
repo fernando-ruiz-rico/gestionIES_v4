@@ -256,22 +256,18 @@ const ProfesoresView = {
     
     methods: {
         async cargarDepartamentos() {
-            const result = await fetch('../backend/api/departamentos/listar.php', {
-                credentials: 'include'
-            });
-            if (result.ok) {
-                const data = await result.json();
-                if (data.success) this.departamentos = data.data || [];
+            try {
+                this.departamentos = await DepartamentosAPI.listar() || [];
+            } catch (error) {
+                // Si falla, se mantiene el listado anterior
             }
         },
         
         async cargarEspecialidades() {
-            const result = await fetch('../backend/api/especialidades/listar.php', {
-                credentials: 'include'
-            });
-            if (result.ok) {
-                const data = await result.json();
-                this.especialidades = (data.success && Array.isArray(data.data)) ? data.data : [];
+            try {
+                this.especialidades = await EspecialidadesAPI.listar() || [];
+            } catch (error) {
+                // Si falla, se mantiene el listado anterior
             }
         },
         
@@ -279,13 +275,12 @@ const ProfesoresView = {
             if (!this.idDepartamentoSeleccionado) return;
             
             this.cargando = true;
-            const result = await ProfesoresAPI.listar(this.idDepartamentoSeleccionado);
-            this.cargando = false;
-            
-            if (result.success) {
-                this.profesores = result.data;
-            } else {
-                Avisos.error(result.error);
+            try {
+                this.profesores = await ProfesoresAPI.listar(this.idDepartamentoSeleccionado) || [];
+            } catch (error) {
+                Avisos.error(error.message);
+            } finally {
+                this.cargando = false;
             }
         },
         
@@ -308,9 +303,8 @@ const ProfesoresView = {
         },
         
         async editarProfesor(id) {
-            const result = await ProfesoresAPI.obtener(id);
-            if (result.success) {
-                const prof = result.data;
+            try {
+                const prof = await ProfesoresAPI.obtener(id);
                 this.formulario = {
                     id: prof.id,
                     nombre: prof.nombre,
@@ -329,8 +323,8 @@ const ProfesoresView = {
                 await this.cargarPreferenciasHorarias(id);
                 
                 this.modalInstance.show();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
         
@@ -391,14 +385,13 @@ const ProfesoresView = {
             formData.append('prefRojas', this.formulario.prefRojas);
             formData.append('prefAmarillas', this.formulario.prefAmarillas);
             
-            const result = await ProfesoresAPI.guardar(formData);
-            
-            if (result.success) {
+            try {
+                const result = await ProfesoresAPI.guardar(formData);
                 this.modalInstance.hide();
                 Avisos.exito('Éxito', result.data.mensaje);
                 await this.cargarProfesores();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
         
@@ -406,21 +399,19 @@ const ProfesoresView = {
             const confirmed = await Avisos.confirmar('¿Borrar profesor?', 'Se eliminará al profesor "' + nombre + '" y todos sus vínculos (selección de materias, preferencias de horario...)', { boton: 'Sí, borrar' });
             
             if (confirmed.isConfirmed) {
-                const result = await ProfesoresAPI.eliminar(id);
-                
-                if (result.success) {
+                try {
+                    const result = await ProfesoresAPI.eliminar(id);
                     Swal.fire('Eliminado', result.data.mensaje, 'success');
                     await this.cargarProfesores();
-                } else {
-                    Avisos.error(result.error);
+                } catch (error) {
+                    Avisos.error(error.message);
                 }
             }
         },
         
         async cambiarJefe(idProfesor) {
-            const result = await ProfesoresAPI.actualizarJefe(idProfesor, this.idDepartamentoSeleccionado);
-            
-            if (result.success) {
+            try {
+                await ProfesoresAPI.actualizarJefe(idProfesor, this.idDepartamentoSeleccionado);
                 Swal.fire({
                     icon: 'success',
                     title: 'Jefe actualizado',
@@ -428,15 +419,14 @@ const ProfesoresView = {
                     showConfirmButton: false
                 });
                 await this.cargarProfesores();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
         
         async cambiarActivo(idProfesor) {
-            const result = await ProfesoresAPI.actualizarActivo(idProfesor);
-            
-            if (result.success) {
+            try {
+                await ProfesoresAPI.actualizarActivo(idProfesor);
                 Swal.fire({
                     icon: 'success',
                     title: 'Estado actualizado',
@@ -444,8 +434,8 @@ const ProfesoresView = {
                     showConfirmButton: false
                 });
                 await this.cargarProfesores();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         }
     },

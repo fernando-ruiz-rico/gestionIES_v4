@@ -17,13 +17,12 @@ const app = createApp({
     
     methods: {
         async checkAuth() {
-            const result = await AuthAPI.checkAuth();
-            
-            if (result.success) {
+            try {
+                this.usuario = await AuthAPI.checkAuth();
                 this.isLoggedIn = true;
-                this.usuario = result.data;
                 await this.loadMenus();
-            } else {
+            } catch (error) {
+                // Sin sesión activa (o error de conexión): queda en el login
                 this.isLoggedIn = false;
                 this.usuario = null;
                 this.menus = [];
@@ -31,18 +30,19 @@ const app = createApp({
         },
         
         async loadMenus() {
-            const result = await AppAPI.getMenus();
-            
-            if (result.success) {
-                this.menus = result.data.menus;
-                this.usuario = { ...this.usuario, ...result.data.usuario };
-            }
+            const data = await AppAPI.getMenus();
+            this.menus = data.menus || [];
+            this.usuario = { ...this.usuario, ...data.usuario };
         },
         
-        handleLoginSuccess(userData) {
+        async handleLoginSuccess(userData) {
             this.isLoggedIn = true;
             this.usuario = userData;
-            this.loadMenus();
+            try {
+                await this.loadMenus();
+            } catch (error) {
+                // Si fallan los menús, se muestran vacíos (igual que antes)
+            }
             
             // Mostrar mensaje de bienvenida
             Avisos.exito('¡Bienvenido!', `Hola ${userData.nombre}`);
@@ -52,7 +52,12 @@ const app = createApp({
             const confirmed = await Avisos.confirmar('¿Cerrar sesión?', 'Se cerrará la sesión actual', { boton: 'Sí, cerrar', icono: 'question' });
             
             if (confirmed.isConfirmed) {
-                await AuthAPI.logout();
+                try {
+                    await AuthAPI.logout();
+                } catch (error) {
+                    // La sesión local se cierra igualmente
+                    console.error('Error al cerrar la sesión:', error);
+                }
                 this.isLoggedIn = false;
                 this.usuario = null;
                 this.menus = [];

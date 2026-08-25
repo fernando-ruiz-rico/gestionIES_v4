@@ -1,29 +1,25 @@
 // API client para el módulo de Actas de departamentos (Fase 6.1)
-
+//
+// Convención unificada: los métodos de lectura resuelven con data.data y
+// lanzan Error en caso de fallo; las acciones lanzan Error y resuelven con
+// el sobre completo { success, data, message }.
 const ActasAPI = {
     baseUrl: '../backend/api/actas.php',
 
     // Lista las actas de un departamento (más reciente primero)
-    async listar(idDepartamento) {
-        const data = await Http.get(this.baseUrl + '?action=listar&idDepartamento=' + idDepartamento, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error de conexión', data: [] };
+    listar(idDepartamento) {
+        return Http.getOk(this.baseUrl + '?action=listar&idDepartamento=' + idDepartamento, 'Error al cargar las actas', 'include');
     },
 
     // Devuelve el texto y fecha de un acta
-    async obtener(idActa) {
-        const data = await Http.get(this.baseUrl + '?action=obtener&idActa=' + idActa, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error de conexión', data: null };
+    obtener(idActa) {
+        return Http.getOk(this.baseUrl + '?action=obtener&idActa=' + idActa, 'Error al cargar el acta', 'include');
     },
 
     // Inserta o actualiza un acta de departamento
     async guardar(data) {
         const parsed = await Http.post(this.baseUrl + '?action=guardar', data, 'include');
-        return parsed.success
-            ? { success: true, data: parsed.data }
-            : { success: false, error: parsed.error || 'Error de conexión' };
+        if (!parsed.success) throw new Error(parsed.error || 'Error al guardar el acta');
+        return parsed;
     }
 };

@@ -2,20 +2,10 @@
 
 // Carga en el div con id "listadepartamentos" el listado de departamentos obtenido
 function cargarDepartamentos() {
-    fetch('../backend/api/departamentos/listar.php', {
-        credentials: 'same-origin'
-    })
-    .then(response => response.json())
-    .then(data => {
+    DepartamentosAPI.listar()
+    .then(filas => {
         const contenedor = document.getElementById('listadepartamentos');
         if (!contenedor) return;
-        
-        if (!data.success) {
-            contenedor.innerHTML = '<div class="alert alert-danger m-3">' + escapeHtml(data.error || 'Error al cargar los departamentos') + '</div>';
-            return;
-        }
-        
-        const filas = data.data || [];
         
         if (filas.length === 0) {
             contenedor.innerHTML = '<div class="alert alert-info m-3">No hay departamentos registrados</div>';
@@ -49,19 +39,11 @@ function cargarDepartamentos() {
 
 // Carga en el formulario modal de departamentos los datos del departamento con el ID proporcionado
 function cargarDepartamentoModal(id) {
-    fetch('../backend/api/departamentos/obtener.php?id=' + id, {
-        credentials: 'same-origin'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (!data.success) {
-            Avisos.error(data.error || 'Error al cargar el departamento');
-            return;
-        }
-        
-        const depto = data.data || {};
-        document.getElementById('idDepartamento').value = depto.id || '';
-        document.getElementById('nombre').value = depto.nombre || '';
+    DepartamentosAPI.obtener(id)
+    .then(depto => {
+        const d = depto || {};
+        document.getElementById('idDepartamento').value = d.id || '';
+        document.getElementById('nombre').value = d.nombre || '';
         
         // Mostrar el modal usando Bootstrap
         const modal = new bootstrap.Modal(document.getElementById('formdepartamento'));
@@ -93,26 +75,14 @@ function borrarDepartamento(id, nombre) {
         }
     ).then((result) => {
         if (result.isConfirmed) {
-            const formData = new FormData();
-            formData.append('id', id);
-            
-            fetch('../backend/api/departamentos/eliminar.php', {
-                method: 'POST',
-                credentials: 'same-origin',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Avisos.exito('¡Éxito!', 'Departamento eliminado correctamente');
-                    cargarDepartamentos();
-                } else {
-                    Avisos.error(data.error || 'Error al eliminar el departamento');
-                }
+            DepartamentosAPI.eliminar(id)
+            .then(() => {
+                Avisos.exito('¡Éxito!', 'Departamento eliminado correctamente');
+                cargarDepartamentos();
             })
             .catch(error => {
                 console.error('Error al eliminar departamento:', error);
-                Avisos.error('Error al eliminar el departamento');
+                Avisos.error(error.message || 'Error al eliminar el departamento');
             });
         }
     });
@@ -131,33 +101,25 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const formData = new FormData(form);
-            
-            fetch('../backend/api/departamentos/guardar.php', {
-                method: 'POST',
-                credentials: 'same-origin',
-                body: formData
+            DepartamentosAPI.guardar({
+                idDepartamento: document.getElementById('idDepartamento').value,
+                nombre: document.getElementById('nombre').value
             })
-            .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    Avisos.exito('¡Éxito!', data.message || 'Departamento guardado correctamente');
-                    limpiarFormularioDepartamentos();
-                    
-                    // Ocultar modal
-                    const modalEl = document.getElementById('formdepartamento');
-                    const modal = bootstrap.Modal.getInstance(modalEl);
-                    if (modal) modal.hide();
-                    
-                    // Recargar lista
-                    cargarDepartamentos();
-                } else {
-                    Avisos.error(data.error || 'Error al guardar el departamento');
-                }
+                Avisos.exito('¡Éxito!', data.message || 'Departamento guardado correctamente');
+                limpiarFormularioDepartamentos();
+                
+                // Ocultar modal
+                const modalEl = document.getElementById('formdepartamento');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+                
+                // Recargar lista
+                cargarDepartamentos();
             })
             .catch(error => {
                 console.error('Error al guardar departamento:', error);
-                Avisos.error('Error al guardar el departamento');
+                Avisos.error(error.message || 'Error al guardar el departamento');
             });
         });
     }

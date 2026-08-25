@@ -84,26 +84,33 @@ const ActasView = {
 
     methods: {
         async cargarDepartamentos() {
-            const result = await fetch('../backend/api/departamentos/listar.php', { credentials: 'same-origin' });
-            const data = await result.json();
-            if (data.success) this.departamentos = data.data || [];
+            try {
+                this.departamentos = await DepartamentosAPI.listar() || [];
+            } catch (error) {
+                // Si falla, se mantiene el listado anterior
+            }
             // Si el usuario es admin, puede editar cualquier depto; si es profesor, no
             this.permisos = this.usuario && (this.usuario.rol === 'admin' || this.usuario.rol === 'jefeDepartamento');
         },
 
         async cargar() {
             if (!this.idDepartamento) return;
-            const res = await ActasAPI.listar(this.idDepartamento);
-            if (res && res.success) this.actas = res.data;
+            try {
+                this.actas = await ActasAPI.listar(this.idDepartamento) || [];
+            } catch (error) {
+                this.actas = [];
+            }
         },
 
         async cargarActa() {
             if (!this.idActa) return;
-            const res = await ActasAPI.obtener(this.idActa);
-            if (res && res.success) {
-                this.actaContenido = res.data.texto;
-                this.form.fecha = res.data.fecha;
+            try {
+                const data = await ActasAPI.obtener(this.idActa);
+                this.actaContenido = data.texto;
+                this.form.fecha = data.fecha;
                 this.form.idActa = this.idActa;
+            } catch (error) {
+                // Si falla, se mantiene el contenido anterior
             }
         },
 
@@ -130,13 +137,15 @@ const ActasView = {
                         texto: '<h3>Asistentes</h3><ol></ol><h3>Orden del día</h3><p>Por completar</p>',
                         fecha: hoy
                     };
-                    const guardada = await ActasAPI.guardar(form);
-                    if (guardada && guardada.success) {
+                    try {
+                        const guardada = await ActasAPI.guardar(form);
                         Swal.fire({ icon: 'success', title: 'Acta creada', timer: 1000, showConfirmButton: false });
                         this.cargar();
                         // Seleccionamos la nueva acta
                         this.idActa = guardada.data.id;
                         this.cargarActa();
+                    } catch (error) {
+                        Swal.fire('Error', error.message, 'error');
                     }
                 }
             });
@@ -149,11 +158,11 @@ const ActasView = {
                 texto: this.actaContenido,
                 fecha: this.form.fecha
             };
-            const res = await ActasAPI.guardar(form);
-            if (res && res.success) {
+            try {
+                await ActasAPI.guardar(form);
                 Swal.fire({ icon: 'success', title: 'Acta guardada', timer: 1000, showConfirmButton: false });
-            } else {
-                Swal.fire('Error', res.error, 'error');
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
             }
         }
     }

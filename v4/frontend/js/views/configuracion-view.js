@@ -83,9 +83,11 @@ const ConfiguracionView = {
 
     methods: {
         async cargar() {
-            const res = await ConfiguracionAPI.obtener();
-            if (res && res.success) {
-                this.activaciones = res.data.activaciones;
+            try {
+                const data = await ConfiguracionAPI.obtener();
+                this.activaciones = data.activaciones;
+            } catch (error) {
+                // Si falla, se mantienen los valores por defecto
             }
         },
 
@@ -94,26 +96,23 @@ const ConfiguracionView = {
                 Avisos.error('Las contraseñas no coinciden');
                 return;
             }
-            const res = ConfiguracionAPI.actualizar_password({
+            ConfiguracionAPI.actualizar_password({
                 passwordActual: this.passwordForm.passwordActual,
                 nuevaPassword: this.passwordForm.nuevaPassword,
                 passwordConfirmacion: this.passwordForm.passwordConfirmacion
-            });
-            res.then(r => {
-                if (r && r.success) {
-                    Avisos.exito('Contraseña actualizada');
-                    this.passwordForm = { passwordActual: '', nuevaPassword: '', passwordConfirmacion: '' };
-                } else {
-                    Avisos.error(r.error);
-                }
+            }).then(() => {
+                Avisos.exito('Contraseña actualizada');
+                this.passwordForm = { passwordActual: '', nuevaPassword: '', passwordConfirmacion: '' };
+            }).catch((error) => {
+                Avisos.error(error.message);
             });
         },
 
         toggle(clave, valor) {
-            ConfiguracionAPI.actualizar_activacion(clave, valor).then(r => {
-                if (r && r.success) {
-                    Avisos.exito('Ajuste actualizado');
-                }
+            ConfiguracionAPI.actualizar_activacion(clave, valor).then(() => {
+                Avisos.exito('Ajuste actualizado');
+            }).catch((error) => {
+                Avisos.error(error.message);
             });
         }
     }

@@ -347,24 +347,28 @@ const MateriasView = {
                 this.materias = [];
                 return;
             }
-            const result = await MateriasAPI.listar(this.selCurso);
-            this.materias = result.success ? result.data : [];
+            try {
+                this.materias = await MateriasAPI.listar(this.selCurso) || [];
+            } catch (error) {
+                this.materias = [];
+            }
         },
 
         async cargarCursos() {
-            const result = await CursosAPI.listar();
-            this.cursos = result.success ? result.data : [];
+            try {
+                this.cursos = await CursosAPI.listar() || [];
+            } catch (error) {
+                this.cursos = [];
+            }
         },
 
         // Cuántos grupos tiene cada curso (para el botón "datos por grupo", fiel a v3)
         async cargarGrupos() {
             try {
-                const result = await GruposAPI.listar();
-                if (result.success) {
-                    const m = {};
-                    result.data.forEach(g => { m[g.idCurso] = (m[g.idCurso] || 0) + 1; });
-                    this.gruposPorCurso = m;
-                }
+                const grupos = await GruposAPI.listar();
+                const m = {};
+                (grupos || []).forEach(g => { m[g.idCurso] = (m[g.idCurso] || 0) + 1; });
+                this.gruposPorCurso = m;
             } catch (e) {
                 this.gruposPorCurso = {};
             }
@@ -372,9 +376,7 @@ const MateriasView = {
 
         async cargarDepartamentos() {
             try {
-                const response = await fetch('../backend/api/departamentos/listar.php', { credentials: 'include' });
-                const data = await response.json();
-                this.departamentos = (data.success && Array.isArray(data.data)) ? data.data : [];
+                this.departamentos = await DepartamentosAPI.listar() || [];
             } catch (e) {
                 this.departamentos = [];
             }
@@ -382,8 +384,7 @@ const MateriasView = {
 
         async cargarEspecialidades() {
             try {
-                const result = await EspecialidadesAPI.listar();
-                this.especialidades = result.success ? result.data : [];
+                this.especialidades = await EspecialidadesAPI.listar() || [];
             } catch (e) {
                 this.especialidades = [];
             }
@@ -434,26 +435,25 @@ const MateriasView = {
         },
 
         async guardar() {
-            const result = await MateriasAPI.guardar(this.form);
-
-            if (result.success) {
+            try {
+                const result = await MateriasAPI.guardar(this.form);
                 Avisos.exito('Éxito', result.message);
                 this.modal.hide();
                 this.cargar();
-            } else {
-                Avisos.error(result.error || 'No se pudo guardar la materia');
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         eliminar(m) {
             Avisos.confirmar('¿Eliminar materia?', m.nombre).then(async (res) => {
                 if (res.isConfirmed) {
-                    const result = await MateriasAPI.eliminar(m.id);
-                    if (result.success) {
+                    try {
+                        await MateriasAPI.eliminar(m.id);
                         Avisos.exito('Materia eliminada');
                         this.cargar();
-                    } else {
-                        Avisos.error(result.error);
+                    } catch (error) {
+                        Avisos.error(error.message);
                     }
                 }
             });
@@ -461,21 +461,20 @@ const MateriasView = {
 
         // Datos por grupo (fiel a v3: cargar_forms_materias_grupos.php)
         async abrirGrupos(m) {
-            const result = await MateriasAPI.listar_materias_grupos(m.id, m.idCurso);
-            if (!result.success || !result.data) {
+            try {
+                const d = await MateriasAPI.listar_materias_grupos(m.id, m.idCurso);
+                this.gruposModal = {
+                    idMateria: d.idMateria,
+                    idCurso: d.idCurso,
+                    nombreCurso: d.nombreCurso,
+                    nombreMateria: d.nombreMateria,
+                    general: d.general,
+                    grupos: d.grupos
+                };
+                this.modalGrupos.show();
+            } catch (error) {
                 Avisos.error('No se pudieron cargar los datos de los grupos');
-                return;
             }
-            const d = result.data;
-            this.gruposModal = {
-                idMateria: d.idMateria,
-                idCurso: d.idCurso,
-                nombreCurso: d.nombreCurso,
-                nombreMateria: d.nombreMateria,
-                general: d.general,
-                grupos: d.grupos
-            };
-            this.modalGrupos.show();
         },
 
         // Rellena todos los grupos con los datos generales (sin guardar, fiel a v3)
@@ -492,46 +491,47 @@ const MateriasView = {
         },
 
         async guardarGrupo(g) {
-            const result = await MateriasAPI.insertar_materia_grupo({
-                idMateria: this.gruposModal.idMateria,
-                idGrupo: g.id,
-                cantidad: g.cantidad,
-                horas: g.horas,
-                horas_complementarias: g.horas_complementarias,
-                min_num_profesores: g.min_num_profesores,
-                max_grupos_profesor: g.max_grupos_profesor
-            });
-            if (result.success) {
+            try {
+                await MateriasAPI.insertar_materia_grupo({
+                    idMateria: this.gruposModal.idMateria,
+                    idGrupo: g.id,
+                    cantidad: g.cantidad,
+                    horas: g.horas,
+                    horas_complementarias: g.horas_complementarias,
+                    min_num_profesores: g.min_num_profesores,
+                    max_grupos_profesor: g.max_grupos_profesor
+                });
                 Avisos.exito('Grupo guardado', 'Los datos del grupo se han actualizado');
-            } else {
-                Avisos.error(result.error || 'No se pudieron guardar los datos del grupo');
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         // Competencias (fiel a v3: cargar_competencias_materia.php)
         async abrirCompetencias(m) {
-            const result = await MateriasAPI.competencias_listar(m.id);
-            if (!result.success || !result.data) {
+            try {
+                const d = await MateriasAPI.competencias_listar(m.id);
+                this.compModal = {
+                    idMateria: d.idMateria,
+                    nombreMateria: d.nombreMateria,
+                    asociadas: d.asociadas,
+                    opciones: d.opciones,
+                    selCompetencia: 0
+                };
+                this.modalCompetencias.show();
+            } catch (error) {
                 Avisos.error('No se pudieron cargar las competencias');
-                return;
             }
-            const d = result.data;
-            this.compModal = {
-                idMateria: d.idMateria,
-                nombreMateria: d.nombreMateria,
-                asociadas: d.asociadas,
-                opciones: d.opciones,
-                selCompetencia: 0
-            };
-            this.modalCompetencias.show();
         },
 
         // Recarga la lista de competencias tras un cambio (fiel a v3)
         async recargarCompetencias() {
-            const result = await MateriasAPI.competencias_listar(this.compModal.idMateria);
-            if (result.success && result.data) {
-                this.compModal.asociadas = result.data.asociadas;
-                this.compModal.opciones = result.data.opciones;
+            try {
+                const d = await MateriasAPI.competencias_listar(this.compModal.idMateria);
+                this.compModal.asociadas = d.asociadas;
+                this.compModal.opciones = d.opciones;
+            } catch (error) {
+                // Si falla, se mantiene el listado anterior
             }
         },
 
@@ -540,23 +540,23 @@ const MateriasView = {
                 Avisos.aviso('Selecciona una competencia');
                 return;
             }
-            const result = await MateriasAPI.competencias_asociar(this.compModal.idMateria, this.compModal.selCompetencia);
-            if (result.success) {
+            try {
+                await MateriasAPI.competencias_asociar(this.compModal.idMateria, this.compModal.selCompetencia);
                 Avisos.exito('Competencia asociada');
                 this.compModal.selCompetencia = 0;
                 this.recargarCompetencias();
-            } else {
-                Avisos.error(result.error || 'No se pudo asociar la competencia');
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         async borrarCompetencia(idCompetencia) {
-            const result = await MateriasAPI.competencias_borrar(this.compModal.idMateria, idCompetencia);
-            if (result.success) {
+            try {
+                await MateriasAPI.competencias_borrar(this.compModal.idMateria, idCompetencia);
                 Avisos.exito('Competencia desvinculada');
                 this.recargarCompetencias();
-            } else {
-                Avisos.error(result.error || 'No se pudo desvincular la competencia');
+            } catch (error) {
+                Avisos.error(error.message);
             }
         }
     }

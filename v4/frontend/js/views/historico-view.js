@@ -106,9 +106,11 @@ const HistoricoView = {
 
     methods: {
         async cargarDepartamentos() {
-            const result = await fetch('../backend/api/departamentos/listar.php', { credentials: 'same-origin' });
-            const data = await result.json();
-            if (data.success) this.departamentos = data.data || [];
+            try {
+                this.departamentos = await DepartamentosAPI.listar() || [];
+            } catch (error) {
+                // Si falla, se mantiene el listado anterior
+            }
         },
 
         async cambiarDepartamento() {
@@ -119,14 +121,20 @@ const HistoricoView = {
 
         async cargarEscenarios() {
             if (!this.idDepartamento) return;
-            const res = await EscenariosAPI.listar(this.idDepartamento);
-            if (res && res.success) this.escenarios = res.data || [];
+            try {
+                this.escenarios = await EscenariosAPI.listar(this.idDepartamento) || [];
+            } catch (error) {
+                this.escenarios = [];
+            }
         },
 
         async cargar() {
             if (!this.idDepartamento || !this.idEscenario) return;
-            const res = await HistoricoAPI.listar(this.idDepartamento, this.idEscenario);
-            if (res && res.success) this.datos = res.data || [];
+            try {
+                this.datos = await HistoricoAPI.listar(this.idDepartamento, this.idEscenario) || [];
+            } catch (error) {
+                this.datos = [];
+            }
         }
     }
 };

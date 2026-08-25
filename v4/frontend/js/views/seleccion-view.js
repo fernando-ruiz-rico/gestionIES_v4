@@ -308,10 +308,14 @@ const SeleccionView = {
     methods: {
         // v3: si el periodo no está activo, el profesor no puede hacer selecciones
         async comprobarActivada() {
-            const res = await AppAPI.getActivaciones();
-            if (res.success && res.data && res.data.desideratas === false) {
-                this.desactivada = true;
-                return;
+            try {
+                const activaciones = await AppAPI.getActivaciones();
+                if (activaciones && activaciones.desideratas === false) {
+                    this.desactivada = true;
+                    return;
+                }
+            } catch (error) {
+                // Si falla, se sigue con la selección (igual que antes)
             }
             this.inicializar();
         },
@@ -332,9 +336,11 @@ const SeleccionView = {
         },
 
         async cargarDepartamentos() {
-            const result = await fetch('../backend/api/departamentos/listar.php', { credentials: 'same-origin' });
-            const data = await result.json();
-            if (data.success) this.departamentos = data.data || [];
+            try {
+                this.departamentos = await DepartamentosAPI.listar() || [];
+            } catch (error) {
+                // Si falla, se mantiene el listado anterior
+            }
         },
 
         async cambiarDepartamento() {
@@ -350,11 +356,14 @@ const SeleccionView = {
         },
 
         async cargarEscenarios() {
-            const res = await SeleccionAPI.listar_escenarios(this.idDepartamento);
-            if (res && res.success) this.escenarios = res.data || [];
-            // Especialidades para el filtro del panel de profesores
-            const resEsp = await SeleccionAPI.listar_especialidades(this.idDepartamento);
-            if (resEsp && resEsp.success) this.especialidades = resEsp.data || [];
+            try {
+                this.escenarios = await SeleccionAPI.listar_escenarios(this.idDepartamento) || [];
+                // Especialidades para el filtro del panel de profesores
+                this.especialidades = await SeleccionAPI.listar_especialidades(this.idDepartamento) || [];
+            } catch (error) {
+                this.escenarios = [];
+                this.especialidades = [];
+            }
             this.idEscenario = '';
         },
 
@@ -368,17 +377,22 @@ const SeleccionView = {
         },
 
         async cargarCursos() {
-            const res = await SeleccionAPI.listar_cursos(this.idDepartamento, this.idEscenario);
-            if (res && res.success) {
-                this.filasCursos = res.data.filas || [];
-                this.modoRueda = res.data.modoRueda === 1 || res.data.modoRueda === '1' || res.data.modoRueda === true;
+            try {
+                const data = await SeleccionAPI.listar_cursos(this.idDepartamento, this.idEscenario);
+                this.filasCursos = data.filas || [];
+                this.modoRueda = data.modoRueda === 1 || data.modoRueda === '1' || data.modoRueda === true;
+            } catch (error) {
+                this.filasCursos = [];
             }
         },
 
         async cargarProfesores() {
             if (!this.idDepartamento || !this.idEscenario) return;
-            const res = await SeleccionAPI.listar_profesores(this.idDepartamento, this.idEspecialidad, this.idEscenario);
-            if (res && res.success) this.profesores = res.data || [];
+            try {
+                this.profesores = await SeleccionAPI.listar_profesores(this.idDepartamento, this.idEspecialidad, this.idEscenario) || [];
+            } catch (error) {
+                this.profesores = [];
+            }
         },
 
         async cargarSeleccion() {
@@ -386,8 +400,11 @@ const SeleccionView = {
                 this.selecciones = [];
                 return;
             }
-            const res = await SeleccionAPI.listar_seleccion(this.idProfesor, this.idEscenario);
-            if (res && res.success) this.selecciones = res.data || [];
+            try {
+                this.selecciones = await SeleccionAPI.listar_seleccion(this.idProfesor, this.idEscenario) || [];
+            } catch (error) {
+                this.selecciones = [];
+            }
         },
 
         seleccionarProfesor(p) {
@@ -430,18 +447,18 @@ const SeleccionView = {
         },
 
         async confirmarHoras() {
-            const res = await SeleccionAPI.insertar_seleccion({
-                idProfesor: this.idProfesor,
-                idMateria: this.materia.idMateria,
-                idGrupo: this.materia.idGrupo,
-                horas: this.materia.horas,
-                idEscenario: this.idEscenario
-            });
-            if (res && res.success) {
+            try {
+                await SeleccionAPI.insertar_seleccion({
+                    idProfesor: this.idProfesor,
+                    idMateria: this.materia.idMateria,
+                    idGrupo: this.materia.idGrupo,
+                    horas: this.materia.horas,
+                    idEscenario: this.idEscenario
+                });
                 this.modalHoras.hide();
                 await Promise.all([this.cargarSeleccion(), this.cargarCursos(), this.cargarProfesores()]);
-            } else {
-                Avisos.error(res ? res.error : 'Error al guardar');
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
@@ -463,9 +480,10 @@ const SeleccionView = {
                 nombre: m.nombre,
                 curso: fila ? fila.nombreCurso : ''
             };
-            const res = await SeleccionAPI.listar_profesores_materia(m.idMateria, m.idGrupo, this.idEscenario);
-            if (res && res.success) {
-                this.nombresProfesoresMateria = res.data || [];
+            try {
+                this.nombresProfesoresMateria = await SeleccionAPI.listar_profesores_materia(m.idMateria, m.idGrupo, this.idEscenario) || [];
+            } catch (error) {
+                this.nombresProfesoresMateria = [];
             }
             this.modalMateria.show();
         },
@@ -473,11 +491,11 @@ const SeleccionView = {
         borrarSeleccion(s) {
             Avisos.confirmar('¿Quitar de la selección?', '¿Seguro que deseas quitar la materia seleccionada de la lista?').then(async res => {
                 if (res.isConfirmed) {
-                    const r = await SeleccionAPI.borrar_seleccion(s.id);
-                    if (r && r.success) {
+                    try {
+                        await SeleccionAPI.borrar_seleccion(s.id);
                         await Promise.all([this.cargarSeleccion(), this.cargarCursos(), this.cargarProfesores()]);
-                    } else {
-                        Avisos.error(r ? r.error : 'Error');
+                    } catch (error) {
+                        Avisos.error(error.message);
                     }
                 }
             });
@@ -486,11 +504,11 @@ const SeleccionView = {
         borrarToda() {
             Avisos.confirmar('¿Vaciar la selección?', '¿Seguro que deseas vaciar toda la selección del profesor?').then(async res => {
                 if (res.isConfirmed) {
-                    const r = await SeleccionAPI.borrar_toda_seleccion(this.idProfesor, this.idEscenario);
-                    if (r && r.success) {
+                    try {
+                        await SeleccionAPI.borrar_toda_seleccion(this.idProfesor, this.idEscenario);
                         await Promise.all([this.cargarSeleccion(), this.cargarCursos(), this.cargarProfesores()]);
-                    } else {
-                        Avisos.error(r ? r.error : 'Error');
+                    } catch (error) {
+                        Avisos.error(error.message);
                     }
                 }
             });
@@ -504,12 +522,12 @@ const SeleccionView = {
                 { boton: '<i class="bi bi-trash me-2"></i>Sí, vaciar', confirmButtonColor: '#dc3545' }
             ).then(async res => {
                 if (res.isConfirmed) {
-                    const r = await SeleccionAPI.borrar_todas_selecciones(this.idEscenario);
-                    if (r && r.success) {
+                    try {
+                        await SeleccionAPI.borrar_todas_selecciones(this.idEscenario);
                         Avisos.exito('La lista de selecciones ahora está vacía');
                         await Promise.all([this.cargarSeleccion(), this.cargarCursos(), this.cargarProfesores()]);
-                    } else {
-                        Avisos.error(r ? r.error : 'Error');
+                    } catch (error) {
+                        Avisos.error(error.message);
                     }
                 }
             });
@@ -522,11 +540,9 @@ const SeleccionView = {
             this.selecciones.splice(destino, 0, movido);
             this.arrastrando = -1;
             const ids = this.selecciones.map(s => s.id);
-            SeleccionAPI.ordenar_seleccion(ids, this.idEscenario).then(res => {
-                if (!res || !res.success) {
-                    Avisos.error(res ? res.error : 'Error al reordenar');
-                    this.cargarSeleccion();
-                }
+            SeleccionAPI.ordenar_seleccion(ids, this.idEscenario).catch((error) => {
+                Avisos.error(error.message);
+                this.cargarSeleccion();
             });
         },
 

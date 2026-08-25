@@ -56,12 +56,11 @@ const LoginView = {
             this.loading = true;
             this.error = '';
             
-            const result = await AuthAPI.login(this.username, this.password);
-            
-            if (result.success) {
+            try {
+                const result = await AuthAPI.login(this.username, this.password);
                 this.$emit('login-success', result.data);
-            } else {
-                this.error = result.error;
+            } catch (error) {
+                this.error = error.message;
                 this.loading = false;
             }
         }

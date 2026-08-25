@@ -1,33 +1,32 @@
 // API client para el módulo de Cursos
-
+//
+// Convención unificada: los métodos de lectura resuelven con data.data y
+// lanzan Error en caso de fallo; las acciones lanzan Error y resuelven con
+// el sobre completo { success, data, message }.
 const CursosAPI = {
     baseUrl: '../backend/api/cursos/',
 
-    async listar() {
-        const data = await Http.get(this.baseUrl + 'listar.php', 'include');
-        return data.success
-            ? { success: true, data: Array.isArray(data.data) ? data.data : [] }
-            : { success: false, error: data.error || 'Error de conexión', data: [] };
+    // Listar cursos
+    listar() {
+        return Http.getOk(this.baseUrl + 'listar.php', 'Error al cargar los cursos', 'include');
     },
 
-    async obtener(id) {
-        const data = await Http.get(this.baseUrl + `obtener.php?id=${id}`, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error de conexión', data: null };
+    // Obtener un curso
+    obtener(id) {
+        return Http.getOk(this.baseUrl + `obtener.php?id=${id}`, 'Error al cargar el curso', 'include');
     },
 
+    // Guardar curso (crear o editar)
     async guardar(curso) {
         const data = await Http.post(this.baseUrl + 'guardar.php', curso, 'include');
-        return data.success
-            ? { success: true, message: data.message, id: data.data ? data.data.id : 0 }
-            : { success: false, error: data.error || 'Error de conexión' };
+        if (!data.success) throw new Error(data.error || 'Error al guardar el curso');
+        return data;
     },
 
+    // Eliminar curso
     async eliminar(id) {
         const data = await Http.post(this.baseUrl + 'eliminar.php', { id: id }, 'include');
-        return data.success
-            ? { success: true, message: data.message }
-            : { success: false, error: data.error || 'Error de conexión' };
+        if (!data.success) throw new Error(data.error || 'Error al eliminar el curso');
+        return data;
     }
 };

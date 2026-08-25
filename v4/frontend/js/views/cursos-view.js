@@ -116,10 +116,9 @@ const CursosView = {
 
     methods: {
         async cargar() {
-            const result = await CursosAPI.listar();
-            if (result.success) {
-                this.cursos = result.data;
-            } else {
+            try {
+                this.cursos = await CursosAPI.listar() || [];
+            } catch (error) {
                 this.cursos = [];
             }
         },
@@ -143,28 +142,25 @@ const CursosView = {
         },
 
         async guardar() {
-            const result = await CursosAPI.guardar(this.form);
-
-            if (result.success) {
+            try {
+                const result = await CursosAPI.guardar(this.form);
                 Avisos.exito('Éxito', result.message);
-
                 this.modal.hide();
                 this.cargar();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         eliminar(curso) {
             Avisos.confirmar('¿Eliminar curso?', curso.nombre).then(async (res) => {
                 if (res.isConfirmed) {
-                    const result = await CursosAPI.eliminar(curso.id);
-
-                    if (result.success) {
+                    try {
+                        await CursosAPI.eliminar(curso.id);
                         Avisos.exito();
                         this.cargar();
-                    } else {
-                        Avisos.error(result.error);
+                    } catch (error) {
+                        Avisos.error(error.message);
                     }
                 }
             });

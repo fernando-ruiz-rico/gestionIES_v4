@@ -222,10 +222,9 @@ const CiclosView = {
 
     methods: {
         async cargar() {
-            const result = await CiclosAPI.listar();
-            if (result.success) {
-                this.ciclos = result.data;
-            } else {
+            try {
+                this.ciclos = await CiclosAPI.listar() || [];
+            } catch (error) {
                 this.ciclos = [];
             }
         },
@@ -243,27 +242,25 @@ const CiclosView = {
         },
 
         async guardar() {
-            const result = await CiclosAPI.guardar(this.form);
-
-            if (result.success) {
+            try {
+                const result = await CiclosAPI.guardar(this.form);
                 Avisos.exito('Éxito', result.message);
                 this.modal.hide();
                 this.cargar();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         eliminar(ciclo) {
             Avisos.confirmar('¿Eliminar ciclo?', ciclo.nombre).then(async (res) => {
                 if (res.isConfirmed) {
-                    const result = await CiclosAPI.eliminar(ciclo.id);
-
-                    if (result.success) {
+                    try {
+                        await CiclosAPI.eliminar(ciclo.id);
                         Avisos.exito();
                         this.cargar();
-                    } else {
-                        Avisos.error(result.error);
+                    } catch (error) {
+                        Avisos.error(error.message);
                     }
                 }
             });
@@ -275,55 +272,58 @@ const CiclosView = {
             this.cicloActual = { id: ciclo.id, nombre: ciclo.nombre };
             this.cursoNuevo = 0;
             this.ordenNuevoCurso = 1;
-            const result = await CiclosAPI.asociacionesCursos(ciclo.id);
-            if (result.success) {
-                this.cursosAsociados = result.data;
+            try {
+                const data = await CiclosAPI.asociacionesCursos(ciclo.id);
+                this.cursosAsociados = data;
                 // El orden por defecto para nuevos cursos es el siguiente al mayor existente
                 const ordenes = this.cursosAsociados.asociados.map(a => a.orden);
                 this.ordenNuevoCurso = ordenes.length ? Math.max(...ordenes) + 1 : 1;
                 this.modalCursos.show();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         async anadirCurso() {
-            const result = await CiclosAPI.guardarAsociacionCurso({
-                idCiclo: this.cicloActual.id,
-                idCurso: this.cursoNuevo,
-                orden: this.ordenNuevoCurso
-            });
-            if (!result.success) {
-                Avisos.error(result.error);
-                return;
+            try {
+                await CiclosAPI.guardarAsociacionCurso({
+                    idCiclo: this.cicloActual.id,
+                    idCurso: this.cursoNuevo,
+                    orden: this.ordenNuevoCurso
+                });
+                this.cursoNuevo = 0;
+                this.cargarAsociacionesCursos();
+            } catch (error) {
+                Avisos.error(error.message);
             }
-            this.cursoNuevo = 0;
-            this.cargarAsociacionesCursos();
         },
 
         async actualizarOrdenCurso(asociacion) {
-            const result = await CiclosAPI.guardarAsociacionCurso({
-                idCiclo: this.cicloActual.id,
-                idCurso: asociacion.idCurso,
-                orden: asociacion.orden
-            });
-            if (!result.success) {
-                Avisos.error(result.error);
+            try {
+                await CiclosAPI.guardarAsociacionCurso({
+                    idCiclo: this.cicloActual.id,
+                    idCurso: asociacion.idCurso,
+                    orden: asociacion.orden
+                });
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         async borrarCurso(asociacion) {
-            const result = await CiclosAPI.borrarAsociacionCurso(this.cicloActual.id, asociacion.idCurso);
-            if (!result.success) {
-                Avisos.error(result.error);
+            try {
+                await CiclosAPI.borrarAsociacionCurso(this.cicloActual.id, asociacion.idCurso);
+            } catch (error) {
+                Avisos.error(error.message);
             }
             this.cargarAsociacionesCursos();
         },
 
         async cargarAsociacionesCursos() {
-            const result = await CiclosAPI.asociacionesCursos(this.cicloActual.id);
-            if (result.success) {
-                this.cursosAsociados = result.data;
+            try {
+                this.cursosAsociados = await CiclosAPI.asociacionesCursos(this.cicloActual.id);
+            } catch (error) {
+                // Si falla, se mantiene el listado anterior
             }
         },
 
@@ -332,37 +332,39 @@ const CiclosView = {
         async verAsociacionesUnidades(ciclo) {
             this.cicloActual = { id: ciclo.id, nombre: ciclo.nombre };
             this.unidadNueva = '';
-            const result = await CiclosAPI.asociacionesUnidades(ciclo.id);
-            if (result.success) {
-                this.unidadesAsociadas = result.data;
+            try {
+                const data = await CiclosAPI.asociacionesUnidades(ciclo.id);
+                this.unidadesAsociadas = data;
                 this.modalUnidades.show();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         async anadirUnidad() {
-            const result = await CiclosAPI.guardarAsociacionUnidad(this.cicloActual.id, this.unidadNueva);
-            if (!result.success) {
-                Avisos.error(result.error);
-                return;
+            try {
+                await CiclosAPI.guardarAsociacionUnidad(this.cicloActual.id, this.unidadNueva);
+                this.unidadNueva = '';
+                this.cargarAsociacionesUnidades();
+            } catch (error) {
+                Avisos.error(error.message);
             }
-            this.unidadNueva = '';
-            this.cargarAsociacionesUnidades();
         },
 
         async borrarUnidad(unidad) {
-            const result = await CiclosAPI.borrarAsociacionUnidad(this.cicloActual.id, unidad.codigo);
-            if (!result.success) {
-                Avisos.error(result.error);
+            try {
+                await CiclosAPI.borrarAsociacionUnidad(this.cicloActual.id, unidad.codigo);
+            } catch (error) {
+                Avisos.error(error.message);
             }
             this.cargarAsociacionesUnidades();
         },
 
         async cargarAsociacionesUnidades() {
-            const result = await CiclosAPI.asociacionesUnidades(this.cicloActual.id);
-            if (result.success) {
-                this.unidadesAsociadas = result.data;
+            try {
+                this.unidadesAsociadas = await CiclosAPI.asociacionesUnidades(this.cicloActual.id);
+            } catch (error) {
+                // Si falla, se mantiene el listado anterior
             }
         }
     }

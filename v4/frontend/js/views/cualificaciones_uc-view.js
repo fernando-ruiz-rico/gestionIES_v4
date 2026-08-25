@@ -189,43 +189,55 @@ const CualificacionesUCView = {
 
     methods: {
         async cargar() {
-            const r1 = await CualificacionesUCAPI.listar_cualificaciones();
-            if (r1.success) this.cualificaciones = r1.data;
-            const r2 = await CualificacionesUCAPI.listar_unidades();
-            if (r2.success) this.unidades = r2.data;
+            try {
+                this.cualificaciones = await CualificacionesUCAPI.listar_cualificaciones() || [];
+                this.unidades = await CualificacionesUCAPI.listar_unidades() || [];
+            } catch (error) {
+                this.cualificaciones = [];
+                this.unidades = [];
+            }
         },
 
         async abrirAsociar(q) {
             this.cualificacionActual = q;
             this.unidadNueva = '';
-            await this.cargarAsociaciones(q.codigo);
+            try {
+                await this.cargarAsociaciones(q.codigo);
+            } catch (error) {
+                Avisos.error(error.message);
+            }
             this.modalAsociar.show();
         },
 
         async cargarAsociaciones(codigo) {
-            const res = await CualificacionesUCAPI.listar_asociaciones(codigo);
-            if (res.success) this.asociaciones = res.data;
+            this.asociaciones = await CualificacionesUCAPI.listar_asociaciones(codigo) || [];
         },
 
         async asociar() {
             if (!this.unidadNueva) return;
-            const res = await CualificacionesUCAPI.guardar_asociacion({
-                codigoCualificacion: this.cualificacionActual.codigo,
-                codigoUnidad: this.unidadNueva
-            });
-            if (res.success) {
+            try {
+                await CualificacionesUCAPI.guardar_asociacion({
+                    codigoCualificacion: this.cualificacionActual.codigo,
+                    codigoUnidad: this.unidadNueva
+                });
                 this.unidadNueva = '';
                 Avisos.exito('Asociada');
+                await this.cargarAsociaciones(this.cualificacionActual.codigo);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         async eliminarAsociacion(a) {
-            const res = await CualificacionesUCAPI.eliminar_asociacion({
-                codigoCualificacion: this.cualificacionActual.codigo,
-                codigoUnidad: a.codigoUnidad
-            });
-            if (res.success) {
+            try {
+                await CualificacionesUCAPI.eliminar_asociacion({
+                    codigoCualificacion: this.cualificacionActual.codigo,
+                    codigoUnidad: a.codigoUnidad
+                });
                 Avisos.exito('Desasociada');
+                await this.cargarAsociaciones(this.cualificacionActual.codigo);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
@@ -237,35 +249,35 @@ const CualificacionesUCView = {
         },
 
         async guardarCualificacion() {
-            const res = await CualificacionesUCAPI.guardar_cualificacion(this.nuevaCualificacion);
-            if (res.success) {
+            try {
+                await CualificacionesUCAPI.guardar_cualificacion(this.nuevaCualificacion);
                 Avisos.exito('Guardada');
                 this.nuevaCualificacion = { codigo: '', texto: '' };
                 this.cargar();
-            } else {
-                Avisos.error(res.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
-        guardarCualificacionModal() {
-            const res = CualificacionesUCAPI.guardar_cualificacion(this.formCualificacion);
-            if (res.success) {
+        async guardarCualificacionModal() {
+            try {
+                await CualificacionesUCAPI.guardar_cualificacion(this.formCualificacion);
                 this.modalCualificacion.hide();
                 this.cargar();
-            } else {
-                Avisos.error(res.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         async eliminarCualificacion(q) {
             const conf = await Avisos.confirmar('¿Eliminar cualificación?', q.texto);
             if (conf.isConfirmed) {
-                const res = await CualificacionesUCAPI.eliminar_cualificacion(q.codigo);
-                if (res.success) {
+                try {
+                    await CualificacionesUCAPI.eliminar_cualificacion(q.codigo);
                     Avisos.exito('Eliminada');
                     this.cargar();
-                } else {
-                    Avisos.error(res.error);
+                } catch (error) {
+                    Avisos.error(error.message);
                 }
             }
         },
@@ -277,36 +289,36 @@ const CualificacionesUCView = {
             this.modalUnidad.show();
         },
 
-        guardarUnidad() {
-            const res = CualificacionesUCAPI.guardar_unidad(this.nuevaUnidad);
-            if (res.success) {
+        async guardarUnidad() {
+            try {
+                await CualificacionesUCAPI.guardar_unidad(this.nuevaUnidad);
                 Avisos.exito('Guardada');
                 this.nuevaUnidad = { codigo: '', texto: '' };
                 this.cargar();
-            } else {
-                Avisos.error(res.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
-        guardarUnidadModal() {
-            const res = CualificacionesUCAPI.guardar_unidad(this.formUnidad);
-            if (res.success) {
+        async guardarUnidadModal() {
+            try {
+                await CualificacionesUCAPI.guardar_unidad(this.formUnidad);
                 this.modalUnidad.hide();
                 this.cargar();
-            } else {
-                Avisos.error(res.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         async eliminarUnidad(u) {
             const conf = await Avisos.confirmar('¿Eliminar unidad?', u.texto);
             if (conf.isConfirmed) {
-                const res = await CualificacionesUCAPI.eliminar_unidad(u.codigo);
-                if (res.success) {
+                try {
+                    await CualificacionesUCAPI.eliminar_unidad(u.codigo);
                     Avisos.exito('Eliminada');
                     this.cargar();
-                } else {
-                    Avisos.error(res.error);
+                } catch (error) {
+                    Avisos.error(error.message);
                 }
             }
         }

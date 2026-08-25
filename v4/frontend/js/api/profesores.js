@@ -1,28 +1,24 @@
 // API de profesores para comunicación con el backend
-
+//
+// Convención unificada: los métodos de lectura resuelven con data.data y
+// lanzan Error en caso de fallo; las acciones lanzan Error y resuelven con
+// el sobre completo { success, data, message }.
 const ProfesoresAPI = {
     // Listar profesores de un departamento
-    async listar(idDepartamento) {
-        const data = await Http.get(`../backend/api/profesores/listar.php?idDepartamento=${idDepartamento}`, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error al cargar profesores' };
+    listar(idDepartamento) {
+        return Http.getOk(`../backend/api/profesores/listar.php?idDepartamento=${idDepartamento}`, 'Error al cargar profesores', 'include');
     },
 
     // Obtener un profesor por ID
-    async obtener(id) {
-        const data = await Http.get(`../backend/api/profesores/obtener.php?id=${id}`, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error al cargar profesor' };
+    obtener(id) {
+        return Http.getOk(`../backend/api/profesores/obtener.php?id=${id}`, 'Error al cargar profesor', 'include');
     },
 
     // Guardar profesor (crear o actualizar)
     async guardar(formData) {
         const data = await Http.post('../backend/api/profesores/guardar.php', formData, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error al guardar profesor' };
+        if (!data.success) throw new Error(data.error || 'Error al guardar profesor');
+        return data;
     },
 
     // Eliminar profesor
@@ -30,9 +26,8 @@ const ProfesoresAPI = {
         const formData = new FormData();
         formData.append('id', id);
         const data = await Http.post('../backend/api/profesores/eliminar.php', formData, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error al eliminar profesor' };
+        if (!data.success) throw new Error(data.error || 'Error al eliminar profesor');
+        return data;
     },
 
     // Actualizar jefe de departamento
@@ -41,9 +36,8 @@ const ProfesoresAPI = {
         formData.append('idProfesor', idProfesor);
         formData.append('idDepartamento', idDepartamento);
         const data = await Http.post('../backend/api/profesores/actualizar_jefe.php', formData, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error al actualizar jefe de departamento' };
+        if (!data.success) throw new Error(data.error || 'Error al actualizar jefe de departamento');
+        return data;
     },
 
     // Activar/desactivar profesor
@@ -51,9 +45,8 @@ const ProfesoresAPI = {
         const formData = new FormData();
         formData.append('idProfesor', idProfesor);
         const data = await Http.post('../backend/api/profesores/actualizar_activo.php', formData, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error al actualizar estado del profesor' };
+        if (!data.success) throw new Error(data.error || 'Error al actualizar el estado del profesor');
+        return data;
     },
 
     // Ordenar profesores
@@ -61,8 +54,7 @@ const ProfesoresAPI = {
         const formData = new FormData();
         formData.append('orden', orden);
         const data = await Http.post('../backend/api/profesores/ordenar.php', formData, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error al ordenar profesores' };
+        if (!data.success) throw new Error(data.error || 'Error al ordenar profesores');
+        return data;
     }
 };

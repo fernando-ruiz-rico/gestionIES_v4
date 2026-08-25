@@ -165,19 +165,16 @@ const EspecialidadesView = {
 
     methods: {
         async cargar() {
-            const result = await EspecialidadesAPI.listar();
-            if (result.success) {
-                this.especialidades = result.data;
-            } else {
+            try {
+                this.especialidades = await EspecialidadesAPI.listar() || [];
+            } catch (error) {
                 this.especialidades = [];
             }
         },
 
         async cargarDepartamentos() {
             try {
-                const response = await fetch('../backend/api/departamentos/listar.php', { credentials: 'include' });
-                const data = await response.json();
-                this.departamentos = (data.success && Array.isArray(data.data)) ? data.data : [];
+                this.departamentos = await DepartamentosAPI.listar() || [];
             } catch (e) {
                 console.error(e);
                 this.departamentos = [];
@@ -208,28 +205,25 @@ const EspecialidadesView = {
         },
 
         async guardar() {
-            const result = await EspecialidadesAPI.guardar(this.form);
-
-            if (result.success) {
+            try {
+                const result = await EspecialidadesAPI.guardar(this.form);
                 Avisos.exito('Éxito', result.message);
-
                 this.modal.hide();
                 this.cargar();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         eliminar(especialidad) {
             Avisos.confirmar('¿Eliminar especialidad?', especialidad.descripcion).then(async (res) => {
                 if (res.isConfirmed) {
-                    const result = await EspecialidadesAPI.eliminar(especialidad.id);
-
-                    if (result.success) {
+                    try {
+                        await EspecialidadesAPI.eliminar(especialidad.id);
                         Avisos.exito();
                         this.cargar();
-                    } else {
-                        Avisos.error(result.error);
+                    } catch (error) {
+                        Avisos.error(error.message);
                     }
                 }
             });

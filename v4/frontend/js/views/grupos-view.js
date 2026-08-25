@@ -104,17 +104,19 @@ const GruposView = {
 
     methods: {
         async cargar() {
-            const result = await GruposAPI.listar();
-            if (result.success) {
-                this.grupos = result.data;
-            } else {
+            try {
+                this.grupos = await GruposAPI.listar() || [];
+            } catch (error) {
                 this.grupos = [];
             }
         },
 
         async cargarCursos() {
-            const result = await CursosAPI.listar();
-            this.cursos = result.success ? result.data : [];
+            try {
+                this.cursos = await CursosAPI.listar() || [];
+            } catch (error) {
+                this.cursos = [];
+            }
         },
 
         abrirModal() {
@@ -135,28 +137,25 @@ const GruposView = {
                 return;
             }
 
-            const result = await GruposAPI.guardar(this.form);
-
-            if (result.success) {
+            try {
+                const result = await GruposAPI.guardar(this.form);
                 Avisos.exito('Éxito', result.message);
-
                 this.modal.hide();
                 this.cargar();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         eliminar(grupo) {
             Avisos.confirmar('¿Eliminar grupo?', grupo.nombre).then(async (res) => {
                 if (res.isConfirmed) {
-                    const result = await GruposAPI.eliminar(grupo.id);
-
-                    if (result.success) {
+                    try {
+                        await GruposAPI.eliminar(grupo.id);
                         Avisos.exito();
                         this.cargar();
-                    } else {
-                        Avisos.error(result.error);
+                    } catch (error) {
+                        Avisos.error(error.message);
                     }
                 }
             });

@@ -1,61 +1,74 @@
 // API client para el módulo de Ciclos
-
+//
+// Convención unificada: los métodos de lectura resuelven con data.data y
+// lanzan Error en caso de fallo; las acciones lanzan Error y resuelven con
+// el sobre completo { success, data, message }.
 const CiclosAPI = {
     baseUrl: '../backend/api/ciclos/',
 
-    async listar() {
-        const data = await Http.get(this.baseUrl + 'listar.php', 'include');
-        return data.success
-            ? { success: true, data: Array.isArray(data.data) ? data.data : [] }
-            : { success: false, error: data.error || 'Error de conexión', data: [] };
+    // Listar ciclos
+    listar() {
+        return Http.getOk(this.baseUrl + 'listar.php', 'Error al cargar los ciclos', 'include');
     },
 
-    async obtener(id) {
-        const data = await Http.get(this.baseUrl + `obtener.php?id=${id}`, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error de conexión', data: null };
+    // Obtener un ciclo
+    obtener(id) {
+        return Http.getOk(this.baseUrl + `obtener.php?id=${id}`, 'Error al cargar el ciclo', 'include');
     },
 
+    // Guardar ciclo (crear o editar)
     async guardar(ciclo) {
-        return Http.post(this.baseUrl + 'guardar.php', ciclo, 'include');
+        const data = await Http.post(this.baseUrl + 'guardar.php', ciclo, 'include');
+        if (!data.success) throw new Error(data.error || 'Error al guardar el ciclo');
+        return data;
     },
 
+    // Eliminar ciclo
     async eliminar(id) {
-        return Http.post(this.baseUrl + 'eliminar.php', { id: id }, 'include');
+        const data = await Http.post(this.baseUrl + 'eliminar.php', { id: id }, 'include');
+        if (!data.success) throw new Error(data.error || 'Error al eliminar el ciclo');
+        return data;
     },
 
     // Asociaciones de cursos con el ciclo
 
-    async asociacionesCursos(idCiclo) {
-        const data = await Http.get(this.baseUrl + `asociaciones_cursos.php?idCiclo=${idCiclo}`, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error de conexión', data: null };
+    // Listar las asociaciones de cursos
+    asociacionesCursos(idCiclo) {
+        return Http.getOk(this.baseUrl + `asociaciones_cursos.php?idCiclo=${idCiclo}`, 'Error al cargar las asociaciones de cursos', 'include');
     },
 
+    // Guardar una asociación de curso
     async guardarAsociacionCurso(asociacion) {
-        return Http.post(this.baseUrl + 'guardar_asociacion_curso.php', asociacion, 'include');
+        const data = await Http.post(this.baseUrl + 'guardar_asociacion_curso.php', asociacion, 'include');
+        if (!data.success) throw new Error(data.error || 'Error al guardar la asociación');
+        return data;
     },
 
+    // Borrar una asociación de curso
     async borrarAsociacionCurso(idCiclo, idCurso) {
-        return Http.post(this.baseUrl + 'borrar_asociacion_curso.php', { idCiclo: idCiclo, idCurso: idCurso }, 'include');
+        const data = await Http.post(this.baseUrl + 'borrar_asociacion_curso.php', { idCiclo: idCiclo, idCurso: idCurso }, 'include');
+        if (!data.success) throw new Error(data.error || 'Error al borrar la asociación');
+        return data;
     },
 
     // Asociaciones de unidades de competencia con el ciclo
 
-    async asociacionesUnidades(idCiclo) {
-        const data = await Http.get(this.baseUrl + `asociaciones_unidades.php?idCiclo=${idCiclo}`, 'include');
-        return data.success
-            ? { success: true, data: data.data }
-            : { success: false, error: data.error || 'Error de conexión', data: null };
+    // Listar las asociaciones de unidades
+    asociacionesUnidades(idCiclo) {
+        return Http.getOk(this.baseUrl + `asociaciones_unidades.php?idCiclo=${idCiclo}`, 'Error al cargar las asociaciones de unidades', 'include');
     },
 
+    // Guardar una asociación de unidad
     async guardarAsociacionUnidad(idCiclo, codigoUnidad) {
-        return Http.post(this.baseUrl + 'guardar_asociacion_unidad.php', { idCiclo: idCiclo, codigoUnidad: codigoUnidad }, 'include');
+        const data = await Http.post(this.baseUrl + 'guardar_asociacion_unidad.php', { idCiclo: idCiclo, codigoUnidad: codigoUnidad }, 'include');
+        if (!data.success) throw new Error(data.error || 'Error al guardar la asociación');
+        return data;
     },
 
+    // Borrar una asociación de unidad
     async borrarAsociacionUnidad(idCiclo, codigoUnidad) {
-        return Http.post(this.baseUrl + 'borrar_asociacion_unidad.php', { idCiclo: idCiclo, codigoUnidad: codigoUnidad }, 'include');
+        const data = await Http.post(this.baseUrl + 'borrar_asociacion_unidad.php', { idCiclo: idCiclo, codigoUnidad: codigoUnidad }, 'include');
+        if (!data.success) throw new Error(data.error || 'Error al borrar la asociación');
+        return data;
     }
 };

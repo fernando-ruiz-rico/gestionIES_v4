@@ -138,24 +138,23 @@ const EscenariosView = {
 
     methods: {
         async cargarDepartamentos() {
-            const result = await fetch('../backend/api/departamentos/listar.php', { credentials: 'same-origin' });
-            const data = await result.json();
-            if (data.success) {
-                this.departamentos = data.data || [];
-                // Fiel a v3: el jefe de departamento solo gestiona su departamento
-                if (!this.esAdmin && this.usuario && this.usuario.departamentoUsuario) {
-                    this.idDepartamento = this.usuario.departamentoUsuario;
-                }
-                this.cargar();
+            try {
+                this.departamentos = await DepartamentosAPI.listar() || [];
+            } catch (error) {
+                return;
             }
+            // Fiel a v3: el jefe de departamento solo gestiona su departamento
+            if (!this.esAdmin && this.usuario && this.usuario.departamentoUsuario) {
+                this.idDepartamento = this.usuario.departamentoUsuario;
+            }
+            this.cargar();
         },
 
         async cargar() {
             if (!this.idDepartamento) return;
-            const result = await EscenariosAPI.listar(this.idDepartamento);
-            if (result.success) {
-                this.escenarios = result.data;
-            } else {
+            try {
+                this.escenarios = await EscenariosAPI.listar(this.idDepartamento) || [];
+            } catch (error) {
                 this.escenarios = [];
             }
         },
@@ -167,28 +166,28 @@ const EscenariosView = {
         },
 
         async editar(escenario) {
-            const result = await EscenariosAPI.obtener(escenario.id);
-            if (result.success) {
+            try {
+                const data = await EscenariosAPI.obtener(escenario.id);
                 this.form = {
-                    id: result.data.id,
-                    nombre: result.data.nombre,
-                    departamentos: (result.data.departamentos || []).map(d => d.id)
+                    id: data.id,
+                    nombre: data.nombre,
+                    departamentos: (data.departamentos || []).map(d => d.id)
                 };
                 this.esEdicion = true;
                 this.modal.show();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         async guardar() {
-            const result = await EscenariosAPI.guardar(this.form);
-            if (result.success) {
+            try {
+                await EscenariosAPI.guardar(this.form);
                 Avisos.exito('Éxito', 'Escenario guardado');
                 this.modal.hide();
                 this.cargar();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
@@ -199,33 +198,33 @@ const EscenariosView = {
                 { boton: '<i class="bi bi-trash me-2"></i>Sí, eliminar', confirmButtonColor: '#dc3545' }
             ).then(async (res) => {
                 if (res.isConfirmed) {
-                    const result = await EscenariosAPI.eliminar(escenario.id);
-                    if (result.success) {
+                    try {
+                        await EscenariosAPI.eliminar(escenario.id);
                         Avisos.exito('Escenario eliminado');
                         this.cargar();
-                    } else {
-                        Avisos.error(result.error);
+                    } catch (error) {
+                        Avisos.error(error.message);
                     }
                 }
             });
         },
 
         async alternar(escenario, campo) {
-            const result = await EscenariosAPI.alternar(escenario.id, campo);
-            if (result.success) {
+            try {
+                await EscenariosAPI.alternar(escenario.id, campo);
                 this.cargar();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         async duplicar(escenario) {
-            const result = await EscenariosAPI.duplicar(escenario.id);
-            if (result.success) {
+            try {
+                await EscenariosAPI.duplicar(escenario.id);
                 Avisos.exito('Escenario duplicado');
                 this.cargar();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         }
     }

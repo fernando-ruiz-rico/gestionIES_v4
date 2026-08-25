@@ -1,60 +1,81 @@
 // API client para el módulo de Selección de materias de Desideratas
-
+//
+// Convención unificada: los métodos de lectura resuelven con data.data y
+// lanzan Error en caso de fallo; las acciones lanzan Error y resuelven con
+// el sobre completo { success, data, message }.
 const SeleccionAPI = {
     baseUrl: '../backend/api/seleccion.php',
 
+    // Listar escenarios de un departamento
     listar_escenarios(idDepartamento) {
-        return Http.get(this.baseUrl + '?action=listar_escenarios&idDepartamento=' + idDepartamento, 'include');
+        return Http.getOk(this.baseUrl + '?action=listar_escenarios&idDepartamento=' + idDepartamento, 'Error al cargar los escenarios', 'include');
     },
 
+    // Listar especialidades de un departamento
     listar_especialidades(idDepartamento) {
-        return Http.get(this.baseUrl + '?action=listar_especialidades&idDepartamento=' + idDepartamento, 'include');
+        return Http.getOk(this.baseUrl + '?action=listar_especialidades&idDepartamento=' + idDepartamento, 'Error al cargar las especialidades', 'include');
     },
 
+    // Listar profesores (con filtro de especialidad opcional)
     listar_profesores(idDepartamento, idEspecialidad, idEscenario) {
         let params = 'idDepartamento=' + idDepartamento;
         if (idEspecialidad) params += '&idEspecialidad=' + encodeURIComponent(idEspecialidad);
-        return Http.get(this.baseUrl + '?action=listar_profesores&idEscenario=' + idEscenario + '&' + params, 'include');
+        return Http.getOk(this.baseUrl + '?action=listar_profesores&idEscenario=' + idEscenario + '&' + params, 'Error al cargar los profesores', 'include');
     },
 
+    // Listar cursos con sus materias (fiel a v3)
     listar_cursos(idDepartamento, idEscenario) {
-        return Http.get(this.baseUrl + '?action=listar_cursos&idDepartamento=' + idDepartamento + '&idEscenario=' + idEscenario, 'include');
+        return Http.getOk(this.baseUrl + '?action=listar_cursos&idDepartamento=' + idDepartamento + '&idEscenario=' + idEscenario, 'Error al cargar los cursos', 'include');
     },
 
+    // Listar la selección de un profesor
     listar_seleccion(idProfesor, idEscenario) {
-        return Http.get(this.baseUrl + '?action=listar_seleccion&idProfesor=' + idProfesor + '&idEscenario=' + idEscenario, 'include');
+        return Http.getOk(this.baseUrl + '?action=listar_seleccion&idProfesor=' + idProfesor + '&idEscenario=' + idEscenario, 'Error al cargar la selección', 'include');
     },
 
     // Nombres de los profesores que ya eligieron una materia
     listar_profesores_materia(idMateria, idGrupo, idEscenario) {
-        return Http.get(this.baseUrl + '?action=listar_profesores_materia&idMateria=' + idMateria + '&idGrupo=' + idGrupo + '&idEscenario=' + idEscenario, 'include');
+        return Http.getOk(this.baseUrl + '?action=listar_profesores_materia&idMateria=' + idMateria + '&idGrupo=' + idGrupo + '&idEscenario=' + idEscenario, 'Error al cargar los profesores de la materia', 'include');
     },
 
-    insertar_seleccion(data) {
-        return Http.post(this.baseUrl + '?action=insertar_seleccion&idEscenario=' + data.idEscenario, {
+    // Insertar una selección
+    async insertar_seleccion(data) {
+        const res = await Http.post(this.baseUrl + '?action=insertar_seleccion&idEscenario=' + data.idEscenario, {
             idProfesor: data.idProfesor,
             idMateria: data.idMateria,
             idGrupo: data.idGrupo,
             horas: data.horas,
             idEscenario: data.idEscenario
         }, 'include');
+        if (!res.success) throw new Error(res.error || 'Error al guardar la selección');
+        return res;
     },
 
-    borrar_seleccion(id) {
-        return Http.post(this.baseUrl + '?action=borrar_seleccion', { id: id }, 'include');
+    // Borrar una selección
+    async borrar_seleccion(id) {
+        const res = await Http.post(this.baseUrl + '?action=borrar_seleccion', { id: id }, 'include');
+        if (!res.success) throw new Error(res.error || 'Error al quitar la selección');
+        return res;
     },
 
-    borrar_toda_seleccion(idProfesor, idEscenario) {
-        return Http.post(this.baseUrl + '?action=borrar_toda_seleccion', { idProfesor: idProfesor, idEscenario: idEscenario }, 'include');
+    // Vaciar la selección de un profesor
+    async borrar_toda_seleccion(idProfesor, idEscenario) {
+        const res = await Http.post(this.baseUrl + '?action=borrar_toda_seleccion', { idProfesor: idProfesor, idEscenario: idEscenario }, 'include');
+        if (!res.success) throw new Error(res.error || 'Error al vaciar la selección');
+        return res;
     },
 
     // Vacía todas las selecciones del escenario (solo jefe de departamento o admin)
-    borrar_todas_selecciones(idEscenario) {
-        return Http.post(this.baseUrl + '?action=borrar_todas_selecciones&idEscenario=' + idEscenario, null, 'include');
+    async borrar_todas_selecciones(idEscenario) {
+        const res = await Http.post(this.baseUrl + '?action=borrar_todas_selecciones&idEscenario=' + idEscenario, null, 'include');
+        if (!res.success) throw new Error(res.error || 'Error al vaciar el escenario');
+        return res;
     },
 
-    // Reordena las selecciones del profesor; "ids" son los ids de la selección en el orden nuevo
-    ordenar_seleccion(ids, idEscenario) {
-        return Http.post(this.baseUrl + '?action=ordenar_seleccion&idEscenario=' + idEscenario, { ids: ids }, 'include');
+    // Reordena las selecciones del profesor; "ids" son los ids en el orden nuevo
+    async ordenar_seleccion(ids, idEscenario) {
+        const res = await Http.post(this.baseUrl + '?action=ordenar_seleccion&idEscenario=' + idEscenario, { ids: ids }, 'include');
+        if (!res.success) throw new Error(res.error || 'Error al reordenar la selección');
+        return res;
     }
 };

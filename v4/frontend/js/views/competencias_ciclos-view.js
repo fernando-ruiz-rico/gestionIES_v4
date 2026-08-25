@@ -132,13 +132,7 @@ const CompetenciasCiclosView = {
             if (!this.idCicloSeleccionado) return;
             this.cargando = true;
             try {
-                const res = await CompetenciasCiclosAPI.listar(this.idCicloSeleccionado);
-                if (res.success) {
-                    this.competencias = res.data;
-                } else {
-                    Avisos.error(res.error);
-                    this.competencias = [];
-                }
+                this.competencias = await CompetenciasCiclosAPI.listar(this.idCicloSeleccionado) || [];
             } catch (error) {
                 Avisos.error(error.message);
                 this.competencias = [];
@@ -149,12 +143,7 @@ const CompetenciasCiclosView = {
 
         async cargarCiclos() {
             try {
-                const res = await CompetenciasCiclosAPI.listar_ciclos();
-                if (res.success) {
-                    this.ciclos = res.data;
-                } else {
-                    Avisos.error(res.error);
-                }
+                this.ciclos = await CompetenciasCiclosAPI.listar_ciclos() || [];
             } catch (error) {
                 Avisos.error(error.message);
             }
@@ -180,12 +169,12 @@ const CompetenciasCiclosView = {
             this.competencias.splice(targetIndex, 0, item);
 
             const orden = this.competencias.map(c => 'cm' + c.id).join(',');
-            const res = await CompetenciasCiclosAPI.ordenar(orden);
-            if (!res.success) {
-                Avisos.error(res.error);
-                this.cargar();
-            } else {
+            try {
+                await CompetenciasCiclosAPI.ordenar(orden);
                 Avisos.exito('Orden actualizado');
+            } catch (error) {
+                Avisos.error(error.message);
+                this.cargar();
             }
 
             this.dragged = null;
@@ -208,31 +197,31 @@ const CompetenciasCiclosView = {
                 Avisos.aviso('Completa los campos obligatorios (código, texto y tipo)');
                 return;
             }
-            const res = await CompetenciasCiclosAPI.guardar({
-                id: this.form.id,
-                codigo: this.form.codigo,
-                texto: this.form.texto,
-                tipo: this.form.tipo,
-                idCiclo: this.form.idCiclo || this.idCicloSeleccionado
-            });
-            if (res.success) {
+            try {
+                await CompetenciasCiclosAPI.guardar({
+                    id: this.form.id,
+                    codigo: this.form.codigo,
+                    texto: this.form.texto,
+                    tipo: this.form.tipo,
+                    idCiclo: this.form.idCiclo || this.idCicloSeleccionado
+                });
                 Avisos.exito('Guardado');
                 this.modal.hide();
                 this.cargar();
-            } else {
-                Avisos.error(res.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         async eliminar(c) {
             const conf = await Avisos.confirmar('¿Eliminar competencia?', 'Confirmas el borrado de la competencia \'' + c.codigo + '\'?');
             if (conf.isConfirmed) {
-                const res = await CompetenciasCiclosAPI.eliminar(c.id);
-                if (res.success) {
+                try {
+                    await CompetenciasCiclosAPI.eliminar(c.id);
                     Avisos.exito('Eliminada');
                     this.cargar();
-                } else {
-                    Avisos.error(res.error);
+                } catch (error) {
+                    Avisos.error(error.message);
                 }
             }
         }

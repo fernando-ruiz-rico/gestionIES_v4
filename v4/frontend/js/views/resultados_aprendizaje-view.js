@@ -277,9 +277,7 @@ const ResultadosArendizajeView = {
     methods: {
         async cargarDepartamentos() {
             try {
-                const response = await fetch('../backend/api/departamentos/listar.php', { credentials: 'same-origin' });
-                const data = await response.json();
-                if (data.success) this.departamentos = data.data || [];
+                this.departamentos = await DepartamentosAPI.listar() || [];
             } catch (e) {
                 this.departamentos = [];
             }
@@ -302,9 +300,7 @@ const ResultadosArendizajeView = {
             this.resultados = [];
             this.permisos = false;
             try {
-                const res = await ResultadosArendizajeAPI.listar_materias(this.idDepartamento);
-                if (res.success) this.materias = res.data;
-                else this.materias = [];
+                this.materias = await ResultadosArendizajeAPI.listar_materias(this.idDepartamento) || [];
             } catch (e) {
                 this.materias = [];
             }
@@ -315,15 +311,12 @@ const ResultadosArendizajeView = {
             this.cargando = true;
             try {
                 const data = await ResultadosArendizajeAPI.cargar(this.idMateriaSeleccionada);
-                if (data.success) {
-                    this.resultados = data.data.resultados;
-                    this.permisos = data.data.permisos;
-                    this.horasEmpresa = data.data.horas_empresa;
-                } else {
-                    this.resultados = [];
-                }
+                this.resultados = data.resultados;
+                this.permisos = data.permisos;
+                this.horasEmpresa = data.horas_empresa;
             } catch (error) {
                 Avisos.error(error.message);
+                this.resultados = [];
             } finally {
                 this.cargando = false;
             }
@@ -336,14 +329,14 @@ const ResultadosArendizajeView = {
 
         async actualizarHoras() {
             if (!this.idMateriaSeleccionada) return;
-            const result = await ResultadosArendizajeAPI.actualizar_horas({
-                idMateria: this.idMateriaSeleccionada,
-                horas: this.horasEmpresa
-            });
-            if (result.success) {
+            try {
+                await ResultadosArendizajeAPI.actualizar_horas({
+                    idMateria: this.idMateriaSeleccionada,
+                    horas: this.horasEmpresa
+                });
                 Avisos.exito('Horas de empresa actualizadas');
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
@@ -365,19 +358,19 @@ const ResultadosArendizajeView = {
         },
 
         async guardar() {
-            const result = await ResultadosArendizajeAPI.guardar({
-                id: this.form.id,
-                idMateria: this.idMateriaSeleccionada,
-                texto: this.form.texto,
-                orden: this.form.orden,
-                porcentaje_empresa: this.form.porcentaje_empresa
-            });
-            if (result.success) {
+            try {
+                await ResultadosArendizajeAPI.guardar({
+                    id: this.form.id,
+                    idMateria: this.idMateriaSeleccionada,
+                    texto: this.form.texto,
+                    orden: this.form.orden,
+                    porcentaje_empresa: this.form.porcentaje_empresa
+                });
                 Avisos.exito('Guardado');
                 this.modalRA.hide();
                 this.cargar();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
@@ -391,13 +384,13 @@ const ResultadosArendizajeView = {
         },
 
         async actualizarEvaluar() {
-            const result = await ResultadosArendizajeAPI.actualizar_evaluacion(this.evalForm);
-            if (result.success) {
+            try {
+                await ResultadosArendizajeAPI.actualizar_evaluacion(this.evalForm);
                 Avisos.exito('Evaluación actualizada');
                 this.modalEvaluar.hide();
                 this.cargar();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
@@ -409,63 +402,66 @@ const ResultadosArendizajeView = {
         },
 
         async cargarCriterios() {
-            const res = await ResultadosArendizajeAPI.cargar_criterios(this.idRAActual);
-            if (res.success) this.criterios = res.data;
+            try {
+                this.criterios = await ResultadosArendizajeAPI.cargar_criterios(this.idRAActual) || [];
+            } catch (error) {
+                // Si falla, se mantiene el listado anterior
+            }
         },
 
         async eliminar(r) {
             const conf = await Avisos.confirmar('¿Eliminar resultado?', r.texto);
             if (conf.isConfirmed) {
-                const result = await ResultadosArendizajeAPI.eliminar(r.id);
-                if (result.success) {
+                try {
+                    await ResultadosArendizajeAPI.eliminar(r.id);
                     Avisos.exito('Eliminado');
                     this.cargar();
-                } else {
-                    Avisos.error(result.error);
+                } catch (error) {
+                    Avisos.error(error.message);
                 }
             }
         },
 
         async guardarCriterio() {
-            const result = await ResultadosArendizajeAPI.guardar_criterio({
-                idResultado: this.idRAActual,
-                codigo: this.nuevoCriterio.codigo,
-                texto: this.nuevoCriterio.texto
-            });
-            if (result.success) {
+            try {
+                await ResultadosArendizajeAPI.guardar_criterio({
+                    idResultado: this.idRAActual,
+                    codigo: this.nuevoCriterio.codigo,
+                    texto: this.nuevoCriterio.texto
+                });
                 Avisos.exito('Criterio guardado');
                 this.nuevoCriterio = { codigo: '', texto: '' };
                 this.cargarCriterios();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         async actualizarCriterio(c) {
-            const result = await ResultadosArendizajeAPI.actualizar_criterio({
-                idResultado: c.idRA,
-                codigo: c.codigo,
-                nuevoCodigo: c.codigo,
-                nuevoTexto: c.texto
-            });
-            if (result.success) {
+            try {
+                await ResultadosArendizajeAPI.actualizar_criterio({
+                    idResultado: c.idRA,
+                    codigo: c.codigo,
+                    nuevoCodigo: c.codigo,
+                    nuevoTexto: c.texto
+                });
                 Avisos.exito('Criterio actualizado');
                 this.cargarCriterios();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         },
 
         async eliminarCriterio(c) {
-            const result = await ResultadosArendizajeAPI.eliminar_criterio({
-                idResultado: c.idRA,
-                codigo: c.codigo
-            });
-            if (result.success) {
+            try {
+                await ResultadosArendizajeAPI.eliminar_criterio({
+                    idResultado: c.idRA,
+                    codigo: c.codigo
+                });
                 Avisos.exito('Criterio eliminado');
                 this.cargarCriterios();
-            } else {
-                Avisos.error(result.error);
+            } catch (error) {
+                Avisos.error(error.message);
             }
         }
     }
