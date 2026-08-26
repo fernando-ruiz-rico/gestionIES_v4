@@ -1,12 +1,13 @@
 // FASE 2.4 — Programaciones de aula (opción propia de v4)
 //
-// Se elige un grupo (y profesor, en caso de jefe/admin) y una materia
-// (las que imparte el profesor en ese grupo y tienen programación). El
-// botón «Importar propuesta» hace una copia, para ese profesor y grupo, de
-// la propuesta pedagógica de la materia —que debe estar marcada como
-// terminada— y la muestra en este editor. A partir de ahí se trabaja con la
-// copia (se modifica igual que la propuesta pedagógica, apartado a
-// apartado); la propuesta pedagógica nunca se toca.
+// Se elige una materia (igual que en la propuesta pedagógica: las que
+// imparte el profesor en el curso actual y tienen programación) y, a
+// continuación, un grupo (de los que imparte esa materia; y profesor, en
+// caso de jefe/admin). El botón «Importar propuesta» hace una copia, para
+// ese profesor y grupo, de la propuesta pedagógica de la materia —que debe
+// estar marcada como terminada— y la muestra en este editor. A partir de
+// ahí se trabaja con la copia (se modifica igual que la propuesta
+// pedagógica, apartado a apartado); la propuesta pedagógica nunca se toca.
 const ProgramacionesAulaView = {
     template: `
         <div class="container-fluid py-4">
@@ -16,7 +17,8 @@ const ProgramacionesAulaView = {
                 </div>
             </div>
 
-            <!-- Selectores: profesor (solo jefe/admin), grupo, materia -->
+            <!-- Selectores: profesor (solo jefe/admin), materia, grupo (como
+                 en la propuesta pedagógica, primero la materia y luego el grupo) -->
             <div class="row mb-3">
                 <div class="col-md-4" v-if="esAdmin">
                     <label class="form-label">Profesor</label>
@@ -27,18 +29,19 @@ const ProgramacionesAulaView = {
                 </div>
 
                 <div :class="esAdmin ? 'col-md-4' : 'col-md-6'">
-                    <label class="form-label">Grupo</label>
-                    <select class="form-select" v-model="idGrupo" @change="cambiarGrupo" :disabled="esAdmin && idProfesor <= 0">
-                        <option :value="0">--Selecciona un grupo--</option>
-                        <option v-for="g in grupos" :key="g.id" :value="g.id">{{ g.nombre }}</option>
+                    <label class="form-label">Materia</label>
+                    <select class="form-select" v-model="idMateria" @change="cambiarMateria" :disabled="esAdmin && idProfesor <= 0">
+                        <option :value="0">--Selecciona una materia--</option>
+                        <!-- Mismo formato que en la propuesta pedagógica -->
+                        <option v-for="m in materias" :key="m.id" :value="m.id">{{ m.nombre }} ({{ m.nomCurso }})</option>
                     </select>
                 </div>
 
                 <div :class="esAdmin ? 'col-md-4' : 'col-md-6'">
-                    <label class="form-label">Materia</label>
-                    <select class="form-select" v-model="idMateria" @change="cambiarMateria" :disabled="idGrupo <= 0">
-                        <option :value="0">--Selecciona una materia--</option>
-                        <option v-for="m in materias" :key="m.id" :value="m.id">{{ m.nombre }}</option>
+                    <label class="form-label">Grupo</label>
+                    <select class="form-select" v-model="idGrupo" @change="cambiarGrupo" :disabled="idMateria <= 0">
+                        <option :value="0">--Selecciona un grupo--</option>
+                        <option v-for="g in grupos" :key="g.id" :value="g.id">{{ g.nombre }}</option>
                     </select>
                 </div>
             </div>
@@ -150,11 +153,13 @@ const ProgramacionesAulaView = {
     },
 
     async mounted() {
-        // Un profesor no elige profesor: el backend usa la sesión.
+        // Un profesor no elige profesor: el backend usa la sesión, y sus
+        // materias se cargan al montar la vista (como en el seguimiento).
         if (this.esAdmin) {
             await this.cargarProfesores();
         } else {
             this.idProfesor = 0;
+            await this.cargarMaterias();
         }
     },
 
@@ -207,47 +212,52 @@ const ProgramacionesAulaView = {
             }
         },
 
+        async cargarMaterias() {
+            try {
+                this.materias = await ProgramacionesAulaAPI.cargarMaterias(this.idProfesor) || [];
+            } catch (error) {
+                Avisos.error(error.message);
+            }
+        },
+
         async cambiarProfesor() {
-            this.idGrupo = 0;
             this.idMateria = 0;
+            this.idGrupo = 0;
             this.idApartado = 0;
             this.apartados = [];
             this.materias = [];
             this.grupos = [];
             await this.borrarEditor();
             if (this.idProfesor <= 0) return;
-            try {
-                this.grupos = await ProgramacionesAulaAPI.cargarGrupos(this.idProfesor) || [];
-            } catch (error) {
-                Avisos.error(error.message);
-            }
-        },
-
-        async cambiarGrupo() {
-            this.idMateria = 0;
-            this.idApartado = 0;
-            this.apartados = [];
-            this.materias = [];
-            await this.borrarEditor();
-            if (this.idGrupo <= 0) return;
-            try {
-                this.materias = await ProgramacionesAulaAPI.cargarMaterias(this.idProfesor, this.idGrupo) || [];
-            } catch (error) {
-                Avisos.error(error.message);
-            }
+            await this.cargarMaterias();
         },
 
         async cambiarMateria() {
-            await this.borrarEditor();
+            this.idGrupo = 0;
             this.idApartado = 0;
             this.tipoApartado = -1;
             this.apartados = [];
+            this.grupos = [];
+            await this.borrarEditor();
             if (this.idMateria <= 0) return;
             try {
                 this.apartados = await ProgramacionesAulaAPI.cargarApartados(this.idMateria) || [];
             } catch (error) {
                 Avisos.error(error.message);
             }
+            try {
+                this.grupos = await ProgramacionesAulaAPI.cargarGrupos(this.idMateria, this.idProfesor) || [];
+            } catch (error) {
+                Avisos.error(error.message);
+            }
+        },
+
+        async cambiarGrupo() {
+            // Los apartados son el catálogo de la materia y no dependen del
+            // grupo: solo se reinicia la selección de apartado.
+            this.idApartado = 0;
+            this.tipoApartado = -1;
+            await this.borrarEditor();
         },
 
         async cambiarApartado() {

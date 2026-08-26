@@ -63,8 +63,11 @@ function pcCmp_listarGrupos()
     }
 }
 
-// Listar las materias con programación activa de un profesor, solo las del
-// curso actual (fiel a v3: e.actual = 1).
+// Listar las materias con programación activa de un profesor (todos sus
+// grupos, solo las del curso actual: e.actual = 1). Cada materia va con su
+// flag "terminada" (materias.terminada_programacion): en la opción de
+// programaciones de aula es lo que habilita importar la programación de aula
+// a partir de la propuesta pedagógica.
 function pcCmp_listarMaterias()
 {
     $session = checkSession();
@@ -82,7 +85,8 @@ function pcCmp_listarMaterias()
     try {
         $db = Db::open();
 
-        $filas = $db->fetchAll("SELECT DISTINCT m.id AS id, m.nombre AS nombreMateria, c.nombre AS nomCurso, m.horas AS horas
+        $filas = $db->fetchAll("SELECT DISTINCT m.id AS id, m.nombre AS nombreMateria, c.nombre AS nomCurso, m.horas AS horas,
+                                            m.terminada_programacion AS terminada
                                 FROM materias m
                                 JOIN cursos c ON c.id = m.idCurso
                                 JOIN seleccion s ON s.idMateria = m.id
@@ -98,7 +102,8 @@ function pcCmp_listarMaterias()
                 'id'       => intval($fila['id']),
                 'nombre'   => $fila['nombreMateria'],
                 'nomCurso' => $fila['nomCurso'],
-                'horas'    => intval($fila['horas'])
+                'horas'    => intval($fila['horas']),
+                'terminada' => (bool)$fila['terminada']
             );
         }
 
@@ -151,90 +156,6 @@ function pcCmp_cargarApartados($db, $idMateria)
         ];
     }
     return $apartados;
-}
-
-// Listar los grupos que imparte un profesor en el escenario actual (para el
-// desplegable «grupo» de la opción de programaciones de aula). El profesor
-// solo ve el suyo; un superusuario puede elegir cualquier profesor.
-function pcCmp_listarGruposProfesor()
-{
-    $session = checkSession();
-    $rol = $session['rol'];
-    $idProfesorSesion = intval($session['idUsuario']);
-    if (esUsuarioSuper($rol)) {
-        $idProfesor = getOptimoInt('idProfesor', $idProfesorSesion);
-    } else {
-        $idProfesor = $idProfesorSesion;
-    }
-
-    try {
-        $db = Db::open();
-        $filas = $db->fetchAll("SELECT DISTINCT g.id AS id, g.nombre AS nombre
-                                  FROM grupos g
-                                  JOIN seleccion s ON s.idGrupo = g.id
-                                  JOIN escenarios_desideratas e ON e.id = s.idEscenario
-                                  WHERE s.idProfesor = ?
-                                    AND e.actual = 1
-                                  ORDER BY g.nombre", $idProfesor);
-
-        $grupos = array();
-        foreach ($filas as $fila) {
-            $grupos[] = array('id' => intval($fila['id']), 'nombre' => $fila['nombre']);
-        }
-
-        $db->close();
-        sendJSONSuccess($grupos);
-    } catch (DbException $e) {
-        sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
-    }
-}
-
-// Listar las materias del profesor en un grupo (con programación, escenario
-// actual), para el desplegable «materia» de la opción de programaciones de
-// aula. Cada materia va con su flag "terminada" (si la propuesta pedagógica
-// está terminada), porque es lo que habilita importar la programación de aula.
-function pcCmp_listarMateriasGrupo()
-{
-    $session = checkSession();
-    $rol = $session['rol'];
-    $idProfesorSesion = intval($session['idUsuario']);
-    if (esUsuarioSuper($rol)) {
-        $idProfesor = getOptimoInt('idProfesor', $idProfesorSesion);
-    } else {
-        $idProfesor = $idProfesorSesion;
-    }
-    $idGrupo = getOptimoInt('idGrupo');
-    if ($idGrupo <= 0) {
-        sendJSONError('Debe indicar un grupo', 400);
-    }
-
-    try {
-        $db = Db::open();
-        $filas = $db->fetchAll("SELECT DISTINCT m.id AS id, m.nombre AS nombreMateria,
-                                           m.terminada_programacion AS terminada
-                                  FROM materias m
-                                  JOIN seleccion s ON s.idMateria = m.id
-                                  JOIN escenarios_desideratas e ON e.id = s.idEscenario
-                                  WHERE m.tiene_programacion = 1
-                                    AND s.idProfesor = ?
-                                    AND s.idGrupo = ?
-                                    AND e.actual = 1
-                                  ORDER BY m.nombre", $idProfesor, $idGrupo);
-
-        $materias = array();
-        foreach ($filas as $fila) {
-            $materias[] = array(
-                'id'        => intval($fila['id']),
-                'nombre'    => $fila['nombreMateria'],
-                'terminada' => (bool)$fila['terminada']
-            );
-        }
-
-        $db->close();
-        sendJSONSuccess($materias);
-    } catch (DbException $e) {
-        sendJSONError('Error de base de datos: ' . $e->getMessage(), 500);
-    }
 }
 
 // Listar todos los profesores (id y nombre), para el desplegable de selección.

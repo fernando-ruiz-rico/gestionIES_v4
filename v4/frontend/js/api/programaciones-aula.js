@@ -14,22 +14,24 @@ const ProgramacionesAulaAPI = {
         return Http.getOk(this.baseUrl + 'profesores.php', 'Error al cargar los profesores');
     },
 
-    // Grupos que imparte el profesor (escenario actual)
-    cargarGrupos(idProfesor) {
-        let url = this.baseUrl + 'grupos.php';
+    // Materias con programación del profesor (todos sus grupos, escenario
+    // actual, con flag "terminada"): como en la propuesta pedagógica, primero
+    // se elige la materia y luego el grupo.
+    cargarMaterias(idProfesor) {
+        let url = this.baseUrl + 'materias.php';
         if (idProfesor > 0) {
             url += `?idProfesor=${idProfesor}`;
         }
-        return Http.getOk(url, 'Error al cargar los grupos');
+        return Http.getOk(url, 'Error al cargar las materias');
     },
 
-    // Materias del profesor en el grupo (con programación y flag "terminada")
-    cargarMaterias(idProfesor, idGrupo) {
-        let url = `${this.baseUrl}materias.php?idGrupo=${idGrupo}`;
+    // Grupos que imparte el profesor en la materia elegida (escenario actual)
+    cargarGrupos(idMateria, idProfesor) {
+        let url = `${this.baseUrl}grupos.php?idMateria=${idMateria}`;
         if (idProfesor > 0) {
             url += `&idProfesor=${idProfesor}`;
         }
-        return Http.getOk(url, 'Error al cargar las materias');
+        return Http.getOk(url, 'Error al cargar los grupos');
     },
 
     // Apartados de la materia (mismo catálogo que la propuesta pedagógica)
