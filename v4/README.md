@@ -8,6 +8,7 @@ Aplicación fullstack para la gestión interna de centros educativos (IESSV). Re
 - [Tecnologías](#tecnologías)
 - [Requisitos del servidor](#requisitos-del-servidor)
 - [Instalación](#instalación)
+- [Base de datos — cambios de esquema](#base-de-datos-cambios-de-esquema)
 - [Estado actual del proyecto](#estado-actual-del-proyecto)
 - [Hoja de ruta](#hoja-de-ruta)
 - [Historial de cambios](#historial-de-cambios)
@@ -140,6 +141,47 @@ v4/
 
 ---
 
+## Base de datos — cambios de esquema
+
+SQL a ejecutar sobre la base de datos real de v3 (la del dump `gestionies.sql`)
+para las opciones propias de v4 «Propuesta Pedagógica» y «Programaciones de
+aula»:
+
+```sql
+-- «Propuesta Pedagógica» (antigua «Programaciones»): flag que indica si la
+-- propuesta de una materia está terminada. Es lo que habilita importar la
+-- programación de aula a partir de ella (opción «Programaciones de aula»,
+-- botón «Importar propuesta»).
+ALTER TABLE `materias`
+  ADD `terminada_programacion` TINYINT(1) NOT NULL DEFAULT 0;
+
+-- «Programaciones de aula»: copia, por profesor y grupo, de la propuesta
+-- pedagógica de una materia (contenidos de apartados). Al ser una copia
+-- independiente, editarla NO modifica `contenidos_programaciones` (la
+-- propuesta pedagógica).
+CREATE TABLE `contenidos_programaciones_aula` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `idMateria` int NOT NULL,
+  `idApartado` int NOT NULL,
+  `idGrupo` int NOT NULL,
+  `idProfesor` int NOT NULL,
+  `texto` longtext NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_spanish_ci;
+```
+
+- El flag `materias.terminada_programacion` (0/1) se edita desde la opción
+  «Propuesta Pedagógica» (interruptor «Propuesta pedagógica terminada», una
+  vez elegida la materia); el endpoint es
+  `backend/api/programaciones/actualizar_terminada.php`.
+- `contenidos_programaciones_aula` se puebla con el botón «Importar
+  propuesta» de la opción «Programaciones de aula», que copia las filas de
+  `contenidos_programaciones` de la materia elegida para el
+  (profesor, grupo) elegido; si ya existía una copia para esa combinación,
+  se reemplaza.
+
+---
+
 ## Estado actual del proyecto
 
 > Tabla basada en los archivos realmente presentes en `backend/` y `frontend/`.
@@ -158,10 +200,10 @@ v4/
 | Materias | ✅ | ✅ | Completado |
 | Escenarios | ✅ | ✅ | Completado |
 | **Fase 2 – Programaciones Didácticas** | | | |
-| 2.1 Programaciones (fiel a v3) | ✅ | ✅ | Completado |
+| 2.1 Propuesta Pedagógica (fiel a v3) | ✅ | ✅ | Completado |
 | 2.2 Apartados de programación | ✅ | ✅ | Completado |
 | 2.3 Contenidos por defecto | ✅ | ✅ | Completado |
-| 2.4 Programación de aula | ✅ | ✅ | Completado |
+| 2.4 Programaciones de aula (propia de v4) | ✅ | ✅ | Completado |
 | 2.5 Seguimiento de programaciones | ✅ | ✅ | Completado |
 | 2.6 Temas (unidades de programación) | ✅ | ✅ | Completado |
 | 2.7 Cont. defecto de temas | ✅ | ✅ | Completado |
@@ -214,14 +256,14 @@ Módulos de base del sistema:
 
 ### Fase 2: Programaciones Didácticas (Completado)
 
-> **Modelo fiel a v3**: en v3 **no existe** la tabla `programaciones`. La programación vive en `apartados_programaciones` + `contenidos_programaciones` asociados a cada materia (flag `materias.tiene_programacion`); el curso se resuelve con `materias.idCurso → cursos`.
+> **Modelo fiel a v3**: en v3 **no existe** la tabla `programaciones`. La programación vive en `apartados_programaciones` + `contenidos_programaciones` asociados a cada materia (flag `materias.tiene_programacion`); el curso se resuelve con `materias.idCurso → cursos`. (Única excepción: la 2.4 «Programaciones de aula», opción propia de v4 sin equivalente en v3.)
 
 | Módulo | Backend | Frontend | Referencia v3 | Estado |
 |--------|---------|----------|---------------|:------:|
-| 2.1 Programaciones | `backend/api/programaciones/` | `programaciones-view.js` + `api/programaciones.js` | `programaciones.php`, `ajax/programaciones/`, `modales/importar_programacion.php` | Completado |
+| 2.1 Propuesta Pedagógica | `backend/api/programaciones/` | `programaciones-view.js` + `api/programaciones.js` | `programaciones.php`, `ajax/programaciones/`, `modales/importar_programacion.php` | Completado (+ flag «terminada» propio de v4) |
 | 2.2 Apartados | `backend/api/programaciones_apartados/` | `programaciones-apartados-view.js` | `programaciones_apartados.php`, `ajax/programaciones_apartados/` | Completado |
 | 2.3 Cont. defecto | `backend/api/programaciones_contenidos_defecto/` | `programaciones-contenidos-defecto-view.js` | `programaciones_contenidos_defecto.php`, `ajax/programaciones_contenidos_defecto/` | Completado |
-| 2.4 Programación de aula | `backend/api/programaciones_aula/` | `programaciones-aula-view.js` | `programaciones_aula.php`, `ajax/programaciones_aula/` | Completado |
+| 2.4 Programaciones de aula | `backend/api/programaciones_aula/` | `programaciones-aula-view.js` + `api/programaciones-aula.js` | — (opción propia de v4, sin equivalente en v3) | Completado |
 | 2.5 Seguimiento | `backend/api/programaciones_seguimiento/` | `programaciones-seguimiento-view.js` | `programaciones_seguimiento.php`, `ajax/programaciones_seguimiento/` | Completado |
 | 2.6 Temas | `backend/api/temas.php` | `temas-view.js` + `api/temas.js` | `temas.php`, `editar_tema.php`, `ajax/temas/` | Completado |
 | 2.7 Cont. defecto de temas | `backend/api/temas_contenidos_defecto.php` | `temas-contenidos-defecto-view.js` | `temas_contenidos_defecto.php`, `ajax/temas_contenidos_defecto/` | Completado |
@@ -279,7 +321,7 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 - `backend/pdf/pdf_unidades_programacion.php` — **PDF de unidades/temas** (`?idMateria=X`, una página por tema), fiel a `v3/pdf_unidades_programacion.php`. El «PDF de Apartado» de la vista enruta aquí si el apartado es de temas (`tipo = 13`), igual que v3. ✅ Verificado en vivo.
 - `backend/pdf/pdf_programaciones_seguimiento.php` — **PDFs de seguimiento de aula** (`?departamento=X&curso=Y&evaluacion=Z&categoria=FP|ESO/BACH`), Fase 2.5, fiel a `v3/pdf_programaciones_seguimiento.php`: portada (curso + evaluación + departamento) y las 5 secciones (1. temporalización, 2. resultados académicos con % de aprobados, 3. inclusión del alumnado —con «No hay datos disponibles» si no hay inclusiones—, 4. valoración de las horas de atención a pendientes [datos comunes del departamento], 5. actividades extraescolares programadas para la evaluación siguiente). Los dos botones de la vista de seguimiento (`Ciclos Formativos` → `categoria=FP`; `ESO/BACH` → el resto) abren este endpoint con el curso actual, la evaluación elegida y el **departamento del usuario** (jefe/profesor: el suyo; **admin real: el que elige en el desplegable de la vista**, equivalente al `seleccion_departamento` de la cabecera de v3 — sin departamento el botón queda desactivado). ✅ Verificado en vivo.
 
-> El botón PDF de `programaciones-aula` (Fase 2.4) sigue siendo un stub informativo, igual que en la entrega 2.4/2.5. Los PDFs de la Fase 2 se abren desde sus vistas (los de «Programaciones» son los 3 de arriba, el de «Resultados de aprendizaje» el de la empresa, y los de «Seguimiento» el de arriba).
+> La opción «Programaciones de aula» (Fase 2.4, propia de v4) no tiene botón de PDF: es la copia de trabajo, por profesor + grupo, de la propuesta pedagógica (ver «Historial de cambios»). Los PDFs de la Fase 2 se abren desde sus vistas (los de «Propuesta Pedagógica» son los 3 de arriba, el de «Resultados de aprendizaje» el de la empresa, y los de «Seguimiento» el de arriba).
 
 ### Fase 9: Características Avanzadas (Parcial)
 
@@ -294,6 +336,15 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 ## Historial de cambios
 
 > Registro cronológico (más reciente primero) de las entregas por versión.
+
+### «Propuesta Pedagógica» + «Programaciones de aula» — opciones propias de v4 (renombrado, flag «terminada» e importar de la propuesta a la programación de aula)
+- **Menú**: el ítem «Programaciones» pasa a llamarse **«Propuesta Pedagógica»** (misma ruta `programaciones.php`, misma vista; su botón «Importar» sigue siendo el de v3: modal materia origen→destino, solo admin).
+- **Flag «terminada»** (`materias.terminada_programacion`, `TINYINT(1)`): en «Propuesta Pedagógica», al elegir una materia aparece el interruptor «Propuesta pedagógica terminada» (endpoint `programaciones/actualizar_terminada.php`); `cargar_materias` devuelve el flag de cada materia.
+- **«Programaciones de aula» (2.4, propia de v4)**: **sustituye** a la antigua 2.4 (texto de introducción por tema + botones PDF pendientes). Flujo: **grupo** (y **profesor**, en caso de jefe/admin) → **materia** (las que imparte el profesor en ese grupo con `tiene_programacion = 1`, escenario actual) → **apartado** (mismo catálogo que la propuesta). El botón **«Importar propuesta»**, solo activo con la propuesta marcada como **terminada**, hace una copia, para el (profesor, grupo) elegidos, de `contenidos_programaciones` de la materia en la nueva tabla `contenidos_programaciones_aula` (idMateria + idApartado + idGrupo + idProfesor) y **la muestra en el editor** (TinyMCE, misma configuración que la propuesta); a partir de ahí se modifica igual que la propuesta pedagógica y **la propuesta no se toca** (copia independiente; si ya existía copia para esa combinación, se reemplaza). Si la propuesta no está terminada, el botón queda desactivado y el backend lo impone (400); el backend además verifica que el profesor imparta la materia en el grupo (escenario actual) y, para un profesor, fuerza el propio id (no vale el `idProfesor` del body).
+- **SQL** (ver «Base de datos — cambios de esquema»): `ALTER TABLE materias ADD terminada_programacion` + `CREATE TABLE contenidos_programaciones_aula`.
+- **Retirados**: `programaciones_aula/contenido.php` y `programaciones_aula/temas.php` (texto de introducción por tema, sin uso ya) y los dos botones PDF «Pendiente (Fase 8)» de la antigua vista.
+- **Compartido**: la lógica de apartados/categoría (`pcCmp_cargarApartados`/`pcCmp_categoriaMateria`) pasa a `lib/programaciones_compartidas.php`, ahora compartida por `programaciones/cargar_apartados.php` y `programaciones_aula/apartados.php`; nuevas funciones `pcCmp_listarGruposProfesor`/`pcCmp_listarMateriasGrupo` en la misma lib. `programaciones_seguimiento` no se ve afectada (regresión verificada).
+- **Verificado en vivo** (Laragon, `testadmin`/`testprofe`): menú renombrado; flag 0/1; compuerta del importar (400 sin «terminada»); import real (16/16 apartados copiados para un profesor+grupo); lectura/guardado con `sin_cambios`; profesor forzado a sí mismo; `php -l` y `node --check` limpios.
 
 ### Perfil — «la opción no funciona adecuadamente» (corregido, fiel a v3): propio perfil + preferencias de horario
 - 🐞 **Causa raíz** (tres cosas a la vez): (1) el menú «Perfil» del sidebar emite `perfil.php` y en la `vistaMap` de `app-layout.js` **no había entrada**, de modo que **silenciosamente caía en la home** (sin vista ni error); (2) el acceso rápido «Perfil» de la home abría `configuracion.php` (una vista **solo de admin**); (3) el formulario de profesor compartido (modal del módulo «Profesores») cargaba las preferencias horarias **desde un stub** (siempre inicializaba vacías), con **horas duras** (8:00, 9:00, …) en vez de las reales de la tabla `horas` y un código de celda de **7 caracteres** (`L_8_00`): guardar **borraba/corrompía** las filas reales de `preferencias_horario` (el backend parsea el código de 6 caracteres de v3, p. ej. `L07_55`).
@@ -588,6 +639,13 @@ Las decisiones importantes de diseño e implementación se documentan aquí.
 - **Decisión**: todos esos puntos usan los helpers existentes de `config.php`: `checkSession()` (401 «No hay sesión activa»), `checkPermission(array(…))` (403 «No tiene permisos para realizar esta acción») y el nuevo `esUsuarioSuper($rol)` para la distinción admin/jefe de v3.
 - **Consecuencia**: el acceso **anónimo** a esos endpoints devuelve ahora **401** (antes 403, porque el rol vacío no era admin); el usuario logueado con rol insuficiente sigue recibiendo 403. Comportamiento verificable en la matriz de roles de la auditoría en vivo.
 - **Verificación**: matriz de roles en vivo (anónimo 401 / `testprofe` 403 / jefe y admin OK); `php -l` limpio.
+
+#### D-2026: «Programaciones de aula» (2.4) — opción propia de v4 (sustituye a la 2.4 fiel a v3)
+- **Decidido por**: Usuario («la opción de programaciones de aula será igual que la de la propuesta pedagógica... el botón importar hará una copia para el grupo y profesor de la propuesta pedagógica correspondiente... la propuesta pedagógica no la tocaremos», más la confirmación de sustituir la antigua 2.4 y de usar selector de materia).
+- **Contexto**: la 2.4 entregada fiel a v3 (texto de introducción por tema + botones PDF pendientes) no encajaba con lo pedido: una copia de trabajo de la propuesta pedagógica, por profesor + grupo, editable apartado a apartado.
+- **Decisión**: sustituir la 2.4 fiel a v3 por la opción propia de v4. Se añaden la tabla `contenidos_programaciones_aula` (copia por profesor + grupo) y el flag `materias.terminada_programacion` como compuerta del importar. Se retiran el texto de introducción por tema y los botones PDF de la antigua vista (pertenecían a la Fase 8 pendiente y a la vista sustituida).
+- **Consecuencia**: el ítem de menú «Programaciones de aula» (misma ruta `programaciones_aula.php`) es ahora la opción nueva; «Programaciones» se renombra a «Propuesta Pedagógica» (2.1 fiel a v3, más el interruptor «terminada» propio de v4); el importar de la 2.1 sigue siendo el de v3 (materia origen→destino).
+- **Verificación**: pruebas en vivo (compuerta 400, import 16/16 filas, guardar, permisos) y `php -l`/`node --check` limpios.
 
 ---
 

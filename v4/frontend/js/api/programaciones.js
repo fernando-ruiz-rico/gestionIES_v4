@@ -47,6 +47,14 @@ const ProgramacionesAPI = {
         };
     },
 
+    // Marcar la propuesta pedagógica de una materia como terminada o no
+    // (v4 propia: habilita importar la programación de aula).
+    async actualizarTerminada(idMateria, terminada) {
+        const data = await Http.post(`${API_URL}actualizar_terminada.php`, { idMateria, terminada });
+        if (!data.success) throw new Error(data.error || 'Error al actualizar el estado de la propuesta');
+        return data;
+    },
+
     async importar(idMateriaOrigen, idMateriaDestino) {
         const data = await Http.post(`${API_URL}importar.php`, { idMateriaOrigen, idMateriaDestino });
         if (!data.success) throw new Error(data.error || 'Error al importar programación');

@@ -1,9 +1,7 @@
 <?php
-// FASE 2.1 — Apartados de una materia (fiel a v3/cargar_apartados.php).
-// Un apartado con tipo = 0 es EDITABLE (se rellena a mano, TinyMCE en v3);
-// el resto se rellenan automáticamente y solo se editan en sus propias secciones.
-// La lógica vive en lib/programaciones_compartidas.php (la comparte también
-// la opción de programaciones de aula).
+// FASE 2.4 — Apartados de una materia, para la opción de programaciones de
+// aula (mismo catálogo que la propuesta pedagógica: apartados por categoría,
+// con numeración). La lógica vive en lib/programaciones_compartidas.php.
 require_once '../../config.php';
 require_once '../../lib/programaciones_compartidas.php';
 cabeceraJson();

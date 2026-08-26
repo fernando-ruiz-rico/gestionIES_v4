@@ -13,7 +13,8 @@ try {
 
     if ($rol === ROLE_PROFESOR) {
         $idProfesor = (int)$session['idUsuario'];
-        $sql = "SELECT DISTINCT m.id AS id, m.nombre AS nomMateria, cu.nombre AS nomCurso
+        $sql = "SELECT DISTINCT m.id AS id, m.nombre AS nomMateria, cu.nombre AS nomCurso,
+                              m.terminada_programacion AS terminada
                   FROM materias m
                   JOIN cursos cu ON cu.id = m.idCurso
                   JOIN seleccion s ON s.idMateria = m.id
@@ -26,14 +27,16 @@ try {
         foreach ($db->fetchAll($sql, $idProfesor) as $fila) {
             $materias[] = [
                 'id'       => (int)$fila['id'],
-                'nombre'   => $fila['nomMateria'] . ' (' . $fila['nomCurso'] . ')'
+                'nombre'   => $fila['nomMateria'] . ' (' . $fila['nomCurso'] . ')',
+                'terminada' => (bool)$fila['terminada']
             ];
         }
     } elseif (esUsuarioSuper($rol)) {
         // Fiel a v3: el jefe ve las del departamento; el admin (sin
         // selector de departamento en v4) ve todas.
         $idDepartamento = !empty($session['idDepartamento']) ? (int)$session['idDepartamento'] : 0;
-        $sql = "SELECT DISTINCT m.id AS id, m.nombre AS nombre, c.orden AS ordenCurso
+        $sql = "SELECT DISTINCT m.id AS id, m.nombre AS nombre, m.terminada_programacion AS terminada,
+                              c.orden AS ordenCurso
                   FROM materias m
                   JOIN cursos c ON c.id = m.idCurso
                  WHERE m.tiene_programacion = 1";
@@ -45,7 +48,11 @@ try {
         $sql .= " ORDER BY c.orden, m.nombre";
         $materias = array();
         foreach ($db->fetchAll($sql, ...$params) as $fila) {
-            $materias[] = ['id' => (int)$fila['id'], 'nombre' => $fila['nombre']];
+            $materias[] = [
+                'id'        => (int)$fila['id'],
+                'nombre'    => $fila['nombre'],
+                'terminada' => (bool)$fila['terminada']
+            ];
         }
     } else {
         throw new Exception('Rol no reconocido');

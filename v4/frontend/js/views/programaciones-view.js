@@ -1,4 +1,8 @@
-// FASE 2.1 — Programaciones Didácticas (edición fiel a v3/programaciones.php)
+// FASE 2.1 — Propuesta Pedagógica (edición fiel a v3/programaciones.php).
+// "Programaciones" de v3: la programación de la materia, editada por
+// apartados. En v4 se renombra la opción a «Propuesta Pedagógica» y se
+// añade el flag "terminada" (v4 propia), que habilita importar la
+// programación de aula a partir de ella.
 //
 // Cada materia guarda su programación como apartados + contenidos. Aquí se
 // elige materia y apartado:
@@ -20,7 +24,7 @@ const ProgramacionesView = {
         <div class="container-fluid py-4">
             <div class="row mb-3">
                 <div class="col-12">
-                    <h2><i class="bi bi-journal-bookmark me-2"></i>Edición de Programaciones</h2>
+                    <h2><i class="bi bi-journal-bookmark me-2"></i>Edición de Propuesta Pedagógica</h2>
                 </div>
             </div>
 
@@ -40,6 +44,19 @@ const ProgramacionesView = {
                         <option :value="0">--Selecciona un apartado--</option>
                         <option v-for="a in apartados" :key="a.id" :value="a.id">{{ a.nombre }}</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- Estado de la propuesta (dato propio de v4) -->
+            <div class="row mb-3" v-if="idMateria > 0">
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="terminadaSwitch" v-model="terminada" @change="guardarTerminada">
+                        <label class="form-check-label" for="terminadaSwitch">Propuesta pedagógica terminada</label>
+                    </div>
+                    <small class="text-muted d-block">
+                        Mientras la propuesta no esté terminada, no se podrá importar la programación de aula a partir de ella.
+                    </small>
                 </div>
             </div>
 
@@ -169,6 +186,7 @@ const ProgramacionesView = {
             tipoApartado: -1,
             contenido: '',
             guardando: false,
+            terminada: false,
             modalImportar: null,
             importarForm: { idMateriaOrigen: '', idMateriaDestino: '' }
         };
@@ -241,11 +259,32 @@ const ProgramacionesView = {
             this.idApartado = 0;
             this.tipoApartado = -1;
             this.apartados = [];
-            if (this.idMateria <= 0) return;
+            if (this.idMateria <= 0) {
+                this.terminada = false;
+                return;
+            }
+            const materia = this.materias.find(m => m.id === this.idMateria);
+            this.terminada = !!(materia && materia.terminada);
 
             try {
                 this.apartados = await ProgramacionesAPI.cargarApartados(this.idMateria) || [];
             } catch (error) {
+                Avisos.error(error.message);
+            }
+        },
+
+        // --- Estado de la propuesta (v4 propia) ---
+        // Marca la propuesta pedagógica de la materia como terminada o no.
+        // Es lo que habilita importar la programación de aula.
+        async guardarTerminada() {
+            try {
+                await ProgramacionesAPI.actualizarTerminada(this.idMateria, this.terminada ? 1 : 0);
+                Avisos.exito('Éxito', this.terminada
+                    ? 'La propuesta pedagógica está marcada como terminada'
+                    : 'La propuesta pedagógica está marcada como no terminada');
+            } catch (error) {
+                // Revertir el interruptor si el guardado falla
+                this.terminada = !this.terminada;
                 Avisos.error(error.message);
             }
         },
