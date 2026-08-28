@@ -70,6 +70,7 @@ const AppLayout = {
                 'programaciones_aula.php': 'programaciones-aula-view',
                 'programaciones_seguimiento_aula.php': 'programaciones-seguimiento-view',
                 'temas.php': 'temas-view',
+                'temas_aula.php': 'temas-aula-view',
                 'pccf_apartados.php': 'pccf-apartados-view',
                 'pccf_contenidos_defecto.php': 'pccf-contenidos-defecto-view',
                 'pccf.php': 'pccf-view',

@@ -16,7 +16,7 @@
  *
  * Al añadir/eliminar archivos, sube NIVEL para forzar la re-caché.
  */
-const NIVEL = 'v4-pwa-2';
+const NIVEL = 'v4-pwa-3';
 const PRECACHE = [
     'index.html',
     'manifest.webmanifest',

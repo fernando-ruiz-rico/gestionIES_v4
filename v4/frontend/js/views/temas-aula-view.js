@@ -1,11 +1,11 @@
 // Fase 2.6 — Gestión de temas / unidades de una materia
 // Equivalente a v3: temas.php (listado + totales) y editar_tema.php (formulario completo).
-const TemasView = {
+const TemasAulaView = {
     template: `
         <div class="container-fluid py-4">
             <div class="row mb-3">
                 <div class="col-12">
-                    <h2><i class="bi bi-stack me-2"></i>Unidades de programación</h2>
+                    <h2><i class="bi bi-stack me-2"></i>Unidades de programación (programación de aula)</h2>
                 </div>
             </div>
 
@@ -16,6 +16,7 @@ const TemasView = {
                         Gestiona los temas / unidades de programación de cada materia.
                         Cada tema rellena sus apartados, los resultados de aprendizaje (RA) y
                         criterios de evaluación (CE) que lo componen, así como sus competencias.
+                        Son las unidades de la copia de aula para el grupo y el profesor elegidos.
                     </div>
                 </div>
             </div>
@@ -34,6 +35,12 @@ const TemasView = {
             <!-- Listado de temas + totales -->
             <div class="row mt-4" v-if="idMateria > 0">
                 <div class="col-12">
+                    <div class="alert alert-warning" v-if="temas.length === 0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        No hay unidades todavía para esta materia en el grupo y el profesor elegidos.
+                        Si aún no existe la copia, créala desde «Programaciones de aula» con el botón
+                        <em>Importar propuesta</em> (copia las unidades y todos sus datos de la propuesta pedagógica).
+                    </div>
                     <div class="table-responsive">
                     <table class="table table-striped align-middle">
                         <thead>
@@ -412,6 +419,10 @@ const TemasView = {
     async mounted() {
         this.modalNueva = new bootstrap.Modal(document.getElementById('formnuevotema'));
         this.modalRA = new bootstrap.Modal(document.getElementById('formresultado_ra'));
+        // Copia de aula: fijar el (grupo, profesor) de la copia en el cliente
+        // antes de cargar (la navega el botón «Unidades» de
+        // «Programaciones de aula» con idMateria, idGrupo e idProfesor).
+        TemasAulaAPI.setContext(this.params && this.params.idGrupo, this.params && this.params.idProfesor);
         await this.cargarMaterias();
         // Si llegó desde «Programaciones» (botón «Unidades») con una materia ya
         // elegida, precargar sus unidades (fiel a v3: temas.php?idMateria=X).
@@ -543,7 +554,7 @@ const TemasView = {
         // --- Carga de datos ---
         async cargarMaterias() {
             try {
-                this.materias = await TemasAPI.listarMaterias() || [];
+                this.materias = await TemasAulaAPI.listarMaterias() || [];
             } catch (error) {
                 Avisos.error(error.message);
             }
@@ -572,7 +583,7 @@ const TemasView = {
 
         async refrescarListado() {
             try {
-                const data = await TemasAPI.listarTemas(this.idMateria);
+                const data = await TemasAulaAPI.listarTemas(this.idMateria);
                 this.temas = data.temas || [];
                 this.horasAnuales = data.horas_anuales || 0;
             } catch (error) {
@@ -582,7 +593,7 @@ const TemasView = {
 
         async cargarAccordion() {
             try {
-                const data = await TemasAPI.cargarAccordionRAyCE(this.idMateria);
+                const data = await TemasAulaAPI.cargarAccordionRAyCE(this.idMateria);
                 this.idCiclo = data.idCiclo || 0;
                 this.ra = data.ra || [];
                 this.totalRA = data.total || 0;
@@ -596,7 +607,7 @@ const TemasView = {
         async editarTema(id) {
             if (id <= 0) return;
             try {
-                const data = await TemasAPI.obtenerTema(id);
+                const data = await TemasAulaAPI.obtenerTema(id);
                 const t = data.tema;
                 this.tema = {
                     orden: t.orden,
@@ -687,7 +698,7 @@ const TemasView = {
                 return;
             }
             try {
-                const res = await TemasAPI.nuevo(this.idMateria, this.nuevaForm.orden, this.nuevaForm.titulo);
+                const res = await TemasAulaAPI.nuevo(this.idMateria, this.nuevaForm.orden, this.nuevaForm.titulo);
                 this.modalNueva.hide();
                 this.nuevaForm = { orden: 0, titulo: '' };
                 await this.refrescarListado();
@@ -711,7 +722,7 @@ const TemasView = {
             });
             const competencias = Object.keys(this.selCom).filter(k => this.selCom[k]).map(k => parseInt(k));
 
-            return await TemasAPI.guardar({
+            return await TemasAulaAPI.guardar({
                 idTema: this.idTema,
                 orden: this.tema.orden,
                 titulo: this.tema.titulo,
@@ -765,7 +776,7 @@ const TemasView = {
             });
             if (!confirmacion.isConfirmed) return;
             try {
-                await TemasAPI.borrar(t.id);
+                await TemasAulaAPI.borrar(t.id);
                 if (this.idTema === t.id) {
                     this.cerrarEdicion();
                 }
@@ -791,7 +802,7 @@ const TemasView = {
                 evaluacion = editor.getContent();
             }
             try {
-                await TemasAPI.repetirEvaluacion(this.idMateria, evaluacion);
+                await TemasAulaAPI.repetirEvaluacion(this.idMateria, evaluacion);
                 Avisos.exito('Éxito', 'El campo "Evaluación" se ha copiado en todos los temas de la materia');
             } catch (error) {
                 Avisos.error(error.message);
@@ -810,7 +821,7 @@ const TemasView = {
             try {
                 // Como en v3: primero se guarda el tema (con sus CE) y después se recalcula
                 await this._guardarTema();
-                await TemasAPI.recalcularPorcentajes(this.idMateria);
+                await TemasAulaAPI.recalcularPorcentajes(this.idMateria);
                 await this.cargarAccordion();
                 Avisos.exito('Éxito', 'Porcentajes de evaluación recalculados');
             } catch (error) {
@@ -856,7 +867,7 @@ const TemasView = {
 
         async guardarRA() {
             try {
-                await TemasAPI.actualizarRA(this.raEdit.id, this.raEdit.porcentaje, this.raEdit.esClave);
+                await TemasAulaAPI.actualizarRA(this.raEdit.id, this.raEdit.porcentaje, this.raEdit.esClave);
                 this.modalRA.hide();
                 await this.cargarAccordion();
                 Avisos.exito('Éxito', 'Resultado de aprendizaje actualizado');

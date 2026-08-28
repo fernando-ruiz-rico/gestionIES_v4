@@ -73,6 +73,39 @@ const ProgramacionesAulaView = {
                 </div>
             </div>
 
+            <!-- Botones (misma barra que la propuesta pedagógica) -->
+            <div class="row g-2 mb-3">
+                <div class="col-md" v-if="esAdmin">
+                    <button class="btn btn-light w-100" :disabled="idMateria <= 0" @click="irAContenidosDefecto" title="Contenidos por defecto de las unidades">
+                        <i class="bi bi-database me-1"></i>Cont. defecto Unidades
+                    </button>
+                </div>
+
+                <div class="col-md">
+                    <button class="btn btn-light w-100" :disabled="idMateria <= 0 || idGrupo <= 0" @click="irAUnidades" title="Gestionar las unidades de la copia de aula">
+                        <i class="bi bi-list-ul me-1"></i>Unidades
+                    </button>
+                </div>
+
+                <div class="col-md">
+                    <button class="btn btn-light w-100" :disabled="idMateria <= 0 || idGrupo <= 0" @click="generarPDFUnidades" title="PDF con todas las unidades de la copia">
+                        <i class="bi bi-filetype-pdf me-1"></i>PDF de Unidades
+                    </button>
+                </div>
+
+                <div class="col-md">
+                    <button class="btn btn-light w-100" :disabled="idMateria <= 0 || idGrupo <= 0 || idApartado <= 0" @click="generarPDFApartado" title="PDF del apartado seleccionado de la copia">
+                        <i class="bi bi-filetype-pdf me-1"></i>PDF de Apartado
+                    </button>
+                </div>
+
+                <div class="col-md">
+                    <button class="btn btn-light w-100" :disabled="idMateria <= 0 || idGrupo <= 0" @click="generarPDFCompleto" title="PDF completo de la programación de aula">
+                        <i class="bi bi-filetype-pdf me-1"></i>PDF Completo
+                    </button>
+                </div>
+            </div>
+
             <!-- Editor (apartado editable) -->
             <div v-if="esEditable" class="mt-3">
                 <div class="card shadow-sm">
@@ -153,12 +186,15 @@ const ProgramacionesAulaView = {
     },
 
     async mounted() {
-        // Un profesor no elige profesor: el backend usa la sesión, y sus
-        // materias se cargan al montar la vista (como en el seguimiento).
+        // Un profesor no elige profesor: mantiene su propio id (el backend de
+        // las acciones de aula usa la sesión, pero los PDFs y la navegación a
+        // las unidades de aula (temas_aula.php) necesitan el id real y no
+        // tienen sesión). Sus materias se cargan al montar la vista (como en
+        // el seguimiento).
         if (this.esAdmin) {
             await this.cargarProfesores();
         } else {
-            this.idProfesor = 0;
+            this.idProfesor = this.usuario.idUsuario;
             await this.cargarMaterias();
         }
     },
@@ -345,6 +381,55 @@ const ProgramacionesAulaView = {
             } finally {
                 this.guardando = false;
             }
+        },
+
+        // --- Navegación y PDF (misma barra que la propuesta pedagógica) ---
+        irAUnidades() {
+            if (this.idMateria <= 0 || this.idGrupo <= 0) return;
+            // Enlaza a las unidades de la copia de aula
+            this.$emit('navigate', 'temas_aula.php', {
+                idMateria: this.idMateria,
+                idGrupo: this.idGrupo,
+                idProfesor: this.idProfesor
+            });
+        },
+
+        irAContenidosDefecto() {
+            if (this.idMateria <= 0) return;
+            // Los contenidos por defecto son un catálogo compartido
+            this.$emit('navigate', 'temas_contenidos_defecto.php');
+        },
+
+        // --- PDFs (endpoints autocontenidos, sin sesión) ---
+        generarPDFCompleto() {
+            if (this.idMateria <= 0 || this.idGrupo <= 0) return;
+            window.open(
+                '../backend/pdf/pdf_programaciones_aula.php?idMateria=' + this.idMateria
+                + '&idGrupo=' + this.idGrupo + '&idProfesor=' + this.idProfesor,
+                '_blank'
+            );
+        },
+
+        generarPDFApartado() {
+            if (this.idMateria <= 0 || this.idGrupo <= 0 || this.idApartado <= 0) return;
+            // Si el apartado es de tipo TEMAS (13), el PDF "por apartado" es el de unidades
+            const esUnidades = this.tipoApartado === 13;
+            const url = (esUnidades
+                ? '../backend/pdf/pdf_unidades_programacion_aula.php'
+                : '../backend/pdf/pdf_programaciones_apartado_aula.php')
+                + '?idMateria=' + this.idMateria
+                + '&idGrupo=' + this.idGrupo + '&idProfesor=' + this.idProfesor
+                + (esUnidades ? '' : '&idApartado=' + this.idApartado);
+            window.open(url, '_blank');
+        },
+
+        generarPDFUnidades() {
+            if (this.idMateria <= 0 || this.idGrupo <= 0) return;
+            window.open(
+                '../backend/pdf/pdf_unidades_programacion_aula.php?idMateria=' + this.idMateria
+                + '&idGrupo=' + this.idGrupo + '&idProfesor=' + this.idProfesor,
+                '_blank'
+            );
         }
     }
 };

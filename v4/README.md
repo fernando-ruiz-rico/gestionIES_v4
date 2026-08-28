@@ -168,6 +168,93 @@ CREATE TABLE `contenidos_programaciones_aula` (
   `texto` longtext NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_spanish_ci;
+
+-- «Programaciones de aula»: copia INDEPENDIENTE de las unidades (temas) de la
+-- propuesta pedagógica, propia de cada profesor y grupo. Especular con `temas`
+-- (mismas columnas) añadiendo idGrupo e idProfesor para distinguir copias.
+CREATE TABLE IF NOT EXISTS `temas_aula` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `idMateria` int NOT NULL,
+  `idGrupo` int NOT NULL,
+  `idProfesor` int NOT NULL,
+  `orden` int NOT NULL DEFAULT 0,
+  `titulo` varchar(200) NOT NULL,
+  `horas` int NOT NULL DEFAULT 0,
+  `trimestre` int NOT NULL DEFAULT 0,
+  `peso_evaluacion` int NOT NULL DEFAULT 0,
+  `descripcion` text NOT NULL,
+  `justificacion` text NOT NULL,
+  `contexto` text NOT NULL,
+  `contenidos` text NOT NULL,
+  `secuenciacion` text NOT NULL,
+  `recursos` text NOT NULL,
+  `evaluacion` text NOT NULL,
+  `metodologia` text NOT NULL,
+  `adaptaciones` text NOT NULL,
+  `contexto_defecto` TINYINT(1) NOT NULL DEFAULT 1,
+  `recursos_defecto` TINYINT(1) NOT NULL DEFAULT 1,
+  `metodologia_defecto` TINYINT(1) NOT NULL DEFAULT 1,
+  `adaptaciones_defecto` TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_spanish_ci;
+
+-- «Programaciones de aula»: copia independiente de los resultados de
+-- aprendizaje (RA) de la propuesta, propia de cada profesor y grupo.
+CREATE TABLE IF NOT EXISTS `resultados_aprendizaje_aula` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `idMateria` int NOT NULL,
+  `idGrupo` int NOT NULL,
+  `idProfesor` int NOT NULL,
+  `orden` int NOT NULL DEFAULT 0,
+  `texto` text NOT NULL,
+  `porcentaje_empresa` int NOT NULL DEFAULT 0,
+  `porcentaje_evaluacion` int NOT NULL DEFAULT 0,
+  `es_clave` TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_spanish_ci;
+
+-- «Programaciones de aula»: copia independiente de los criterios de evaluación
+-- (CE) que vinculan RA (resultados_aprendizaje_aula.id) con temas
+-- (temas_aula.id) para cada profesor y grupo.
+CREATE TABLE IF NOT EXISTS `criterios_temas_aula` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `idMateria` int NOT NULL,
+  `idRA` int NOT NULL,
+  `codigo` varchar(2) NOT NULL,
+  `idTema` int NOT NULL,
+  `idGrupo` int NOT NULL,
+  `idProfesor` int NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_spanish_ci;
+
+-- «Programaciones de aula»: copia INDEPENDIENTE de los textos de los criterios
+-- de evaluación (CE) de la propuesta (especular con `criterios_evaluacion`),
+-- propia de cada profesor y grupo. idRA referencia
+-- resultados_aprendizaje_aula.id.
+CREATE TABLE IF NOT EXISTS `criterios_evaluacion_aula` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `idMateria` int NOT NULL,
+  `idRA` int NOT NULL,
+  `codigo` varchar(2) NOT NULL,
+  `texto` varchar(200) NOT NULL,
+  `idGrupo` int NOT NULL,
+  `idProfesor` int NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_spanish_ci;
+
+-- «Programaciones de aula»: copia INDEPENDIENTE de las competencias de cada
+-- unidad (especular con `competencias_temas`), propia de cada profesor y
+-- grupo. idCompetencia referencia el catálogo compartido
+-- `competencias_ciclos`; idTema referencia temas_aula.id.
+CREATE TABLE IF NOT EXISTS `competencias_temas_aula` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `idMateria` int NOT NULL,
+  `idCompetencia` int NOT NULL,
+  `idTema` int NOT NULL,
+  `idGrupo` int NOT NULL,
+  `idProfesor` int NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_spanish_ci;
 ```
 
 - El flag `materias.terminada_programacion` (0/1) se edita desde la opción
@@ -179,6 +266,16 @@ CREATE TABLE `contenidos_programaciones_aula` (
   `contenidos_programaciones` de la materia elegida para el
   (profesor, grupo) elegido; si ya existía una copia para esa combinación,
   se reemplaza.
+- `temas_aula`, `resultados_aprendizaje_aula`, `criterios_temas_aula`,
+  `criterios_evaluacion_aula` y `competencias_temas_aula` se pueblan también
+  con ese mismo botón «Importar propuesta»: además de los contenidos de
+  apartados, se copian las **unidades** (temas) y **todos los demás datos** que
+  las componen —sus resultados de aprendizaje (RA), los criterios de
+  evaluación (CE, tanto su texto como su vínculo RA↔tema) y sus
+  competencias— creando una copia **completa e independiente** para el
+  (profesor, grupo) elegido. Si ya existía copia, se reemplaza (mismos
+  borrados + reinsertos dentro de la misma transacción; los vínculos RA↔tema
+  y las competencias se re-vinculan por orden, pues los ids cambian).
 
 ---
 
@@ -316,12 +413,15 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 - `backend/pdf/pdf_desiderata.php` — **Ficha de la desiderata** de un profesor (`?idProfesor=X&idEscenario=Y`, solo el propio, o `?selEsp=<esp|Todos>&idDepartamento=X&idEscenario=Y` para jefe/admin: todos los profesores de la especialidad), fiel a `v3/pdf_desiderata.php` (TCPDF+FPDI sobre la plantilla `backend/pdf/plantilla.pdf`). ✅ Verificado en vivo (200 `application/pdf`, cabecera `%PDF`).
 - `backend/pdf/pdf_preferencias.php` — **Preferencias** de un profesor (`?idProfesor=X`, solo el propio) o de todo un departamento/especialidad (`?selEsp=<esp|Todos>&idDepartamento=X` para jefe/admin), fiel a `v3/pdf_preferencias.php` (TCPDF+FPDI sobre la plantilla `backend/pdf/desiderata_horario.pdf`); sin permiso: «Acceso no permitido». ✅ Verificado en vivo.
 - `backend/api/pccf/generar.php` — PDF del PCCF (`modo=completo` / `modo=apartado`). ⚠️ Con MySQL 8 (`ONLY_FULL_GROUP_BY`) el modo `completo` genera siempre un PDF de una página con el error SQL 3087 (ver bug **B-3**); en `modo=apartado` funcionan los tipos 0/7/12 y falla el tipo 4.
-- `backend/pdf/pdf_programaciones.php` — **PDF completo** de la programación de una materia (`?idMateria=X`), Fase 2.1, fiel a `v3/pdf_programaciones.php` (portada + índice con TOC + apartados con `Bookmark`, FE en página propia, temas en su página). ✅ Verificado en vivo.
+- `backend/pdf/pdf_programaciones.php` — **PDF completo** de la programación de una materia (`?idMateria=X`), Fase 2.1, fiel a `v3/pdf_programaciones.php` (portada que **siempre dice «Propuesta pedagógica»** —antes, con `idCiclo`, ponía «Programación didáctica»— + índice con TOC + apartados con `Bookmark`, FE en página propia, temas en su página). ✅ Verificado en vivo.
 - `backend/pdf/pdf_programaciones_apartado.php` — **PDF de un apartado** (`?idMateria=X&idApartado=Y`), el apartado pedido + sus subapartados hasta el siguiente principal, fiel a v3. ✅ Verificado en vivo.
 - `backend/pdf/pdf_unidades_programacion.php` — **PDF de unidades/temas** (`?idMateria=X`, una página por tema), fiel a `v3/pdf_unidades_programacion.php`. El «PDF de Apartado» de la vista enruta aquí si el apartado es de temas (`tipo = 13`), igual que v3. ✅ Verificado en vivo.
 - `backend/pdf/pdf_programaciones_seguimiento.php` — **PDFs de seguimiento de aula** (`?departamento=X&curso=Y&evaluacion=Z&categoria=FP|ESO/BACH`), Fase 2.5, fiel a `v3/pdf_programaciones_seguimiento.php`: portada (curso + evaluación + departamento) y las 5 secciones (1. temporalización, 2. resultados académicos con % de aprobados, 3. inclusión del alumnado —con «No hay datos disponibles» si no hay inclusiones—, 4. valoración de las horas de atención a pendientes [datos comunes del departamento], 5. actividades extraescolares programadas para la evaluación siguiente). Los dos botones de la vista de seguimiento (`Ciclos Formativos` → `categoria=FP`; `ESO/BACH` → el resto) abren este endpoint con el curso actual, la evaluación elegida y el **departamento del usuario** (jefe/profesor: el suyo; **admin real: el que elige en el desplegable de la vista**, equivalente al `seleccion_departamento` de la cabecera de v3 — sin departamento el botón queda desactivado). ✅ Verificado en vivo.
+- `backend/pdf/pdf_programaciones_aula.php` — **PDF completo de la copia de aula** (`?idMateria=X&idGrupo=G&idProfesor=P`): espejo de `pdf_programaciones.php` sobre las tablas de aula (portada que **siempre dice «Programación de aula»** e **incluye el grupo** de la copia —nombre de `grupos.nombre`— junto al curso y al profesor de la copia + apartados editables/predefinidos + índice). Lo abre el botón «PDF Completo» de «Programaciones de aula».
+- `backend/pdf/pdf_programaciones_apartado_aula.php` — **PDF de un apartado de la copia de aula** (`?idMateria=X&idApartado=Y&idGrupo=G&idProfesor=P`): espejo de `pdf_programaciones_apartado.php` sobre las tablas de aula. Lo abre el botón «PDF de Apartado» (cuando el apartado no es de temas).
+- `backend/pdf/pdf_unidades_programacion_aula.php` — **PDF de unidades de la copia de aula** (`?idMateria=X&idGrupo=G&idProfesor=P`, una página por tema): espejo de `pdf_unidades_programacion.php` sobre `temas_aula`/`resultados_aprendizaje_aula`/`criterios_*_aula`/`competencias_temas_aula`. Lo abren el botón «PDF de Unidades» y el «PDF de Apartado» cuando el apartado es de temas (`tipo = 13`).
 
-> La opción «Programaciones de aula» (Fase 2.4, propia de v4) no tiene botón de PDF: es la copia de trabajo, por profesor + grupo, de la propuesta pedagógica (ver «Historial de cambios»). Los PDFs de la Fase 2 se abren desde sus vistas (los de «Propuesta Pedagógica» son los 3 de arriba, el de «Resultados de aprendizaje» el de la empresa, y los de «Seguimiento» el de arriba).
+> Los PDFs se abren desde sus vistas: los de «Propuesta Pedagógica» son los 3 de más arriba; los de «Resultados de aprendizaje», el de la empresa; los de «Seguimiento», el de antes de esta línea. **La opción «Programaciones de aula» (Fase 2.4, propia de v4) abre sus propios PDFs** (los 3 de la copia de aula, `*_aula.php` de arriba) con el (grupo, profesor) de la copia —mismos botones que «Propuesta Pedagógica»: «PDF de Unidades», «PDF de Apartado» y «PDF Completo» (ver «Historial de cambios»).
 
 ### Fase 9: Características Avanzadas (Parcial)
 
@@ -337,11 +437,32 @@ Endpoints que generan PDF con TCPDF (compatible PHP 5, copiado en `backend/lib/p
 
 > Registro cronológico (más reciente primero) de las entregas por versión.
 
+### Portada de los «PDF Completo» — la de «Propuesta Pedagógica» decía «Programación didáctica» y la de aula no ponía el grupo (corregido)
+- 🔧 **Portada del «PDF Completo» de «Propuesta Pedagógica»** (`backend/pdf/pdf_programaciones.php`): el título de la portada era `$idCiclo ? 'Programación didáctica' : 'Propuesta pedagógica'` — para las materias de **ciclo** (`idCiclo > 0`) ponía «Programación didáctica». Ahora **siempre** pone «**Propuesta pedagógica**» (que es como se llama la opción que genera este PDF).
+- 🔧 **Portada del «PDF Completo» de «Programaciones de aula»** (`backend/pdf/pdf_programaciones_aula.php`): el título era el mismo condicional de arriba —para ciclo, «Programación didáctica»—. Ahora siempre pone «**Programación de aula**» y la portada **añade el grupo** de la copia: una línea «Grupo: …» con `grupos.nombre` (nombre del grupo, la misma etiqueta del desplegable), junto al curso académico y al profesor de la copia. El nombre se lee de la tabla `grupos` con una consulta preparada por `Db`.
+- ✅ **Verificado**: `php -l` limpio en los dos ficheros; el resto de la portada (materia, curso, año académico, departamento, profesores del ciclo) no cambia.
+- ⚠️ Sin cambios de esquema de BD ni de frontend (los dos «PDF Completo» siguen abriendo los mismos endpoints con los mismos parámetros).
+
+### «Unidades» — los apartados salían vacíos en el editor (corregido: el editor muestra lo que se imprime)
+- 🐞 **Causa raíz**: en el editor de unidades (tanto «Propuesta Pedagógica» como «Programaciones de aula») los 4 apartados con checkbox «Dejar valores por defecto» (Contexto, Recursos, Metodología, Adaptaciones) mostraban **solo el contenido propio** de la unidad (`temas`/`temas_aula`), que en la mayoría de unidades está **vacío**: su texto efectivo lo aporta el **catálogo compartido** del departamento (`contenidos_defecto_temas`), que rige cuando el flag `*_defecto = 1` y no hay propio — la misma regla que ya cumplía el **PDF** (`pgGenerarContenidoTemas`). La UI no conocía el catálogo (el endpoint `temas_contenidos_defecto/cargar.php` de la Fase 2.7 es solo admin/jefe — al profesor le da 403), de ahí el «la mayoría salen vacíos» pese a que el PDF salía bien. (v3 tenía el mismo comportamiento: campo crudo + checkbox, sin prellenado.)
+- 🔧 **Backend** (`temas/obtener.php` + `temas_aula/obtener.php`, espejo): el JSON de «obtener tema» añade `contenidosDefecto` — los 4 campos compartidos del departamento de la materia (`LEFT JOIN contenidos_defecto_temas ON cd.idDepartamento = m.idDepartamento`). PHP 5 (ternario, sin `??`), sentencias preparadas por `Db`; cambio aditivo (las sesiones existentes siguen funcionando). Se resuelve en `obtener` — y no en `cargar.php` (2.7) — porque el editor lo usa un **profesor**.
+- 🔧 **Frontend** (`temas-view.js` + `temas-aula-view.js`, espejo): al abrir una unidad, cada apartado defecto muestra **lo que se imprime**: flag 1 + hay compartido → el contenido del catálogo; en su caso, el propio (misma regla que el PDF, `contenidoMostrado`). Se añade una nota informativa azul cuando el apartado muestra contenido compartido. Al **guardar**: (a) sin cambios → la unidad **conserva** su contenido propio y su flag (no se materializa copia del compartido); (b) con cambios → la unidad queda con **contenido propio** y el checkbox se **desmarca** (en el handler de `change` se desmarca en vivo); (c) desmarcar el checkbox sin escribir → **fiel a v3** (prevalece el propio: si está vacío, el apartado queda omitido en el PDF).
+- 📄 **Despliegue**: `index.html` — `temas-view.js?v=2`, `temas-aula-view.js?v=3`; `sw.js` — `NIVEL → v4-pwa-3` (re-caché PWA al subir NIVEL).
+- ✅ **Verificado** (Laragon): `php -l` / `node --check` limpios; en vivo `temas_aula/obtener.php?idTema=17` devuelve `contenidosDefecto` (613 chars de recursos, depto 1); unidades 17–27: los 9 apartados salen **rellenos** en el editor; la unidad 16 (sin datos ni flags) sigue mostrando solo sus propios (legítimo: no tiene nada); simulación del modelo (21 aserciones display/guardar) OK; los **PDFs no cambian** (ya imprimían el compartido).
+- ⚠️ Solo `obtener` + vistas; sin cambios de esquema de BD.
+
+### «Importar propuesta» — «Error de conexión con el servidor» (corregido)
+- 🐞 **Causa raíz**: en `programaciones_aula/importar.php`, los `INSERT … SELECT` de los **resultados de aprendizaje** y de las **unidades** usaban **4 huecos `?`** en la lista `SELECT` (`SELECT ?, ?, ?, ?, …`) con una lista de **3 parámetros** (`$idMateria, $idGrupo, $idProfesor`) → `ArgumentCountError` en PHP 8 (500 en el endpoint), que la SPA traducía a «Error de conexión con el servidor».
+- 🔧 **Fix**: en ambos `INSERT … SELECT`, la `idMateria` de la copia se deriva de la fila origen (`SELECT idMateria, ?, ?, … FROM … WHERE idMateria = ?`) — los parámetros vuelven a ser 3 y encajan.
+- ✅ **Verificado en vivo**: «Importar propuesta» OK de nuevo — copia completa e **idéntica al origen** (12 unidades, 12 RA, criterios y competencias revinculados por `orden`, incluidos los 4 flags `*_defecto`; byte-exacto). `php -l` limpio.
+- ⚠️ Sin cambios de esquema; la copia ya era completa (los 18 campos de `temas`, flags incluidos).
+
 ### «Propuesta Pedagógica» + «Programaciones de aula» — opciones propias de v4 (renombrado, flag «terminada» e importar de la propuesta a la programación de aula)
 - **Menú**: el ítem «Programaciones» pasa a llamarse **«Propuesta Pedagógica»** (misma ruta `programaciones.php`, misma vista; su botón «Importar» sigue siendo el de v3: modal materia origen→destino, solo admin).
 - **Flag «terminada»** (`materias.terminada_programacion`, `TINYINT(1)`): en «Propuesta Pedagógica», al elegir una materia aparece el interruptor «Propuesta pedagógica terminada» (endpoint `programaciones/actualizar_terminada.php`); `cargar_materias` devuelve el flag de cada materia.
 - **«Programaciones de aula» (2.4, propia de v4)**: **sustituye** a la antigua 2.4 (texto de introducción por tema + botones PDF pendientes). Flujo: **materia** (igual que en la propuesta pedagógica: las que imparte el profesor en el curso actual con `tiene_programacion = 1`, escenario actual) → **grupo** (de los que imparte esa materia; y **profesor**, en caso de jefe/admin) → **apartado** (mismo catálogo que la propuesta). El botón **«Importar propuesta»**, solo activo con la propuesta marcada como **terminada**, hace una copia, para el (profesor, grupo) elegidos, de `contenidos_programaciones` de la materia en la nueva tabla `contenidos_programaciones_aula` (idMateria + idApartado + idGrupo + idProfesor) y **la muestra en el editor** (TinyMCE, misma configuración que la propuesta); a partir de ahí se modifica igual que la propuesta pedagógica y **la propuesta no se toca** (copia independiente; si ya existía copia para esa combinación, se reemplaza). Si la propuesta no está terminada, el botón queda desactivado y el backend lo impone (400); el backend además verifica que el profesor imparta la materia en el grupo (escenario actual) y, para un profesor, fuerza el propio id (no vale el `idProfesor` del body).
-- **SQL** (ver «Base de datos — cambios de esquema»): `ALTER TABLE materias ADD terminada_programacion` + `CREATE TABLE contenidos_programaciones_aula`.
+- **SQL** (ver «Base de datos — cambios de esquema»): `ALTER TABLE materias ADD terminada_programacion` + 6 tablas de la copia de aula (`contenidos_programaciones_aula`, `temas_aula`, `resultados_aprendizaje_aula`, `criterios_temas_aula`, `criterios_evaluacion_aula` y `competencias_temas_aula`).
+- **Barra de botones + unidades + PDF (igual que «Propuesta Pedagógica»)**: la vista «Programaciones de aula» muestra la misma barra que «Propuesta Pedagógica» —«Cont. defecto Unidades» (admin; catálogo compartido `temas_contenidos_defecto.php`), **«Unidades»** (navega a `temas_aula.php`, la gestión de unidades de la copia, espejo de `temas-view` sobre `temas_aula`), **«PDF de Unidades»**, **«PDF de Apartado»** (enruta al PDF de unidades si el apartado es de temas, `tipo = 13`) y **«PDF Completo»**—; los tres PDFs abren los endpoints `*_aula.php` con el (grupo, profesor) de la copia. **No** se añade el botón «Importar» origen→destino de la propuesta (aquí el importar es solo «Importar propuesta»).
 - **Retirados**: `programaciones_aula/contenido.php` y `programaciones_aula/temas.php` (texto de introducción por tema, sin uso ya) y los dos botones PDF «Pendiente (Fase 8)» de la antigua vista.
 - **Compartido**: la lógica de apartados/categoría (`pcCmp_cargarApartados`/`pcCmp_categoriaMateria`) pasa a `lib/programaciones_compartidas.php`, ahora compartida por `programaciones/cargar_apartados.php` y `programaciones_aula/apartados.php`; las funciones de listado `pcCmp_listarMaterias`/`pcCmp_listarGrupos`/`pcCmp_listarProfesores` viven en la misma lib y las reutilizan los dos módulos (el de aula, con el flag `terminada` en `pcCmp_listarMaterias`, y el de seguimiento).
 - **Verificado en vivo** (Laragon, `testadmin`/`testprofe`): menú renombrado; flag 0/1; compuerta del importar (400 sin «terminada»); import real (16/16 apartados copiados para un profesor+grupo); lectura/guardado con `sin_cambios`; profesor forzado a sí mismo; `php -l` y `node --check` limpios.

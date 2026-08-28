@@ -1,16 +1,22 @@
 <?php
 // ============================================================================
-// Genera el PDF COMPLETO de la programación de una materia (Fase 2.1)
+// Genera el PDF COMPLETO de la programación de la copia de aula de un
+// (materia, grupo, profesor) (Fase 2.4)
 // ============================================================================
 //
-// Endpoint autocontenido (solicitud de navegador directa, sin sesión) que
-// replica v3/pdf_programaciones.php sobre la base de datos de v4.
+// Endpoint autocontenido (solicitud de navegador directa, sin sesión).
+// Espejo de pdf_programaciones.php, pero lee las tablas de copia de aula
+// (contenidos_programaciones_aula, temas_aula, resultados_aprendizaje_aula,
+// criterios_temas_aula, criterios_evaluacion_aula, competencias_temas_aula)
+// filtradas por el (grupo, profesor) de la copia.
 //
 // Uso:
-//   .../pdf_programaciones.php?idMateria=<id>
+//   .../pdf_programaciones_aula.php?idMateria=<id>&idGrupo=<g>&idProfesor=<p>
 //
-// Portada + apartados (editables con su contenido, predefinidos generados al
-// vuelo) + índice. PHP 5 compatible (suelo efectivo 5.4).
+// Portada (materia, curso, «Programación de aula», curso académico, **grupo**
+// de la copia, departamento y el profesor de la copia) + apartados
+// (editables con su contenido, predefinidos generados al vuelo) + índice.
+// PHP 5 compatible (suelo efectivo 5.4).
 
 header('Content-Type: application/pdf; charset=utf-8');
 
@@ -20,9 +26,10 @@ require_once '../lib/php/tcpdf/tcpdf.php';
 require_once '../lib/programaciones_pdf.php';
 
 // ---------------------------------------------------------------------------
-// Agrega un apartado al PDF (fiel a v3/pdf_programaciones.php)
+// Agrega un apartado al PDF (fiel a v3/pdf_programaciones.php / a
+// pdf_programaciones.php de v4)
 // ---------------------------------------------------------------------------
-function pgAgregarApartadoAlPDF($pdf, &$contadorPrincipal, &$contadorSecundario, $apartado, $contenido, $tipo)
+function pgAulaAgregarApartadoAlPDF($pdf, &$contadorPrincipal, &$contadorSecundario, $apartado, $contenido, $tipo)
 {
     $esSubapartado = (bool)$apartado['subapartado'];
     $titulo = $apartado['titulo'];
@@ -61,9 +68,9 @@ function pgAgregarApartadoAlPDF($pdf, &$contadorPrincipal, &$contadorSecundario,
 }
 
 // ---------------------------------------------------------------------------
-// Genera el PDF completo
+// Genera el PDF completo de la copia de aula
 // ---------------------------------------------------------------------------
-function pgGenerarPDFProgramacion($db, $idMateria)
+function pgAulaGenerarPDFProgramacion($db, $idMateria, $aula)
 {
     // 1. Datos básicos
     $datos = pgObtenerDatosMateria($db, $idMateria);
@@ -79,9 +86,11 @@ function pgGenerarPDFProgramacion($db, $idMateria)
     $categoria = !empty($datos['categoria']) ? $datos['categoria'] : '';
     $idCiclo = pgObtenerIdCicloPorMateria($db, $idMateria);
 
-    // 2. Profesores y curso académico
-    $profesores = pgObtenerProfesoresMateria($db, $idMateria);
+    // 2. Profesor de la copia, grupo de la copia y curso académico
+    $profesores = pgObtenerProfesoresAula($db, $aula['idProfesor']);
     list($anyo1, $anyo2) = pgCursoAcademico();
+    $filaGrupo = pgConsultarUna($db, "SELECT nombre FROM grupos WHERE id = ?", array((int)$aula['idGrupo']));
+    $nombreGrupo = $filaGrupo ? $filaGrupo['nombre'] : '';
 
     // 3. Inicializar PDF
     $pdf = new MiPDFProgramaciones();
@@ -97,11 +106,12 @@ function pgGenerarPDFProgramacion($db, $idMateria)
     $pdf->Write(0, $materia . str_repeat(PHP_EOL, 2), '', 0, 'C', true, 0, false, false, 0);
     $pdf->Write(0, $curso . str_repeat(PHP_EOL, 2), '', 0, 'C', true, 0, false, false, 0);
     $pdf->SetFont('helvetica', '', 16);
-    // La portada de la «Propuesta Pedagógica» siempre dice «Propuesta
-    // pedagógica» (antes, con idCiclo, ponía «Programación didáctica»).
-    $titulo = 'Propuesta pedagógica';
+    // La portada de la «Programación de aula» siempre dice «Programación de
+    // aula» (antes, con idCiclo, ponía «Programación didáctica»).
+    $titulo = 'Programación de aula';
     $pdf->Write(0, $titulo . str_repeat(PHP_EOL, 2), '', 0, 'C', true, 0, false, false, 0);
-    $pdf->Write(0, "Curso: $anyo1/$anyo2" . str_repeat(PHP_EOL, 3), '', 0, 'C', true, 0, false, false, 0);
+    $pdf->Write(0, "Curso: $anyo1/$anyo2" . PHP_EOL, '', 0, 'C', true, 0, false, false, 0);
+    $pdf->Write(0, "Grupo: $nombreGrupo" . str_repeat(PHP_EOL, 3), '', 0, 'C', true, 0, false, false, 0);
     $pdf->Write(0, "Departamento de " . $departamento . str_repeat(PHP_EOL, 2), '', 0, 'C', true, 0, false, false, 0);
     $pdf->SetFont('helvetica', 'I', 12);
     if ($idCiclo > 0) {
@@ -111,7 +121,7 @@ function pgGenerarPDFProgramacion($db, $idMateria)
     }
     $pdf->SetFont('helvetica', '', 12);
 
-    // 5. Contenidos
+    // 5. Contenidos (apartados de la copia de aula)
     $apartados = pgObtenerApartadosProgramacion($db, $categoria);
     $contadorPrincipal = 0;
     $contadorSecundario = 0;
@@ -122,15 +132,15 @@ function pgGenerarPDFProgramacion($db, $idMateria)
         $requerido = (bool)$apartado['requerido'];
 
         if ($tipo == PG_TIPO_APARTADO_EDITABLE) {
-            // Apartado editable
-            $contenido = pgObtenerContenidoApartado($db, $id, $idMateria, $idDepartamento);
+            // Apartado editable (texto de la copia)
+            $contenido = pgObtenerContenidoApartado($db, $id, $idMateria, $idDepartamento, $aula);
         } else {
-            // Apartado predefinido
-            $contenido = pgGenerarApartadoPredefinido($db, $tipo, $idMateria, $idCiclo, $idDepartamento, $profesores, $horasEmpresa);
+            // Apartado predefinido (generado a partir de la copia)
+            $contenido = pgGenerarApartadoPredefinido($db, $tipo, $idMateria, $idCiclo, $idDepartamento, $profesores, $horasEmpresa, $aula);
         }
 
         if (!empty($contenido) || $requerido) {
-            pgAgregarApartadoAlPDF($pdf, $contadorPrincipal, $contadorSecundario, $apartado, $contenido, $tipo);
+            pgAulaAgregarApartadoAlPDF($pdf, $contadorPrincipal, $contadorSecundario, $apartado, $contenido, $tipo);
         }
     }
 
@@ -150,7 +160,7 @@ function pgGenerarPDFProgramacion($db, $idMateria)
 // ---------------------------------------------------------------------------
 // Punto de entrada principal
 // ---------------------------------------------------------------------------
-if (!empty($_REQUEST['idMateria'])) {
+if (!empty($_REQUEST['idMateria']) && !empty($_REQUEST['idGrupo']) && !empty($_REQUEST['idProfesor'])) {
     $idMateria = (int)$_REQUEST['idMateria'];
     $db = getDBConnection();
     if (!$db) {
@@ -158,11 +168,12 @@ if (!empty($_REQUEST['idMateria'])) {
     }
     $db = new Db($db);
     try {
-        pgGenerarPDFProgramacion($db, $idMateria);
+        $aula = array('idGrupo' => (int)$_REQUEST['idGrupo'], 'idProfesor' => (int)$_REQUEST['idProfesor']);
+        pgAulaGenerarPDFProgramacion($db, $idMateria, $aula);
     } catch (Exception $e) {
         die('Error generando el PDF: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8'));
     }
 } else {
-    die('Falta el parámetro idMateria.');
+    die('Faltan los parámetros idMateria, idGrupo e idProfesor.');
 }
 ?>

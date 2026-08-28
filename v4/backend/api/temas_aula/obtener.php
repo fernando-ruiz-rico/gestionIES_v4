@@ -1,5 +1,7 @@
 <?php
-// FASE 2.6 — Datos de un tema (prefill del formulario) + CE/competencias.
+// Programaciones de aula — Datos de una unidad (tema) de la copia de aula
+// (prefill del formulario) + CE/competencias. Espejo de api/temas/obtener.php
+// sobre temas_aula / criterios_temas_aula / competencias_temas_aula.
 require_once '../../config.php';
 cabeceraJson();
 
@@ -12,19 +14,19 @@ try {
         throw new Exception('Debe indicar un tema');
     }
 
-    $fila = $db->fetchOne("SELECT * FROM temas WHERE id = ?", $idTema);
+    $fila = $db->fetchOne("SELECT * FROM temas_aula WHERE id = ?", $idTema);
     if (!$fila) {
         $db->close();
         sendJSONError('Tema no encontrado', 404);
     }
 
     $criterios = array();
-    foreach ($db->fetchAll("SELECT idRA, codigo FROM criterios_temas WHERE idTema = ?", $idTema) as $c) {
+    foreach ($db->fetchAll("SELECT idRA, codigo FROM criterios_temas_aula WHERE idTema = ?", $idTema) as $c) {
         $criterios[] = ['idRA' => intval($c['idRA']), 'codigo' => $c['codigo']];
     }
 
     $competencias = array();
-    foreach ($db->fetchAll("SELECT idCompetencia FROM competencias_temas WHERE idTema = ?", $idTema) as $c) {
+    foreach ($db->fetchAll("SELECT idCompetencia FROM competencias_temas_aula WHERE idTema = ?", $idTema) as $c) {
         $competencias[] = intval($c['idCompetencia']);
     }
 
