@@ -74,8 +74,10 @@ const TemasAulaAPI = {
         return data;
     },
 
-    async actualizarRA(idRA, porcentaje_evaluacion, es_clave) {
-        const data = await Http.post(this.baseUrl + 'actualizar_ra.php', { idRA, porcentaje_evaluacion, es_clave });
+    // El porcentaje de evaluación ya no se edita a mano: se calcula en
+    // recalcular_porcentajes. Aquí solo se actualiza el flag «RA/CE clave».
+    async actualizarRA(idRA, es_clave) {
+        const data = await Http.post(this.baseUrl + 'actualizar_ra.php', { idRA, es_clave });
         if (!data.success) throw new Error(data.error || 'Error al actualizar el resultado de aprendizaje');
         return data;
     }

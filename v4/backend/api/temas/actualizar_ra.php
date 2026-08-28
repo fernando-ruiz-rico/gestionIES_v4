@@ -1,5 +1,8 @@
 <?php
-// FASE 2.6 — Editar porcentaje/es_clave de un RA concreto.
+// FASE 2.6 — Editar el flag «RA/CE clave» de un RA concreto.
+// El porcentaje de evaluación (porcentaje_evaluacion) ya no se edita a
+// mano: se calcula en recalcular_porcentajes.php a partir del peso de las
+// unidades y de los criterios de evaluación de cada RA.
 require_once '../../config.php';
 cabeceraJson();
 
@@ -10,15 +13,14 @@ try {
     $body = cuerpoJson();
 
     $idRA    = datosOptimoInt($body, 'idRA');
-    $porcentaje = datosOptimoInt($body, 'porcentaje_evaluacion');
     $esClave   = !empty($body['es_clave']) ? 1 : 0;
 
     if ($idRA <= 0) {
         throw new Exception('Debe indicar un resultado de aprendizaje');
     }
 
-    $db->execute("UPDATE resultados_aprendizaje SET porcentaje_evaluacion = ?, es_clave = ? WHERE id = ?",
-        $porcentaje, $esClave, $idRA);
+    $db->execute("UPDATE resultados_aprendizaje SET es_clave = ? WHERE id = ?",
+        $esClave, $idRA);
 
     $db->close();
     sendJSONSuccess(null, 'Resultado de aprendizaje actualizado');

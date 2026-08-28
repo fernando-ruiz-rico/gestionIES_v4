@@ -87,7 +87,10 @@ try {
 
     $db->close();
     sendJSONSuccess([
-        'errorTema' => ($afectados == 0),
+        // Si solo cambian los criterios de evaluación, los datos generales no se
+        // modifican (UPDATE afectadas == 0), lo cual es un guardado válido, no un
+        // error; la señal de error real es que el tema no exista ($fila).
+        'errorTema' => !$fila,
         'errorCriterios' => false,
         'errorCompetencias' => false
     ], 'Tema guardado correctamente');

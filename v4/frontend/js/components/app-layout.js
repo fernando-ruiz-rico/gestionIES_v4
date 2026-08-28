@@ -6,7 +6,7 @@ const AppLayout = {
             <header-bar :usuario="usuario" @logout="handleLogout" @close-menu="handleCloseMenu"></header-bar>
             
             <!-- Sidebar con menú -->
-            <sidebar :usuario="usuario" :menus="menus" :link-actual="linkActual" @navigate="handleNavigate" @close-menu="handleCloseMenu"></sidebar>
+            <sidebar :usuario="usuario" :menus="menus" :link-actual="linkActual" @navigate="handleNavigate" @close-menu="handleCloseMenu" @logout="handleLogout"></sidebar>
             
             <!-- Contenido principal -->
             <div id="page-content-wrapper" class="container-fluid">

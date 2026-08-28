@@ -83,6 +83,12 @@ const Sidebar = {
         },
         
         navigate(link) {
+            // El menú «Salir» (link «logout») cierra la sesión, igual que el botón
+            // rojo de la barra superior: no es una navegación a una vista.
+            if (link === 'logout') {
+                this.$emit('logout');
+                return;
+            }
             if (link && !link.startsWith('javascript:')) {
                 this.$emit('navigate', link + '.php');
                 // Cerrar menú después de navegar - emitir evento para app-layout
@@ -91,5 +97,5 @@ const Sidebar = {
         }
     },
     
-    emits: ['navigate', 'close-menu']
+    emits: ['navigate', 'close-menu', 'logout']
 };

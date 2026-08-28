@@ -233,8 +233,9 @@ const TemasView = {
                                             <h2 class="accordion-header">
                                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" :data-bs-target="'#collapseRA' + r.orden" aria-expanded="false">
                                                     <input type="checkbox" class="form-check-input mt-0 me-2 check_ra" :id="'ra' + r.id" :checked="raTodosMarcados(r.id)" @change="marcarDesmarcar(r.id)">
-                                                    <span class="d-inline-block text-truncate" style="width: 95%" :title="r.texto">{{ r.orden }}. {{ r.texto }}</span>
-                                                    <button class="btn btn-sm btn-secondary px-2 py-0 mx-2" style="min-width: 5%" title="Pulsa para cambiar" @click.stop="cargarModalRA(r.id)">{{ r.porcentaje_evaluacion }}%</button>
+                                                    <span class="d-inline-block text-truncate" style="width: 88%" :title="r.texto">{{ r.orden }}. {{ r.texto }}</span>
+                                                    <span class="badge rounded-pill bg-secondary text-white d-inline-block text-center" style="min-width: 4%" title="Porcentaje en la evaluación (calculado a partir del peso de las unidades y de los CE de este RA)">{{ r.porcentaje_evaluacion }}%</span>
+                                                    <button type="button" class="btn btn-sm px-2 mx-2" :class="r.es_clave ? 'btn-warning' : 'btn-outline-secondary'" :title="r.es_clave ? ('RA/CE clave: sí — pulsa para cambiar.') : ('RA/CE clave: no — pulsa para cambiar.')" @click.stop="cargarModalRA(r.id)"><i class="bi" :class="r.es_clave ? 'bi-star-fill' : 'bi-star'"></i></button>
                                                 </button>
                                             </h2>
                                             <div :id="'collapseRA' + r.orden" class="accordion-collapse collapse">
@@ -315,20 +316,16 @@ const TemasView = {
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Evaluación del {{ idCiclo > 0 ? 'Resultado de Aprendizaje (RA)' : 'Competencia Específica (CE)' }}</h5>
+                            <h5 class="modal-title">{{ idCiclo > 0 ? 'Resultado de Aprendizaje (RA)' : 'Competencia Específica (CE)' }} clave</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <input type="hidden" v-model.number="raEdit.id">
-                            <h6 class="mb-4">{{ idCiclo > 0 ? 'RA' : 'CE' }}{{ raEdit.orden }}. {{ raEdit.texto }}</h6>
-                            <div class="mb-3">
-                                <label class="form-label" for="porcentajeEvaluacion">Porcentaje en la evaluación global</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="porcentajeEvaluacion" v-model.number="raEdit.porcentaje" min="0" max="100">
-                                    <span class="input-group-text">%</span>
-                                </div>
-                            </div>
-                            <div class="form-check mb-3">
+                            <h6 class="mb-3">{{ idCiclo > 0 ? 'RA' : 'CE' }}{{ raEdit.orden }}. {{ raEdit.texto }}</h6>
+                            <p class="text-muted mb-3">
+                                Porcentaje en la evaluación: <strong>{{ raEdit.porcentaje }}%</strong> — se calcula a partir del peso de las unidades y de los criterios de evaluación de este RA (botón «Calcular y actualizar porcentajes»); no se edita a mano.
+                            </p>
+                            <div class="form-check">
                                 <input type="checkbox" class="form-check-input" id="esClave" v-model="raEdit.esClave">
                                 <label class="form-check-label" for="esClave">{{ idCiclo > 0 ? 'RA' : 'CE' }} clave</label>
                                 <div class="form-text">
@@ -337,7 +334,7 @@ const TemasView = {
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-primary" @click="guardarRA">Enviar</button>
+                            <button type="button" class="btn btn-primary" @click="guardarRA">Guardar</button>
                             <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
                         </div>
                     </div>
@@ -856,7 +853,8 @@ const TemasView = {
 
         async guardarRA() {
             try {
-                await TemasAPI.actualizarRA(this.raEdit.id, this.raEdit.porcentaje, this.raEdit.esClave);
+                // El % se calcula (no se edita a mano): solo se guarda el flag «RA/CE clave»
+                await TemasAPI.actualizarRA(this.raEdit.id, this.raEdit.esClave);
                 this.modalRA.hide();
                 await this.cargarAccordion();
                 Avisos.exito('Éxito', 'Resultado de aprendizaje actualizado');

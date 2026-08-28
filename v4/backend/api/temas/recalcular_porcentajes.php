@@ -1,6 +1,14 @@
 <?php
-// FASE 2.6 — Recalcular porcentajes de evaluación de los RA
-// (v3 calcularPorcentajesRA).
+// FASE 2.6 — Recalcular porcentajes de evaluación de los RA.
+//
+// Cálculo por peso de unidad: el % que se aplica a cada RA en la evaluación
+// anual se calcula a partir del % que cada unidad (tema) tiene como peso en
+// la evaluación anual (temas.peso_evaluacion). El peso de cada unidad se
+// reparte entre los RA que intervienen en ella, en proporción a los
+// criterios de evaluación (CE) de cada RA en esa unidad (criterios_temas).
+// El % final de cada RA es la suma de su parte en cada unidad en la que
+// interviene, así un RA que influye en más unidades, y con más CE en cada
+// una, se lleva una parte mayor de la nota de la asignatura.
 require_once '../../config.php';
 cabeceraJson();
 
@@ -15,43 +23,51 @@ try {
         throw new Exception('Debe indicar una materia');
     }
 
-    $listadoRA = array();
-    foreach ($db->fetchAll("SELECT ra.id, ra.orden, COUNT(ct.codigo) AS num_criterios
-                    FROM resultados_aprendizaje ra
-                    LEFT JOIN criterios_temas ct ON ra.id = ct.idRA
-                    WHERE ra.idMateria = ?
-                    GROUP BY ra.id, ra.orden
-                    ORDER BY ra.orden", $idMateria) as $fila) {
-        $listadoRA[] = ['id' => intval($fila['id']), 'num_criterios' => intval($fila['num_criterios'])];
+    // Peso de cada unidad en la evaluación anual
+    $pesos = array();
+    foreach ($db->fetchAll("SELECT id, peso_evaluacion FROM temas WHERE idMateria = ?", $idMateria) as $fila) {
+        $pesos[intval($fila['id'])] = intval($fila['peso_evaluacion']);
     }
 
-    if (!empty($listadoRA)) {
-        $filaTotal = $db->fetchOne("SELECT COUNT(*) AS total
-                    FROM resultados_aprendizaje ra
-                    INNER JOIN criterios_temas ct ON ra.id = ct.idRA
-                    WHERE ra.idMateria = ?", $idMateria);
-        $totalCriterios = $filaTotal ? intval($filaTotal['total']) : 0;
-    } else {
-        $totalCriterios = 0;
+    // CE por (RA, unidad): cuántos criterios de evaluación lleva cada RA en
+    // cada unidad, y el total de CE por unidad (todos los RA).
+    $ceRA = array();      // ceRA[ra][tema] = nº de CE del RA en la unidad
+    $ceTotal = array();   // ceTotal[tema] = nº total de CE de la unidad
+    foreach ($db->fetchAll(
+        "SELECT ct.idRA, ct.idTema, COUNT(*) AS n
+           FROM criterios_temas ct
+           INNER JOIN temas t ON t.id = ct.idTema
+          WHERE t.idMateria = ?
+          GROUP BY ct.idRA, ct.idTema", $idMateria) as $fila) {
+        $ra   = intval($fila['idRA']);
+        $tema = intval($fila['idTema']);
+        $n    = intval($fila['n']);
+        if (!isset($ceRA[$ra])) {
+            $ceRA[$ra] = array();
+        }
+        $ceRA[$ra][$tema] = $n;
+        $ceTotal[$tema] = isset($ceTotal[$tema]) ? $ceTotal[$tema] + $n : $n;
     }
 
+    // % final de cada RA = Σ en cada unidad: peso × (CEs del RA / CE totales)
     $porcentajes = array();
-    $suma = 0;
-    foreach ($listadoRA as $item) {
-        $num = $item['num_criterios'];
-        $porcentaje = $totalCriterios > 0 ? intval(($num / $totalCriterios) * 100) : 0;
-        $porcentajes[] = ['id' => $item['id'], 'porcentaje' => $porcentaje];
-        $suma += $porcentaje;
-    }
-
-    // Si la suma no llega a 100, repartir el resto en los últimos con valor > 0
-    if ($suma > 0 && $suma < 100) {
-        for ($i = count($porcentajes) - 1; $i >= 0 && $suma < 100; $i--) {
-            if ($porcentajes[$i]['porcentaje'] > 0) {
-                $porcentajes[$i]['porcentaje']++;
-                $suma++;
+    foreach ($db->fetchAll("SELECT id FROM resultados_aprendizaje WHERE idMateria = ? ORDER BY orden", $idMateria) as $fila) {
+        $raId = intval($fila['id']);
+        $total = 0;
+        if (isset($ceRA[$raId])) {
+            foreach ($pesos as $tema => $peso) {
+                $nTotal = isset($ceTotal[$tema]) ? $ceTotal[$tema] : 0;
+                if ($nTotal <= 0) {
+                    continue;
+                }
+                $nRA = isset($ceRA[$raId][$tema]) ? $ceRA[$raId][$tema] : 0;
+                if ($nRA <= 0) {
+                    continue;
+                }
+                $total += $peso * ($nRA / $nTotal);
             }
         }
+        $porcentajes[] = ['id' => $raId, 'porcentaje' => intval(round($total))];
     }
 
     foreach ($porcentajes as $p) {

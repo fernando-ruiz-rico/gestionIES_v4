@@ -66,6 +66,11 @@ try {
                 intval($com), $idTema);
         }
 
+        // La señal de error real es que el tema no exista, no que el UPDATE afecte 0
+        // filas: si solo cambian los criterios de evaluación, los datos generales
+        // quedan iguales y el UPDATE no modifica filas (afectadas == 0), lo cual
+        // es un guardado válido, no un error.
+        $existe = $db->fetchOne("SELECT 1 AS ok FROM temas WHERE id = ?", $idTema);
         $db->commit();
     } catch (DbException $e) {
         $db->rollback();
@@ -74,7 +79,7 @@ try {
 
     $db->close();
     sendJSONSuccess([
-        'errorTema' => ($afectados == 0),
+        'errorTema' => !$existe,
         'errorCriterios' => false,
         'errorCompetencias' => false
     ], 'Tema guardado correctamente');
