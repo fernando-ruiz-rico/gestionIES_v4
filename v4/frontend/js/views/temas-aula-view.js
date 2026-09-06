@@ -108,9 +108,15 @@ const TemasAulaView = {
                     <div class="card shadow-sm">
                         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Formulario de edición de tema / unidad</h5>
-                            <button class="btn btn-light btn-sm" @click="cerrarEdicion">
-                                <i class="bi bi-x-lg me-1"></i>Cerrar edición
-                            </button>
+                            <div class="d-flex align-items-center">
+                                <button class="btn btn-light btn-sm me-2" @click="cerrarEdicion">
+                                    <i class="bi bi-x-lg me-1"></i>Cerrar edición
+                                </button>
+                                <button class="btn btn-warning btn-sm" @click="guardar" :disabled="guardando">
+                                    <i class="bi bi-save me-1"></i>
+                                    {{ guardando ? 'Guardando...' : 'Guardar' }}
+                                </button>
+                            </div>
                         </div>
                         <div class="card-body">
                             <!-- Campos básicos -->
@@ -279,14 +285,6 @@ const TemasAulaView = {
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Botones finales -->
-                            <div class="text-center mt-3">
-                                <button class="btn btn-primary" @click="guardar" :disabled="guardando">
-                                    <i class="bi bi-save me-1"></i>
-                                    {{ guardando ? 'Guardando...' : 'Guardar' }}
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -378,6 +376,11 @@ const TemasAulaView = {
             temaDefecto: null,
             mostradorDe: null,
             temaOriginalDe: null,
+
+            // Fotografía del estado al abrir la edición (tras la
+            // inicialización de los editores); base para detectar
+            // cambios sin guardar al cerrar.
+            estadoOriginal: null,
 
             // Estado de selección de CE/competencias (mapa reactiva)
             selCE: {},
@@ -563,6 +566,7 @@ const TemasAulaView = {
             this.temaDefecto = null;
             this.mostradorDe = null;
             this.temaOriginalDe = null;
+            this.estadoOriginal = null;
             this.selCE = {};
             this.selCom = {};
             this.borrarEditores();
@@ -663,8 +667,14 @@ const TemasAulaView = {
                 });
 
                 this.idTema = id;
-                this.$nextTick(() => {
-                    this.inicializarEditores();
+                // La fotografía de referencia se toma después de la
+                // inicialización de los editores (la inicialización puede
+                // normalizar el HTML) y es la base para detectar cambios
+                // sin guardar al cerrar la edición.
+                this.estadoOriginal = null;
+                this.$nextTick(async () => {
+                    await this.inicializarEditores();
+                    this.estadoOriginal = this._fotografiaEstado();
                 });
 
                 // Subir al editor
@@ -674,13 +684,90 @@ const TemasAulaView = {
             }
         },
 
-        cerrarEdicion() {
+        // Cerrar la edición: si hay cambios sin guardar, avisa y pregunta
+        // qué hacer (guardar y cerrar, o cerrar descartando los cambios).
+        // Con X / Esc se descarta el diálogo sin decisión, por lo que la
+        // edición queda abierta (no se pierde nada).
+        async cerrarEdicion() {
+            if (!this.hayCambiosSinGuardar()) {
+                this._hacerCerrarEdicion();
+                return;
+            }
+            const res = await Swal.fire({
+                title: 'Cambios sin guardar',
+                text: 'Se han realizado cambios en la unidad que todavía no se han guardado. ¿Qué quieres hacer?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Guardar y cerrar',
+                confirmButtonColor: '#0d6efd',
+                cancelButtonText: 'Cerrar sin guardar'
+            });
+            if (res.isConfirmed) {
+                // «Guardar y cerrar»: solo se cierra si la guarda fue correcta.
+                const ok = await this.guardar();
+                if (ok) {
+                    this._hacerCerrarEdicion();
+                }
+            } else if (res.isCanceled) {
+                // «Cerrar sin guardar»: cierra descartando los cambios.
+                this._hacerCerrarEdicion();
+            }
+        },
+
+        // El cierre efectivo (sin comprobación de cambios sin guardar).
+        _hacerCerrarEdicion() {
             this.borrarEditores();
             this.idTema = 0;
             this.tema = null;
             this.temaDefecto = null;
             this.mostradorDe = null;
             this.temaOriginalDe = null;
+            this.estadoOriginal = null;
+        },
+
+        // Fotografía del estado que se enviaría al guardar: los campos de
+        // «tema» con el contenido real de los editores (misma lógica que
+        // leerEditores, pero sin mutar estado) más las selecciones de CE y
+        // competencias.
+        _fotografiaEstado() {
+            if (!this.tema) return null;
+            const tema = JSON.parse(JSON.stringify(this.tema));
+            this.camposEditores().forEach(id => {
+                let contenido = null;
+                if (window.tinymce) {
+                    const e = tinymce.get(id);
+                    if (e) {
+                        e.save();
+                        contenido = e.getContent();
+                    }
+                }
+                if (contenido === null) {
+                    const el = document.getElementById(id);
+                    contenido = el ? el.value : (this.tema[id] || '');
+                }
+                if (this.camposDefecto().indexOf(id) === -1) {
+                    tema[id] = contenido;
+                } else if (contenido === (this.mostradorDe || {})[id]) {
+                    // Campo por defecto sin modificar: la unidad conserva
+                    // su contenido propio.
+                    tema[id] = (this.temaOriginalDe || {})[id];
+                } else {
+                    tema[id] = contenido;
+                    tema[id + 'Defecto'] = false;
+                }
+            });
+            return JSON.stringify({
+                tema: tema,
+                selCE: this.selCE,
+                selCom: this.selCom
+            });
+        },
+
+        // ¿Hay cambios respecto al momento de abrir la edición (es decir,
+        // guardar enviaría datos distintos)?
+        hayCambiosSinGuardar() {
+            if (!this.tema || this.estadoOriginal === null) return false;
+            return this._fotografiaEstado() !== this.estadoOriginal;
         },
 
         // --- Alta (nueva unidad) ---
@@ -744,12 +831,16 @@ const TemasAulaView = {
             });
         },
 
+        // Guarda el tema. Devuelve true si todo se guardó correctamente
+        // (lo usa «Cerrar edición» para decidir si puede cerrar).
         async guardar() {
             this.guardando = true;
+            let ok = false;
             try {
                 const res = await this._guardarTema();
                 if (!res.errorTema && !res.errorCriterios && !res.errorCompetencias) {
                     Avisos.exito('Éxito', 'Tema guardado correctamente');
+                    ok = true;
                 } else {
                     let msg = '';
                     if (res.errorTema) msg += 'Los datos generales del tema no se guardaron correctamente\n';
@@ -763,6 +854,7 @@ const TemasAulaView = {
             } finally {
                 this.guardando = false;
             }
+            return ok;
         },
 
         // --- Borrar ---
@@ -775,7 +867,9 @@ const TemasAulaView = {
             try {
                 await TemasAulaAPI.borrar(t.id);
                 if (this.idTema === t.id) {
-                    this.cerrarEdicion();
+                    // La fila editada ha sido eliminada: cerrar directamente
+                    // (los cambios ya no tienen sentido para guardarlos).
+                    this._hacerCerrarEdicion();
                 }
                 await this.refrescarListado();
                 Avisos.exito('Éxito', 'Tema eliminado correctamente');
