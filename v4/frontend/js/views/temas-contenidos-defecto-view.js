@@ -51,7 +51,7 @@ const TemasContenidosDefectoView = {
 
                 <div class="col-12">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header text-bg-primary">
                             <h5 class="mb-0">Contenidos para las unidades</h5>
                         </div>
                         <div class="card-body">

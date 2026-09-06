@@ -106,7 +106,7 @@ const ProfesoresView = {
             <div id="formprofesor" class="modal fade" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
+                        <div class="modal-header text-bg-primary">
                             <h5 class="modal-title">
                                 <i class="bi bi-person me-2"></i>Formulario de perfil de profesor
                             </h5>
@@ -359,9 +359,9 @@ const ProfesoresView = {
             // ':' (p. ej. L07_55), siempre de 6 caracteres
             const idCelda = dia + hora.replace(':', '_');
             if (this.formulario.prefRojas.includes(idCelda)) {
-                return 'bg-danger text-white';
+                return 'text-bg-danger';
             } else if (this.formulario.prefAmarillas.includes(idCelda)) {
-                return 'bg-warning text-dark';
+                return 'text-bg-warning';
             }
             return 'bg-light';
         },

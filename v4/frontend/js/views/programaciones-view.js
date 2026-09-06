@@ -102,7 +102,7 @@ const ProgramacionesView = {
             <!-- Editor (apartado editable) -->
             <div v-if="esEditable" class="mt-3">
                 <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header text-bg-primary">
                         <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Editar apartado</h5>
                     </div>
                     <div class="card-body">
@@ -131,7 +131,7 @@ const ProgramacionesView = {
             <div class="modal fade" id="modalImportar" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
+                        <div class="modal-header text-bg-primary">
                             <h5 class="modal-title"><i class="bi bi-download me-2"></i>Importar Programación</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>

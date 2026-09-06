@@ -74,7 +74,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     
     <!-- Estilos personalizados mínimos -->
-    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/app.css?v=1">
 </head>
 <body>
     <div id="app">
@@ -101,7 +101,10 @@
     <!-- Avisos: capa fina sobre SweetAlert2 (ver js/avisos.js) -->
     <script src="js/avisos.js"></script>
 
-    <!-- TinyMCE (editor WYSIWYG, misma versión que v3) -->
+    <!-- Marcador: renderiza los manuales de Ayuda (port de v3 Parsedown) -->
+<script src="lib/js/marked.min.js" integrity="sha384-/TQbtLCAerC3jgaim+N78RZSDYV7ryeoBCVqTuzRrFec2akfBkHS7ACQ3PQhvMVi" crossorigin="anonymous"></script>
+
+<!-- TinyMCE (editor WYSIWYG, misma versión que v3) -->
     <script src="lib/js/tinymce/tinymce.min.js?v=7.9.1"></script>
 
     <!-- Ciclo de vida de TinyMCE 7: init/remove son asíncronos (ver js/tinymce-helpers.js) -->
@@ -109,38 +112,39 @@
 
     <!-- Componentes y lógica de la aplicación -->
     <script src="js/views/home-view.js?v=1"></script>
-    <script src="js/views/perfil-view.js?v=1"></script>
-    <script src="js/views/departamentos-view.js"></script>
-    <script src="js/views/profesores-view.js?v=1"></script>
-    <script src="js/views/especialidades-view.js?v=3"></script>
-    <script src="js/views/ciclos-view.js?v=1"></script>
-    <script src="js/views/cursos-view.js?v=1"></script>
-    <script src="js/views/grupos-view.js?v=3"></script>
-    <script src="js/views/materias-view.js?v=4"></script>
-    <script src="js/views/escenarios-view.js?v=3"></script>
-    <script src="js/views/programaciones-view.js?v=4"></script>
-    <script src="js/views/programaciones-apartados-view.js"></script>
-    <script src="js/views/programaciones-contenidos-defecto-view.js"></script>
-    <script src="js/views/programaciones-aula-view.js?v=3"></script>
-    <script src="js/views/programaciones-seguimiento-view.js?v=1"></script>
-    <script src="js/views/temas-view.js?v=4"></script>
-    <script src="js/views/temas-aula-view.js?v=5"></script>
-    <script src="js/views/temas-contenidos-defecto-view.js?v=1"></script>
+    <script src="js/views/perfil-view.js?v=2"></script>
+    <script src="js/views/departamentos-view.js?v=1"></script>
+    <script src="js/views/profesores-view.js?v=2"></script>
+    <script src="js/views/especialidades-view.js?v=4"></script>
+    <script src="js/views/ciclos-view.js?v=2"></script>
+    <script src="js/views/cursos-view.js?v=2"></script>
+    <script src="js/views/grupos-view.js?v=4"></script>
+    <script src="js/views/materias-view.js?v=5"></script>
+    <script src="js/views/escenarios-view.js?v=4"></script>
+    <script src="js/views/programaciones-view.js?v=5"></script>
+    <script src="js/views/programaciones-apartados-view.js?v=1"></script>
+    <script src="js/views/programaciones-contenidos-defecto-view.js?v=1"></script>
+    <script src="js/views/programaciones-aula-view.js?v=4"></script>
+    <script src="js/views/programaciones-seguimiento-view.js?v=2"></script>
+    <script src="js/views/temas-view.js?v=5"></script>
+    <script src="js/views/temas-aula-view.js?v=6"></script>
+    <script src="js/views/temas-contenidos-defecto-view.js?v=2"></script>
     <script src="js/views/pccf-view.js"></script>
-    <script src="js/views/pccf-apartados-view.js?v=1"></script>
+    <script src="js/views/pccf-apartados-view.js?v=2"></script>
     <script src="js/views/pccf-contenidos-defecto-view.js?v=2"></script>
-    <script src="js/views/resultados_aprendizaje-view.js?v=2"></script>
-    <script src="js/views/competencias_ciclos-view.js?v=3"></script>
-    <script src="js/views/cualificaciones_uc-view.js?v=1"></script>
-    <script src="js/views/seleccion-view.js?v=3"></script>
+    <script src="js/views/resultados_aprendizaje-view.js?v=3"></script>
+    <script src="js/views/competencias_ciclos-view.js?v=4"></script>
+    <script src="js/views/cualificaciones_uc-view.js?v=2"></script>
+    <script src="js/views/seleccion-view.js?v=4"></script>
     <script src="js/views/actas-view.js?v=2"></script>
     <script src="js/views/historico-view.js?v=3"></script>
     <script src="js/views/estadisticas-view.js?v=3"></script>
     <script src="js/views/configuracion-view.js?v=1"></script>
-    <script src="js/components/login-view.js?v=1"></script>
+<script src="js/views/ayuda-view.js?v=1"></script>
+    <script src="js/components/login-view.js?v=2"></script>
     <script src="js/components/sidebar.js?v=1"></script>
     <script src="js/components/header-bar.js"></script>
-    <script src="js/components/app-layout.js?v=4"></script>
+    <script src="js/components/app-layout.js?v=5"></script>
     <script src="js/api/http.js"></script>
     <script src="js/api/auth.js?v=1"></script>
     <script src="js/api/app.js?v=1"></script>
@@ -171,7 +175,7 @@
     <script src="js/api/historico.js?v=1"></script>
     <script src="js/api/estadisticas.js?v=1"></script>
     <script src="js/api/configuracion.js?v=1"></script>
-    <script src="js/app.js?v=3"></script>
+    <script src="js/app.js?v=4"></script>
 
     <!-- PWA: registro del service worker (ver sw.js) -->
     <script>

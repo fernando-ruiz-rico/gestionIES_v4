@@ -9,6 +9,8 @@ const LoginView = {
                         <p class="text-muted">Gestión interna IESSV</p>
                     </div>
                 
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
                     <form @submit.prevent="handleLogin">
                         <div class="mb-3">
                             <label for="username" class="form-label">Usuario</label>
@@ -37,6 +39,8 @@ const LoginView = {
                             <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
                         </div>
                     </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

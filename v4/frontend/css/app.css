@@ -59,6 +59,22 @@
     overflow-y: auto;
 }
 
+/* --- Puntero en elementos clicables que no son <a>/<button> --- */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* --- Manuales de Ayuda (markdown renderizado, ver js/views/ayuda-view.js) --- */
+.ayuda-md img {
+    max-width: 100%;
+    height: auto;
+}
+
+.ayuda-md :not(pre) > code {
+    color: var(--bs-danger-text-emphasis);
+    word-wrap: break-word;
+}
+
 /* --- Icono centrado cuando el botón solo contiene un icono.
    Bootstrap no lo hace; requiere :has() (navegadores modernos). --- */
 .btn:has(> .bi:only-child) {

@@ -61,17 +61,19 @@ const SeleccionView = {
                         <div class="card shadow-sm h-100">
                             <div class="card-header"><h5 class="h6 mb-0"><i class="bi bi-people me-2"></i>Profesores</h5></div>
                             <div class="card-body">
-                                <div class="mb-2 text-center">
-                                    <label class="me-3">
-                                        <input type="radio" class="me-1" value="Todos" v-model="idEspecialidad" @change="cargarProfesores"> Todos
-                                    </label>
-                                    <label v-for="esp in especialidades" :key="esp.id" class="me-3">
-                                        <input type="radio" class="me-1" :value="esp.id" v-model="idEspecialidad" @change="cargarProfesores"> {{ esp.descripcion }}
-                                    </label>
+                                <div class="mb-2 d-flex flex-wrap justify-content-center">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="filtroEspecialidad" id="filtroEspTodos" value="Todos" v-model="idEspecialidad" @change="cargarProfesores">
+                                        <label class="form-check-label" for="filtroEspTodos">Todos</label>
+                                    </div>
+                                    <div v-for="esp in especialidades" :key="esp.id" class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="filtroEspecialidad" :id="'filtroEsp' + esp.id" :value="esp.id" v-model="idEspecialidad" @change="cargarProfesores">
+                                        <label class="form-check-label" :for="'filtroEsp' + esp.id">{{ esp.descripcion }}</label>
+                                    </div>
                                 </div>
                                 <div class="d-flex gap-2 mb-2">
                                     <button class="btn btn-sm btn-outline-secondary" title="Imprimir las fichas de todos los profesores" @click="imprimirTodos()">
-                                        <i class="bi bi-print"></i>
+                                        <i class="bi bi-printer"></i>
                                     </button>
                                     <button class="btn btn-sm btn-outline-secondary" title="Imprimir las preferencias de horario de todos los profesores" @click="imprimirPreferenciasTodos()">
                                         <i class="bi bi-calendar-week"></i>
@@ -81,9 +83,10 @@ const SeleccionView = {
                                     </button>
                                 </div>
                                 <div v-for="p in profesores" :key="p.id"
-                                     :class="['d-flex justify-content-between align-items-center border rounded p-2 mb-2', p.id == idProfesor ? 'bg-primary text-white' : ''] "
-                                     style="cursor: pointer"
-                                     @click="seleccionarProfesor(p)">
+                                     :class="['cursor-pointer d-flex justify-content-between align-items-center border rounded p-2 mb-2', p.id == idProfesor ? 'text-bg-primary' : '']"
+                                     role="button" tabindex="0"
+                                     @click="seleccionarProfesor(p)"
+                                     @keyup.enter="seleccionarProfesor(p)">
                                     <div>{{ p.nombre }}</div>
                                     <span :class="['badge', claseHoras(p.horas)]">{{ p.horas }} h</span>
                                 </div>
@@ -92,7 +95,7 @@ const SeleccionView = {
                     </div>
 
                     <!-- Panel de cursos -->
-                    <div :class="['col-md-5', esSuper ? 'col-md-5' : 'col-md-6']">
+                    <div :class="esSuper ? 'col-md-5' : 'col-md-6'">
                         <div class="card shadow-sm h-100">
                             <div class="card-header"><h5 class="h6 mb-0"><i class="bi bi-mortarboard me-2"></i>Cursos</h5></div>
                             <div class="card-body">
@@ -111,11 +114,12 @@ const SeleccionView = {
                                             </button>
                                             <span>{{ m.nombre }} ({{ m.horas }}h)</span>
                                             <span v-if="m.minNumProfesores > 0 || m.maxGruposProfesor > 0"
-                                                  class="badge bg-info" style="cursor: pointer"
+                                                  class="badge text-bg-info cursor-pointer" role="button" tabindex="0"
                                                   title="Restricciones de profesores"
-                                                  @click="mostrarInfo(m)">?</span>
+                                                  @click="mostrarInfo(m)"
+                                                  @keyup.enter="mostrarInfo(m)">?</span>
                                         </div>
-                                        <span :class="['badge', claseElegidas(m)]" style="cursor: pointer" @click="verProfesoresMateria(m)">
+                                        <span :class="['badge', 'cursor-pointer', claseElegidas(m)]" role="button" tabindex="0" @click="verProfesoresMateria(m)" @keyup.enter="verProfesoresMateria(m)">
                                             {{ m.elegidas }} / {{ m.cantidad }}
                                         </span>
                                     </div>
@@ -128,7 +132,7 @@ const SeleccionView = {
                     </div>
 
                     <!-- Panel de selección -->
-                    <div :class="['col-md-4', esSuper ? 'col-md-4' : 'col-md-6']">
+                    <div :class="esSuper ? 'col-md-4' : 'col-md-6'">
                         <div class="card shadow-sm h-100">
                             <div class="card-header"><h5 class="h6 mb-0"><i class="bi bi-check2-square me-2"></i>Selección</h5></div>
                             <div class="card-body">
@@ -140,7 +144,7 @@ const SeleccionView = {
                                 </div>
                                 <template v-else>
                                     <div v-for="(s, i) in selecciones" :key="s.id"
-                                         draggable="true"
+                                         :draggable="!modoRuedaBloquea"
                                          @dragstart="arrastrando = i"
                                          @dragover.prevent
                                          @drop="soltarEn(i)"
@@ -164,7 +168,7 @@ const SeleccionView = {
                                             <i class="bi bi-graph-up"></i>
                                         </button>
                                         <button class="btn btn-sm btn-outline-secondary" title="Imprimir la ficha del profesor" @click="imprimirSeleccion()">
-                                            <i class="bi bi-print"></i>
+                                            <i class="bi bi-printer"></i>
                                         </button>
                                         <button class="btn btn-sm btn-outline-secondary" title="Imprimir las preferencias de horario del profesor" @click="imprimirPreferencias()">
                                             <i class="bi bi-calendar-week"></i>
@@ -192,7 +196,7 @@ const SeleccionView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Horas para la materia seleccionada</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <label class="form-label">Horas para la materia seleccionada (por defecto, todas):</label>
@@ -212,7 +216,7 @@ const SeleccionView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Profesores que han seleccionado la materia '{{ materiaNombre.nombre }}' de '{{ materiaNombre.curso }}'</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <div v-for="n in nombresProfesoresMateria" :key="n" class="mb-1 fw-bold">{{ n }}</div>
@@ -260,6 +264,9 @@ const SeleccionView = {
         // v3: si el escenario está en modo rueda y no hay permisos, no se puede reordenar ni elegir
         modoRuedaBloquea() {
             return this.modoRueda && !this.esSuper;
+        },
+        arrastrable() {
+            return !this.modoRuedaBloquea;
         },
         totalHoras() {
             return this.selecciones.reduce((sum, s) => sum + parseInt(s.horas || 0), 0);
@@ -456,7 +463,7 @@ const SeleccionView = {
                     idEscenario: this.idEscenario
                 });
                 this.modalHoras.hide();
-                await Promise.all([this.cargarSeleccion(), this.cargarCursos(), this.cargarProfesores()]);
+                await this.cargarTodo();
             } catch (error) {
                 Avisos.error(error.message);
             }
@@ -493,7 +500,7 @@ const SeleccionView = {
                 if (res.isConfirmed) {
                     try {
                         await SeleccionAPI.borrar_seleccion(s.id);
-                        await Promise.all([this.cargarSeleccion(), this.cargarCursos(), this.cargarProfesores()]);
+                        await this.cargarTodo();
                     } catch (error) {
                         Avisos.error(error.message);
                     }
@@ -506,7 +513,7 @@ const SeleccionView = {
                 if (res.isConfirmed) {
                     try {
                         await SeleccionAPI.borrar_toda_seleccion(this.idProfesor, this.idEscenario);
-                        await Promise.all([this.cargarSeleccion(), this.cargarCursos(), this.cargarProfesores()]);
+                        await this.cargarTodo();
                     } catch (error) {
                         Avisos.error(error.message);
                     }
@@ -525,7 +532,7 @@ const SeleccionView = {
                     try {
                         await SeleccionAPI.borrar_todas_selecciones(this.idEscenario);
                         Avisos.exito('La lista de selecciones ahora está vacía');
-                        await Promise.all([this.cargarSeleccion(), this.cargarCursos(), this.cargarProfesores()]);
+                        await this.cargarTodo();
                     } catch (error) {
                         Avisos.error(error.message);
                     }

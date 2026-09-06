@@ -48,7 +48,7 @@ const ProgramacionesContenidosDefectoView = {
             <div class="row" v-if="idDepartamento && idApartado">
                 <div class="col-12">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header text-bg-primary">
                             <h5 class="mb-0">{{ apartadoActual }}</h5>
                         </div>
                         <div class="card-body">

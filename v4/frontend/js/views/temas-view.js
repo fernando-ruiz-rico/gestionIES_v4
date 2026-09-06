@@ -99,7 +99,7 @@ const TemasView = {
             <div class="row mt-4" v-if="idTema > 0 && tema">
                 <div class="col-12">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <div class="card-header text-bg-primary d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Formulario de edición de tema / unidad</h5>
                             <div class="d-flex align-items-center">
                                 <button class="btn btn-light btn-sm me-2" @click="cerrarEdicion">
@@ -240,7 +240,7 @@ const TemasView = {
                                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" :data-bs-target="'#collapseRA' + r.orden" aria-expanded="false">
                                                     <input type="checkbox" class="form-check-input mt-0 me-2 check_ra" :id="'ra' + r.id" :checked="raTodosMarcados(r.id)" @change="marcarDesmarcar(r.id)">
                                                     <span class="d-inline-block text-truncate" style="width: 88%" :title="r.texto">{{ r.orden }}. {{ r.texto }}</span>
-                                                    <span class="badge rounded-pill bg-secondary text-white d-inline-block text-center" style="min-width: 4%" title="Porcentaje en la evaluación (calculado a partir del peso de las unidades y de los CE de este RA)">{{ r.porcentaje_evaluacion }}%</span>
+                                                    <span class="badge rounded-pill text-bg-secondary d-inline-block text-center" style="min-width: 4%" title="Porcentaje en la evaluación (calculado a partir del peso de las unidades y de los CE de este RA)">{{ r.porcentaje_evaluacion }}%</span>
                                                     <button type="button" class="btn btn-sm px-2 mx-2" :class="r.es_clave ? 'btn-warning' : 'btn-outline-secondary'" :title="r.es_clave ? ('RA/CE clave: sí — pulsa para cambiar.') : ('RA/CE clave: no — pulsa para cambiar.')" @click.stop="cargarModalRA(r.id)"><i class="bi" :class="r.es_clave ? 'bi-star-fill' : 'bi-star'"></i></button>
                                                 </button>
                                             </h2>

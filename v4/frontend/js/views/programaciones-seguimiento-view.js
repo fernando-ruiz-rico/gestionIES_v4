@@ -20,7 +20,7 @@ const ProgramacionesSeguimientoView = {
             <!-- Selectores de profesor y departamento (solo admin) -->
             <!-- El admin real no tiene departamento propio: lo elige aquí, como
                  en la cabecera de v3 (seleccion_departamento), para el PDF -->
-            <div class="row mb-3" v-if="esAdmin">
+            <div class="row mb-3" v-if="esGestor">
                 <div class="col-md-6">
                     <label for="selectorProfesor" class="form-label">Profesor</label>
                     <select id="selectorProfesor" class="form-select" v-model="idProfesor" @change="cambiarProfesor">
@@ -68,13 +68,13 @@ const ProgramacionesSeguimientoView = {
                  para el admin sin departamento propio, departamento elegido -->
             <div class="row mb-3">
                 <div class="col-md-6 d-flex align-items-center justify-content-center">
-                    <button class="btn btn-light" :disabled="!idEvaluacion || (!idDepartamentoUsuario && !idDepartamento)" @click="generarPDF('Ciclos Formativos')">
+                    <button class="btn btn-outline-secondary" :disabled="!idEvaluacion || (!idDepartamentoUsuario && !idDepartamento)" @click="generarPDF('Ciclos Formativos')">
                         <i class="bi bi-filetype-pdf me-1"></i>PDF seguimiento Ciclos Formativos
                     </button>
                 </div>
 
                 <div class="col-md-6 d-flex align-items-center justify-content-center">
-                    <button class="btn btn-light" :disabled="!idEvaluacion || (!idDepartamentoUsuario && !idDepartamento)" @click="generarPDF('ESO/BACH')">
+                    <button class="btn btn-outline-secondary" :disabled="!idEvaluacion || (!idDepartamentoUsuario && !idDepartamento)" @click="generarPDF('ESO/BACH')">
                         <i class="bi bi-filetype-pdf me-1"></i>PDF seguimiento ESO/BACH
                     </button>
                 </div>
@@ -84,7 +84,7 @@ const ProgramacionesSeguimientoView = {
             <div class="row" v-if="completa">
                 <div class="col-12">
                     <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header text-bg-primary">
                             <h5 class="mb-0">
                                 Seguimiento — {{ materiaSeleccionada }} / {{ grupoSeleccionada }} — {{ evaluacionSeleccionada }}
                             </h5>
@@ -94,7 +94,7 @@ const ProgramacionesSeguimientoView = {
                                 <label for="editorTemporalizacion" class="form-label mb-2">
                                     SEGUIMIENTO DE LA PROGRAMACIÓN, con respecto a la temporalización que figura en las Propuestas Pedagógicas:
                                 </label>
-                                <textarea id="editorTemporalizacion"></textarea>
+                                <textarea id="editorTemporalizacion" class="form-control" rows="8"></textarea>
                             </div>
 
                             <div class="mt-4">
@@ -105,36 +105,36 @@ const ProgramacionesSeguimientoView = {
                                     <div class="col-md-3">
                                         <div class="input-group">
                                             <span class="input-group-text">Aprobados:</span>
-                                            <input type="number" class="form-control" v-model="numAprobados" min="0" max="99">
+                                            <input type="number" class="form-control" v-model.number="numAprobados" min="0" max="99" aria-label="Número de aprobados">
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="input-group">
                                             <span class="input-group-text">Suspensos:</span>
-                                            <input type="number" class="form-control" v-model="numSuspensos" min="0" max="99">
+                                            <input type="number" class="form-control" v-model.number="numSuspensos" min="0" max="99" aria-label="Número de suspensos">
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="input-group">
                                             <span class="input-group-text">Otros:</span>
-                                            <input type="number" class="form-control" v-model="numOtros" min="0" max="99">
+                                            <input type="number" class="form-control" v-model.number="numOtros" min="0" max="99" aria-label="Número de otras calificaciones">
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="input-group">
                                             <span class="input-group-text">Total:</span>
-                                            <input type="number" class="form-control" :value="totalAlumnos" disabled readonly>
+                                            <input type="number" class="form-control" :value="totalAlumnos" readonly tabindex="-1" aria-label="Total de alumnos">
                                         </div>
                                     </div>
                                 </div>
-                                <textarea id="editorResultados"></textarea>
+                                <textarea id="editorResultados" class="form-control" rows="8"></textarea>
                             </div>
 
                             <div class="mt-4">
                                 <label for="editorInclusion" class="form-label mb-2">
                                     INCLUSIÓN DEL ALUMNADO (si procede), detallando la valoración de los resultados de alumnado a quien se le ha aplicado algún tipo de respuesta educativa:
                                 </label>
-                                <textarea id="editorInclusion"></textarea>
+                                <textarea id="editorInclusion" class="form-control" rows="8"></textarea>
                             </div>
 
                             <div class="text-center mt-4 mb-2">
@@ -165,9 +165,9 @@ const ProgramacionesSeguimientoView = {
             <div class="modal fade" id="modalVistaPrevia" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-scrollable">
                     <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
+                        <div class="modal-header text-bg-primary">
                             <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Vista previa — Seguimiento</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <h6>Temporalización</h6>
@@ -229,7 +229,7 @@ const ProgramacionesSeguimientoView = {
     },
 
     computed: {
-        esAdmin() {
+        esGestor() {
             return this.usuario.rol === 'admin' || this.usuario.rol === 'jefeDepartamento';
         },
 
@@ -283,7 +283,7 @@ const ProgramacionesSeguimientoView = {
     async mounted() {
         this.modalVistaPrevia = new bootstrap.Modal(document.getElementById('modalVistaPrevia'));
 
-        if (this.esAdmin) {
+        if (this.esGestor) {
             await this.cargarProfesores();
             if (!this.idDepartamentoUsuario) {
                 await this.cargarDepartamentos();
@@ -305,6 +305,14 @@ const ProgramacionesSeguimientoView = {
         // --- TinyMCE (misma configuración que 2.3/2.4) ---
         idsEditores() {
             return ['editorTemporalizacion', 'editorResultados', 'editorInclusion'];
+        },
+
+        mapaEditores() {
+            return {
+                editorTemporalizacion: 'temporalizacion',
+                editorResultados: 'resultados',
+                editorInclusion: 'inclusion'
+            };
         },
 
         async inicializarEditores() {
@@ -337,12 +345,7 @@ const ProgramacionesSeguimientoView = {
                 branding: false,
                 content_css: 'css/estilos_tiny.css',
                 setup: (editor) => {
-                    const mapa = {
-                        editorTemporalizacion: 'temporalizacion',
-                        editorResultados: 'resultados',
-                        editorInclusion: 'inclusion'
-                    };
-                    const campo = mapa[editor.id];
+                    const campo = this.mapaEditores()[editor.id];
                     editor.on('change', () => {
                         this[campo] = editor.getContent();
                     });
@@ -356,11 +359,7 @@ const ProgramacionesSeguimientoView = {
 
         // Sincroniza el estado con los editores y devuelve el contenido final
         leerEditores() {
-            const mapa = {
-                editorTemporalizacion: 'temporalizacion',
-                editorResultados: 'resultados',
-                editorInclusion: 'inclusion'
-            };
+            const mapa = this.mapaEditores();
             this.idsEditores().forEach(id => {
                 const editor = window.tinymce ? tinymce.get(id) : null;
                 if (editor) {
@@ -405,7 +404,7 @@ const ProgramacionesSeguimientoView = {
         },
 
         async cargarMaterias() {
-            if (this.esAdmin && this.idProfesor <= 0) return;
+            if (this.esGestor && this.idProfesor <= 0) return;
             try {
                 const data = await ProgramacionesSeguimientoAPI.cargarMaterias(this.idProfesor);
                 this.materias = data || [];

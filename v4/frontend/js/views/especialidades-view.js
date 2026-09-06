@@ -82,7 +82,7 @@ const EspecialidadesView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">{{ esEdicion ? 'Editar' : 'Nueva' }} Especialidad</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <form @submit.prevent="guardar">
@@ -98,11 +98,11 @@ const EspecialidadesView = {
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Horas de tutoría (estimación)</label>
-                                        <input type="number" min="0" class="form-control" v-model="form.horasTutoria">
+                                        <input type="number" min="0" class="form-control" v-model.number="form.horasTutoria">
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Horas de inglés (estimación)</label>
-                                        <input type="number" min="0" class="form-control" v-model="form.horasIngles">
+                                        <input type="number" min="0" class="form-control" v-model.number="form.horasIngles">
                                     </div>
                                 </div>
                                 <div class="mb-3">

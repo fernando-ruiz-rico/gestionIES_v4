@@ -16,13 +16,13 @@
  *
  * Al añadir/eliminar archivos, sube NIVEL para forzar la re-caché.
  */
-const NIVEL = 'v4-pwa-6';
+const NIVEL = 'v4-pwa-8';
 const PRECACHE = [
     'index.html',
     'manifest.webmanifest',
-    'css/app.css',
+    'css/app.css?v=1', // mismo querystring que index.html
     'css/estilos_tiny.css',
-    'js/app.js?v=2', // mismo querystring que index.html
+    'js/app.js?v=4', // mismo querystring que index.html
     'js/avisos.js',
     'js/tinymce-helpers.js',
     'icons/icon-192.png',
@@ -82,7 +82,7 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(request.url);
 
     // API PHP: nunca se cachea (datos en vivo).
-    if (url.pathname.startsWith('/backend/')) { return; }
+    if (url.pathname.includes('/backend/')) { return; }
 
     // Navegación (SPA): red primero, si no, index.html cacheado.
     if (request.mode === 'navigate') {

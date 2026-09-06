@@ -61,7 +61,7 @@ const PCCFApartadosView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h6 class="modal-title" id="modalApartadoTitle">Nuevo Apartado</h6>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" @click="cerrarModal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" @click="cerrarModal"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">

@@ -26,9 +26,9 @@ const MateriasView = {
 
             <!-- Desplegable de curso: el primer elemento, fiel a v3 (materias.php) -->
             <div class="row mb-3">
-                <div class="col-12">
+                <div class="col-12 col-md-6">
                     <label class="form-label" for="cursoMateria">Curso</label>
-                    <select id="cursoMateria" class="form-select col-md-6" v-model="selCurso" @change="cargar()">
+                    <select id="cursoMateria" class="form-select" v-model="selCurso" @change="cargar()">
                         <option :value="0">--Selecciona un curso--</option>
                         <option v-for="c in cursos" :key="c.id" :value="c.id">{{ c.nombre }}</option>
                     </select>
@@ -39,7 +39,7 @@ const MateriasView = {
                 <div class="col-12">
                     <div class="card shadow-sm">
                         <div class="card-body table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover table-sm align-middle">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
@@ -52,7 +52,7 @@ const MateriasView = {
                                         <td>{{ m.id }}</td>
                                         <td>{{ m.nombre }}</td>
                                         <td class="text-end">
-                                            <button class="btn btn-sm btn-outline-secondary me-1" title="Asociar competencias" @click="abrirCompetencias(m)">
+                                            <button v-if="esAdmin" class="btn btn-sm btn-outline-secondary me-1" title="Asociar competencias" @click="abrirCompetencias(m)">
                                                 <i class="bi bi-lightning"></i>
                                             </button>
                                             <button v-if="cursoTieneGrupos" class="btn btn-sm btn-outline-primary me-1" title="Gestionar datos por grupo" @click="abrirGrupos(m)">
@@ -85,12 +85,13 @@ const MateriasView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">{{ esEdicion ? 'Editar' : 'Nueva' }} Materia</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
-                                <label class="form-label">Nombre *</label>
-                                <input type="text" class="form-control" v-model="form.nombre" required>
+                                <label class="form-label" for="nombreMateria">Nombre *</label>
+                                <input type="text" class="form-control" id="nombreMateria" :class="{ 'is-invalid': intentadoGuardar && !form.nombre }" v-model="form.nombre">
+                                <div class="invalid-feedback">El nombre de la materia es obligatorio.</div>
                             </div>
                             <div class="row g-2">
                                 <div class="col-md-6">
@@ -105,11 +106,11 @@ const MateriasView = {
                             <div class="row g-2">
                                 <div class="col-md-4">
                                     <label class="form-label">Créditos ECTS</label>
-                                    <input type="number" min="0" class="form-control" v-model="form.creditosECTS">
+                                    <input type="number" min="0" class="form-control" v-model.number="form.creditosECTS">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Horas anuales</label>
-                                    <input type="number" min="0" class="form-control" v-model="form.horasAnuales">
+                                    <input type="number" min="0" class="form-control" v-model.number="form.horasAnuales">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Tipo de materia</label>
@@ -158,27 +159,27 @@ const MateriasView = {
                             <div class="row g-2">
                                 <div class="col-md-6">
                                     <label class="form-label">Cantidad de unidades por grupo</label>
-                                    <input type="number" min="0" class="form-control" v-model="form.cantidad">
+                                    <input type="number" min="0" class="form-control" v-model.number="form.cantidad">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Horas / semana</label>
-                                    <input type="number" min="0" class="form-control" v-model="form.horas">
+                                    <input type="number" min="0" class="form-control" v-model.number="form.horas">
                                 </div>
                             </div>
                             <div class="row g-2">
                                 <div class="col-md-6">
                                     <label class="form-label">Horas complementarias / semana</label>
-                                    <input type="number" min="0" class="form-control" v-model="form.horas_complementarias">
+                                    <input type="number" min="0" class="form-control" v-model.number="form.horas_complementarias">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Mín. nº de profesores (0 para no limitar)</label>
-                                    <input type="number" min="0" class="form-control" v-model="form.min_num_profesores">
+                                    <input type="number" min="0" class="form-control" v-model.number="form.min_num_profesores">
                                 </div>
                             </div>
                             <div class="row g-2">
                                 <div class="col-md-6">
                                     <label class="form-label">Máx. nº de grupos por profesor (0 para no limitar)</label>
-                                    <input type="number" min="0" class="form-control" v-model="form.max_grupos_profesor">
+                                    <input type="number" min="0" class="form-control" v-model.number="form.max_grupos_profesor">
                                 </div>
                             </div>
                         </div>
@@ -198,7 +199,7 @@ const MateriasView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Datos de {{ gruposModal.nombreMateria }} por grupo</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <div class="text-center mb-3">
@@ -212,27 +213,27 @@ const MateriasView = {
                                     <div class="row g-2">
                                         <div class="col-md-6">
                                             <label class="form-label">Cantidad de unidades por grupo</label>
-                                            <input type="number" min="0" class="form-control" v-model="g.cantidad">
+                                            <input type="number" min="0" class="form-control" v-model.number="g.cantidad">
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Mín. profesores (0 para no limitar)</label>
-                                            <input type="number" min="0" class="form-control" v-model="g.min_num_profesores">
+                                            <input type="number" min="0" class="form-control" v-model.number="g.min_num_profesores">
                                         </div>
                                     </div>
                                     <div class="row g-2">
                                         <div class="col-md-6">
                                             <label class="form-label">Horas / semana</label>
-                                            <input type="number" min="0" class="form-control" v-model="g.horas">
+                                            <input type="number" min="0" class="form-control" v-model.number="g.horas">
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Máx. grupos por profesor (0 para no limitar)</label>
-                                            <input type="number" min="0" class="form-control" v-model="g.max_grupos_profesor">
+                                            <input type="number" min="0" class="form-control" v-model.number="g.max_grupos_profesor">
                                         </div>
                                     </div>
                                     <div class="row g-2">
                                         <div class="col-md-6">
                                             <label class="form-label">Horas complementarias / semana</label>
-                                            <input type="number" min="0" class="form-control" v-model="g.horas_complementarias">
+                                            <input type="number" min="0" class="form-control" v-model.number="g.horas_complementarias">
                                         </div>
                                         <div class="col-md-6 d-flex align-items-end">
                                             <button type="button" class="btn btn-success btn-sm me-1" @click="guardarGrupo(g)"><i class="bi bi-save"></i> Guardar</button>
@@ -254,14 +255,16 @@ const MateriasView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Competencias asociadas a {{ compModal.nombreMateria }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <p v-if="!compModal.asociadas.length" class="text-muted">Sin competencias asociadas.</p>
-                            <p v-for="c in compModal.asociadas" :key="c.id" class="mb-1">
-                                <button type="button" class="btn btn-sm btn-outline-danger me-2" @click="borrarCompetencia(c.id)"><i class="bi bi-trash"></i></button>
-                                {{ c.codigo }} - {{ c.texto }}
-                            </p>
+                            <ul v-else class="list-group list-group-flush mb-3">
+                                <li v-for="c in compModal.asociadas" :key="c.id" class="list-group-item d-flex align-items-center gap-2 px-0">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Desasociar competencia" aria-label="Desasociar competencia" @click="borrarCompetencia(c.id)"><i class="bi bi-trash"></i></button>
+                                    <span>{{ c.codigo }} - {{ c.texto }}</span>
+                                </li>
+                            </ul>
                             <p class="fw-bold mt-3">Asociar nuevas competencias</p>
                             <div class="d-flex gap-2 align-items-center">
                                 <select class="form-select flex-grow-1" v-model="compModal.selCompetencia">
@@ -295,15 +298,10 @@ const MateriasView = {
             gruposPorCurso: {},
             departamentos: [],
             especialidades: [],
-            form: {
-                id: 0, nombre: '', idCurso: 0, codigoOficial: '', nombreOficial: '',
-                creditosECTS: '', horasAnuales: '', tipo: 'OTRA', idDepartamento: 0,
-                idEspecialidad: '', computables_horas_grupo: true, asignada_directiva: false,
-                tiene_programacion: true, divisible: true, cantidad: 1, horas: '',
-                horas_complementarias: '', min_num_profesores: 0, max_grupos_profesor: 0
-            },
+            form: { id: 0, nombre: '', idCurso: 0, codigoOficial: '', nombreOficial: '', creditosECTS: '', horasAnuales: '', tipo: 'OTRA', idDepartamento: 0, idEspecialidad: '', computables_horas_grupo: true, asignada_directiva: false, tiene_programacion: true, divisible: true, cantidad: 1, horas: '', horas_complementarias: '', min_num_profesores: 0, max_grupos_profesor: 0 },
             esEdicion: false,
-            gruposModal: { idMateria: 0, idCurso: 0, nombreCurso: '', nombreMateria: '', general: null, grupos: [] },
+            intentadoGuardar: false,
+            gruposModal: { idMateria: 0, nombreMateria: '', general: null, grupos: [] },
             compModal: { idMateria: 0, nombreMateria: '', asociadas: [], opciones: [], selCompetencia: 0 },
             modal: null,
             modalGrupos: null,
@@ -396,13 +394,8 @@ const MateriasView = {
                 Avisos.aviso('Debes seleccionar un curso primero');
                 return;
             }
-            this.form = {
-                id: 0, nombre: '', idCurso: this.selCurso, codigoOficial: '', nombreOficial: '',
-                creditosECTS: '', horasAnuales: '', tipo: 'OTRA', idDepartamento: 0,
-                idEspecialidad: '', computables_horas_grupo: true, asignada_directiva: false,
-                tiene_programacion: true, divisible: true, cantidad: 1, horas: '',
-                horas_complementarias: '', min_num_profesores: 0, max_grupos_profesor: 0
-            };
+            this.form = Object.assign(this.formVacio(), { idCurso: this.selCurso });
+            this.intentadoGuardar = false;
             this.esEdicion = false;
             this.modal.show();
         },
@@ -430,11 +423,26 @@ const MateriasView = {
                 min_num_profesores: m.min_num_profesores,
                 max_grupos_profesor: m.max_grupos_profesor
             };
+            this.intentadoGuardar = false;
             this.esEdicion = true;
             this.modal.show();
         },
 
+        formVacio() {
+            return {
+                id: 0, nombre: '', idCurso: 0, codigoOficial: '', nombreOficial: '',
+                creditosECTS: '', horasAnuales: '', tipo: 'OTRA', idDepartamento: 0,
+                idEspecialidad: '', computables_horas_grupo: true, asignada_directiva: false,
+                tiene_programacion: true, divisible: true, cantidad: 1, horas: '',
+                horas_complementarias: '', min_num_profesores: 0, max_grupos_profesor: 0
+            };
+        },
+
         async guardar() {
+            if (!this.form.nombre || !this.form.nombre.trim()) {
+                this.intentadoGuardar = true;
+                return;
+            }
             try {
                 const result = await MateriasAPI.guardar(this.form);
                 Avisos.exito('Éxito', result.message);
@@ -465,8 +473,6 @@ const MateriasView = {
                 const d = await MateriasAPI.listar_materias_grupos(m.id, m.idCurso);
                 this.gruposModal = {
                     idMateria: d.idMateria,
-                    idCurso: d.idCurso,
-                    nombreCurso: d.nombreCurso,
                     nombreMateria: d.nombreMateria,
                     general: d.general,
                     grupos: d.grupos

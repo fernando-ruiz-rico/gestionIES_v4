@@ -70,7 +70,7 @@ const ProgramacionesApartadosView = {
             <div class="modal fade" id="modalApartado" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
+                        <div class="modal-header text-bg-primary">
                             <h5 class="modal-title">{{ esNuevo ? 'Nuevo Apartado' : 'Editar Apartado' }}</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>

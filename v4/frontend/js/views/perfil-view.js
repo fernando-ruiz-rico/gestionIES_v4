@@ -188,9 +188,9 @@ const PerfilView = {
         obtenerClaseCelda(dia, hora) {
             const idCelda = this.codigoCelda(dia, hora);
             if (this.formulario.prefRojas.includes(idCelda)) {
-                return 'bg-danger text-white';
+                return 'text-bg-danger';
             } else if (this.formulario.prefAmarillas.includes(idCelda)) {
-                return 'bg-warning text-dark';
+                return 'text-bg-warning';
             }
             return 'bg-light';
         },

@@ -13,7 +13,7 @@ const ProgramacionesAulaView = {
         <div class="container-fluid py-4">
             <div class="row mb-3">
                 <div class="col-12">
-                    <h2><i class="bi bi-collection-measure me-2"></i>Programaciones de aula</h2>
+                    <h2><i class="bi bi-collection me-2"></i>Programaciones de aula</h2>
                 </div>
             </div>
 
@@ -109,7 +109,7 @@ const ProgramacionesAulaView = {
             <!-- Editor (apartado editable) -->
             <div v-if="esEditable" class="mt-3">
                 <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header text-bg-primary">
                         <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Editar apartado de la programación de aula</h5>
                     </div>
                     <div class="card-body">

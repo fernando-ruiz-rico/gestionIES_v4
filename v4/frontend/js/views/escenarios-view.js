@@ -87,7 +87,7 @@ const EscenariosView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">{{ esEdicion ? 'Editar' : 'Nuevo' }} escenario</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">

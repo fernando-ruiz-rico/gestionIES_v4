@@ -65,7 +65,7 @@ const CiclosView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">{{ esEdicion ? 'Editar' : 'Nuevo' }} Ciclo</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <form @submit.prevent="guardar">
@@ -102,7 +102,7 @@ const CiclosView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Cursos asociados: {{ cicloActual.nombre }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <table class="table table-sm" v-if="cursosAsociados.asociados.length">
@@ -155,7 +155,7 @@ const CiclosView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Unidades de competencia: {{ cicloActual.nombre }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <div v-if="unidadesAsociadas.asociadas.length">

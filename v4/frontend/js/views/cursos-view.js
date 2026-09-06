@@ -59,7 +59,7 @@ const CursosView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">{{ esEdicion ? 'Editar' : 'Nuevo' }} Curso</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <form @submit.prevent="guardar">
@@ -73,7 +73,7 @@ const CursosView = {
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Horas de clase semanales</label>
-                                    <input type="number" min="0" class="form-control" v-model="form.horas_semana"
+                                    <input type="number" min="0" class="form-control" v-model.number="form.horas_semana"
                                            placeholder="Deja el campo vacío o pon 0 si el curso no debe sumar X horas semanales">
                                 </div>
                                 <div class="mb-3">

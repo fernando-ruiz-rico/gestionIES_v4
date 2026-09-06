@@ -57,7 +57,7 @@ const DepartamentosView = {
             <div id="formdepartamento" class="modal fade" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
-                        <div class="modal-header bg-primary text-white">
+                        <div class="modal-header text-bg-primary">
                             <h5 class="modal-title">
                                 <i class="bi bi-building me-2"></i>Formulario de departamentos
                             </h5>

@@ -102,6 +102,7 @@ app.component('actas-view', ActasView);
 app.component('historico-view', HistoricoView);
 app.component('estadisticas-view', EstadisticasView);
 app.component('configuracion-view', ConfiguracionView);
+app.component('ayuda-view', AyudaView);
 
 // Montar la aplicación
 app.mount('#app');

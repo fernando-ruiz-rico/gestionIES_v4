@@ -49,6 +49,9 @@ const AppLayout = {
         handleNavigate(link, params) {
             // Recordar el enlace activo para resaltar el elemento del menú
             this.linkActual = link || '';
+            // Ayuda: elegir el manual según el enlace del menú (port de v3/ayuda.php)
+            if (link === 'ayuda.php') params = { doc: 'Manual_Profe.md' };
+            if (link === 'ayuda_admin.php') params = { doc: 'Manual_Admin.md' };
             // Parámetros de la navegación (o ninguno si viene del menú lateral)
             this.params = (params && typeof params === 'object') ? params : {};
 
@@ -81,7 +84,9 @@ const AppLayout = {
                 'actas.php': 'actas-view',
                 'historico.php': 'historico-view',
                 'estadisticas.php': 'estadisticas-view',
-                'configuracion.php': 'configuracion-view'
+                'configuracion.php': 'configuracion-view',
+                'ayuda.php': 'ayuda-view',
+                'ayuda_admin.php': 'ayuda-view'
             };
             
             this.vistaActual = vistaMap[link] || 'home-view';

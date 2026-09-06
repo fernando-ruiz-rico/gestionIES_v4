@@ -70,7 +70,7 @@ const ResultadosArendizajeView = {
                     <div class="col-md-8" v-if="idMateriaSeleccionada">
                         <div class="form-inline">
                             <label class="form-label me-2">Horas a impartir en empresa:</label>
-                            <input type="number" class="form-control" style="width:100px" v-model="horasEmpresa" :disabled="!permisos">
+                            <input type="number" class="form-control" style="width:100px" v-model.number="horasEmpresa" :disabled="!permisos">
                             <button class="btn btn-outline-primary ms-2" v-if="permisos" @click="actualizarHoras">Actualizar</button>
                         </div>
                     </div>
@@ -99,7 +99,7 @@ const ResultadosArendizajeView = {
                                 </div>
                                 <div class="d-flex gap-2">
                                     <button class="btn btn-sm btn-outline-secondary" @click="abrirEvaluar(r)" title="Fijar % de evaluación y RA clave">
-                                        <i class="bi bi-medal"></i>
+                                        <i class="bi bi-award"></i>
                                     </button>
                                     <button class="btn btn-sm btn-outline-secondary" @click="abrirModal(r)" title="Editar resultado">
                                         <i class="bi bi-pencil"></i>
@@ -130,7 +130,7 @@ const ResultadosArendizajeView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">{{ esEdicion ? 'Resultado a editar' : 'Nuevo resultado' }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
@@ -139,7 +139,7 @@ const ResultadosArendizajeView = {
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Orden</label>
-                                <input type="number" class="form-control" v-model="form.orden">
+                                <input type="number" class="form-control" v-model.number="form.orden">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Porcentaje de docencia asignado a la empresa</label>
@@ -163,12 +163,12 @@ const ResultadosArendizajeView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Evaluar resultado</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label class="form-label">Porcentaje de evaluación</label>
-                                <input type="number" class="form-control" v-model="evalForm.porcentaje_evaluacion">
+                                <input type="number" class="form-control" v-model.number="evalForm.porcentaje_evaluacion">
                             </div>
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" id="esClave" v-model="evalForm.es_clave">
@@ -189,7 +189,7 @@ const ResultadosArendizajeView = {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Criterios de evaluación</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
                             <div v-for="c in criterios" :key="'cce'+c.codigo"
